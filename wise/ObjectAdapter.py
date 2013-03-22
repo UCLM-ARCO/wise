@@ -1,0 +1,43 @@
+# -*- mode: python; coding: utf-8 -*-
+
+import uuid
+
+from .Transceiver import TransceiverApp
+from .Exceptions import AlreadyRegisteredException
+
+
+class ObjectAdapter:
+    def __init__(self, communicator, name, endpoint):
+        self._communicator = communicator
+        self._name = name
+        self._endpoint = endpoint
+
+        self._asm = {}
+
+        # register transceiver (to handle JSON requests)
+        transceiver = TransceiverApp(
+            communicator=self._communicator,
+            url="^/{}$".format(endpoint),
+            adapter=self)
+        self._communicator.registerApplication(transceiver)
+
+    def getCommunicator(self):
+        return self._communicator
+
+    def getName(self):
+        return self._name
+
+    def getEndpoint(self):
+        return self._endpoint
+
+    def add(self, servant, identity):
+        if not self._asm.get(identity) is None:
+            raise AlreadyRegisteredException("Object: " + identity)
+        self._asm[identity] = servant
+
+    def addWithUUID(self, servant):
+        identity = str(uuid.uuid1())
+        self.add(servant, identity)
+
+    def find(self, identity):
+        return self._asm.get(identity)
