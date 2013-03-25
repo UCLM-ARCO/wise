@@ -18,7 +18,7 @@ class ActiveHandler(websocket.WebSocketHandler):
             TransceiverFactory.unregister_handler(self._endpoint)
 
 
-class RiceAdmin:
+class WiseAdmin:
     def __init__(self, ic):
         self._ic = ic
 

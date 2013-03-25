@@ -1,6 +1,7 @@
 # -*- mode: python; coding: utf-8 -*-
 
 import os
+import logging
 from threading import Thread, Event
 from tornado import web, ioloop
 
@@ -39,7 +40,7 @@ class TornadoApplication(web.Application):
                     kwargs = {}
                 spec = web.URLSpec(pattern, handler, kwargs)
 
-            # verify that spec is not added
+            # verify that spec is not added yet
             for old in specs:
                 if old._path == spec._path:
                     raise AlreadyRegisteredException(
@@ -91,6 +92,9 @@ class Communicator(Thread):
 
     # handlers is a list of (url, class, params)
     def registerHandlers(self, handlers, host=".*$"):
+        for spec in handlers:
+            logging.debug("Handler for '{}' registered".format(spec[0]))
+
         self._server.append_handlers(host, handlers)
 
     # return adapter name, find by its endpoint
@@ -116,10 +120,10 @@ class Communicator(Thread):
             pass
 
     def _register_static_files_handler(self):
-        # register static files handler (to serve rice.js and others)
+        # register static files handler (to serve wise.js and others)
         pwd = os.path.dirname(__file__)
         static_files = StaticFSApplication(
             communicator=self,
-            locator='/rice/',
+            locator='/wise/',
             path=pwd)
         self.registerApplication(static_files)

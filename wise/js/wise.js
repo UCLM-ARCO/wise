@@ -9,8 +9,7 @@ function bind(scope, fn) {
     };
 }
 
-
-rice = {
+wise = {
 
 Transceiver: Class.extend({
     // args: socket_url, on_ready
@@ -151,7 +150,7 @@ TransceiverFactory: Class.extend({
 	var socket_url = "ws://127.0.0.1:8080/" + args.endpoint;
 
 	log.info("New transceiver for: ", socket_url);
-	var transceiver = new rice.Transceiver({
+	var transceiver = new wise.Transceiver({
 	    socket_url: socket_url,
 	    on_ready: args.on_ready,
 	});
@@ -187,7 +186,7 @@ ObjectAdapter: Class.extend({
 
     // args: identity
     createProxy: function(args) {
-	return new rice.ObjectPrx({
+	return new wise.ObjectPrx({
 	    identity: args.identity,
 	    transceiver: this._transceiver,
 	});
@@ -242,8 +241,8 @@ ObjectPrx: Class.extend({
     // args: identity, transceiver
     init: function(args) {
 	if (args.base) {
-	    args.identity = args.base.rice_getIdentity();
-	    args.transceiver = args.base.rice_getTransceiver();
+	    args.identity = args.base.wise_getIdentity();
+	    args.transceiver = args.base.wise_getTransceiver();
 	}
 
     	this._identity = args.identity;
@@ -251,16 +250,16 @@ ObjectPrx: Class.extend({
     },
 
     // args: request, on_response
-    rice_invoke: function(args) {
+    wise_invoke: function(args) {
     	args.request.identity = this._identity;
     	this._transceiver.send_request(args);
     },
 
-    rice_getTransceiver: function() {
+    wise_getTransceiver: function() {
     	return this._transceiver;
     },
 
-    rice_getIdentity: function() {
+    wise_getIdentity: function() {
     	return this._identity;
     },
 
@@ -304,7 +303,7 @@ Logger: Class.extend({
 Communicator: Class.extend({
     init: function() {
 	this._adapters = {};
-	this._transceiverFactory = new rice.TransceiverFactory();
+	this._transceiverFactory = new wise.TransceiverFactory();
     },
 
     // args: name, endpoint, on_ready
@@ -319,7 +318,7 @@ Communicator: Class.extend({
 
 	// result: transceiver
 	function on_transceiver_ready(result) {
-	    var adapter = new rice.ObjectAdapter({
+	    var adapter = new wise.ObjectAdapter({
 		transceiver: result.transceiver
 	    });
 
@@ -328,7 +327,7 @@ Communicator: Class.extend({
 	}
     },
 
-    // args: stringfied_proxy, on_ready
+    // args: proxy, on_ready
     stringToProxy: function(args) {
 	var fields = this._get_proxy_fields(args.proxy);
 
@@ -340,7 +339,7 @@ Communicator: Class.extend({
 
 	// result: transceiver
 	function on_transceiver_ready(result) {
-	    var proxy = new rice.ObjectPrx({
+	    var proxy = new wise.ObjectPrx({
 		identity: identity,
 		transceiver: result.transceiver,
 	    });
@@ -363,7 +362,7 @@ Communicator: Class.extend({
 // args: on_ready
 initialize: function(args) {
 
-    // create root logger for Rice
+    // create root logger for Wise
     if (console) {
 	log = console;
     }
@@ -371,22 +370,22 @@ initialize: function(args) {
 	if ($('#log').length == 0) {
 	    $('body').append($('<div id="log">'));
 	}
-	log = new rice.Logger({ element_id: "log"});
+	log = new wise.Logger({ element_id: "log"});
     }
 
     // create communicator
-    var ic = new rice.Communicator();
+    var ic = new wise.Communicator();
 
     // create server admin proxy
-    var AdminPrx = rice.newDerivedProxy({ methods: ['create_socket'] });
+    var AdminPrx = wise.newDerivedProxy({ methods: ['create_socket'] });
     var proxy = ic.stringToProxy({
-	proxy: "RiceAdmin -e rice",
+	proxy: "WiseAdmin -e wise",
 	on_ready: bind(this, on_admin_proxy_ready),
     });
 
     // result: proxy
     function on_admin_proxy_ready(result) {
-	rice.TransceiverFactory.prototype._server_admin =
+	wise.TransceiverFactory.prototype._server_admin =
 	    new AdminPrx({ base: result.proxy });
 
 	// finish intialization
@@ -397,19 +396,29 @@ initialize: function(args) {
 // args: methods
 newDerivedProxy: function(args) {
     var methods = {};
-    for (var i in args.methods) {
-	var name = args.methods[i];
-	methods[name] = function(params) {
-	    this.rice_invoke({
+
+    function new_method(name) {
+
+	// args: params, on_response
+	return function(args) {
+	    this.wise_invoke({
 		request: {
 		    method: name,
-		    params: params,
+		    params: args.params
 		},
+		on_response: args.on_response
 	    });
 	};
     }
 
-    return rice.ObjectPrx.extend(methods);
+    for (var i in args.methods) {
+	var name = args.methods[i];
+	methods[name] = new_method(name);
+    }
+
+    return wise.ObjectPrx.extend(methods);
 },
 
 };
+
+

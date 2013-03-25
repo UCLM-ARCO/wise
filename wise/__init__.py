@@ -1,7 +1,7 @@
 # -*- mode: python; coding: utf-8 -*-
 
 from .Communicator import Communicator
-from .RiceAdmin import RiceAdmin
+from .WiseAdmin import WiseAdmin
 
 # Imports not used here, made available for the rest of users
 from .WebApplication import WebApplication
@@ -12,8 +12,8 @@ def initialize(host="127.0.0.1", port=8080):
     ic = Communicator(host=host, port=port)
     ic.is_ready.wait()
 
-    admin_adapter = ic.createObjectAdapter("RiceAdmin", "rice")
-    servant = RiceAdmin(ic)
-    admin_adapter.add(servant, "RiceAdmin")
+    admin_adapter = ic.createObjectAdapter("WiseAdmin", "wise")
+    servant = WiseAdmin(ic)
+    admin_adapter.add(servant, "WiseAdmin")
 
     return ic

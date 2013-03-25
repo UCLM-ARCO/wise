@@ -1,0 +1,66 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <title>Browser sent method invocation to server, no response</title>
+  </head>
+  <body>
+
+    <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <script src="/wise/js/class.js"></script>
+    <script src="/wise/js/wise.js"></script>
+
+    <script type="text/javascript">
+
+    BannerPrx = wise.newDerivedProxy({
+	methods: ['set_message', 'get_message'],
+    });
+
+    // create communicator and proxy to server
+    $(window).ready(function() {
+	wise.initialize({ on_ready: on_communicator_ready });
+
+	// args: communicator
+	function on_communicator_ready(args) {
+	    args.communicator.stringToProxy({
+		proxy: "Server -e ws",
+		on_ready: on_server_ready
+	    });
+	}
+
+	// args: proxy
+	function on_server_ready(args) {
+	    log.info("Server @ '" + args.proxy + "'");
+	    banner = new BannerPrx({ base: args.proxy });
+	}
+    });
+
+    // UI callbacks
+    function on_set_clicked() {
+	var message = $('#banner').val();
+	banner.set_message({
+	    params: { message: message }
+	});
+    }
+
+    function on_get_clicked() {
+	banner.get_message({
+	    params: {},
+	    on_response: function(args) {
+		console.info("RESPONSE:", JSON.stringify(args));
+		$('#banner').val(args.message);
+	    }
+	});
+    }
+
+    </script>
+
+    Banner: <input type="text" id="banner" value="the message" /><br>
+
+    <input type="button" id="set_button" value="set"
+           onClick="on_set_clicked()" />
+
+    <input type="button" id="get_button" value="get"
+           onClick="on_get_clicked()" />
+
+  </body>
+</html>

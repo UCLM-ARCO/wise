@@ -5,7 +5,7 @@ ServerPrx = ObjectPrx.extend({
     get_model: function(args) {
     	var transceiver = this._transceiver;
 
-    	this.rice_invoke({
+    	this.wise_invoke({
     	    request: {
     		method: 'get_model',
     		params: {
@@ -26,7 +26,7 @@ ServerPrx = ObjectPrx.extend({
 DUO_RWA = ObjectPrx.extend({
     // args: value
     set: function(args) {
-    	this.rice_invoke({
+    	this.wise_invoke({
     	    request: {
     		method: 'set',
     		params: args,
@@ -36,7 +36,7 @@ DUO_RWA = ObjectPrx.extend({
 
     // args: on_response
     get: function(args) {
-    	this.rice_invoke({
+    	this.wise_invoke({
     	    request: {
     		method: 'get'
     	    },
@@ -46,7 +46,7 @@ DUO_RWA = ObjectPrx.extend({
 
     // args: proxy
     setObserver: function(args) {
-    	this.rice_invoke({
+    	this.wise_invoke({
     	    request: {
     		method: 'setObserver',
     		params: {

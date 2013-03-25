@@ -45,7 +45,6 @@ class TransceiverFactory:
 
     @classmethod
     def register_handler(cls, endpoint, handler):
-        print "Handler for:" + endpoint
         cls._handlers[endpoint] = handler
 
     @classmethod
@@ -86,7 +85,11 @@ class RequestMessage:
         if not 'params' in data:
             return retval
 
-        for name, value in data['params'].items():
+        params = data['params']
+        if not isinstance(params, dict):
+            raise ValueError("Invalid params: '{}'".format(params))
+
+        for name, value in params.items():
             if value is None:
                 continue
 
@@ -133,6 +136,7 @@ class MessageHandler(websocket.WebSocketHandler):
 
             current = Current(self, self._adapter)
             retval = method(current=current, **request.params)
+            print "RETVAL:", retval
             self._response(request.request_id, retval)
 
         except ProtocolException as e:
