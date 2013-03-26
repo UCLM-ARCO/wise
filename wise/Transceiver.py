@@ -70,7 +70,9 @@ class TransceiverFactory:
 
     @classmethod
     def unregister_handler(cls, endpoint):
+        print "TransceiverFactory: un-register handler for '{}'".format(endpoint)
         cls._handlers.pop(endpoint, None)
+        cls._transceivers.pop(endpoint, None)
 
     @classmethod
     def get(cls, endpoint):
@@ -85,6 +87,7 @@ class TransceiverFactory:
             print "TransceiverFactory: ERROR: there is no handler for that endpoint"
             return None
 
+        print "TransceiverFactory: creating new for endpoint '{}'".format(endpoint)
         transceiver = Transceiver(handler)
         cls._transceivers[endpoint] = transceiver
         return transceiver

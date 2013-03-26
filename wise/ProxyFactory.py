@@ -11,6 +11,9 @@ class ProxyFactory:
     def create(cls, ic, string):
         fields = cls._get_proxy_fields(ic, string)
 
+        # FIXME: make this lazy, get transceiver only when needed.
+        #        This allows creation of proxies that does not exist (yet).
+
         transceiver = TransceiverFactory.get(fields['endpoint'])
         if not transceiver:
             logging.warning("Transceiver for endpoint '{}' not available"

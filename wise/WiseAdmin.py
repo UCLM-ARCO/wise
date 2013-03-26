@@ -13,7 +13,7 @@ class ResponseMessage:
 
         try:
             self.request_id = data['request_id']
-            self.result = data['result']
+            self.result = data.get('result', None)
         except KeyError as e:
             raise ProtocolException(
                 "Invalid message format: missing {}, received: '{}'"

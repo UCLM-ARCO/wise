@@ -17,7 +17,7 @@ class TestServerToBrowser(TestCase):
     def setUpClass(cls):
         cls._expected_message = "some message"
         cls._server = Server()
-        cls._browser = Chrome(headless=False, left_open=True)
+        cls._browser = Chrome()
 
     @classmethod
     def tearDownClass(cls):

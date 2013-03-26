@@ -39,11 +39,11 @@ class TornadoApplication(web.Application):
                     kwargs = {}
                 spec = web.URLSpec(pattern, handler, kwargs)
 
-            # verify that spec is not added yet
-            for old in specs:
+            # replace old spec with new one
+            for old in specs[:]:
                 if old._path == spec._path:
-                    raise AlreadyRegisteredException(
-                        "Endpoint already registered: '{}'".format(old._path))
+                    specs.remove(old)
+                    break
 
             specs.append(spec)
 
