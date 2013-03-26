@@ -21,7 +21,7 @@ class TestBrowserToServer(TestCase):
             cls._servant = servant
 
         cls._server = Server(cls._servant)
-        cls._browser = Chrome(headless=False, left_open=True)
+        cls._browser = Chrome()
 
     @classmethod
     def tearDownClass(cls):

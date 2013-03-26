@@ -27,11 +27,11 @@ class Server:
 
         # register static files handler
         pwd = os.path.abspath(os.path.dirname(__file__))
-        frontend = wise.StaticFSApplication(self._ic, '/', pwd, "index.html")
+        frontend = wise.StaticFSApplication(self._ic, '/static/', pwd, "index.html")
         self._ic.registerApplication(frontend)
 
     def loop(self):
-        print "Server ready, waiting events"
+        print "Server ready ({}), waiting events".format(self.url)
         self._ic.waitForShutdown()
 
     def stop(self):
@@ -41,7 +41,7 @@ class Server:
 
     @property
     def url(self):
-        return "http://127.0.0.1:8080/index.html"
+        return "http://127.0.0.1:8080/static/index.html"
 
 
 if __name__ == "__main__":
