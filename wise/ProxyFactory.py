@@ -22,6 +22,7 @@ class ProxyFactory:
     @classmethod
     def _get_proxy_fields(cls, ic, string):
         # proxy should be like: "Object -e ws"
+        assert '-e' in string, "Invalid proxy format: '{}'".format(string)
 
         fields = string.split("-e")
         identity = fields[0].strip()

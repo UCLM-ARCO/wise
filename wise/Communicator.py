@@ -1,7 +1,6 @@
 # -*- mode: python; coding: utf-8 -*-
 
 import os
-import logging
 from threading import Thread, Event
 from tornado import web, ioloop
 
@@ -93,7 +92,7 @@ class Communicator(Thread):
     # handlers is a list of (url, class, params)
     def registerHandlers(self, handlers, host=".*$"):
         for spec in handlers:
-            logging.debug("Handler for '{}' registered".format(spec[0]))
+            print "Handler for '{}' registered as '{}'".format(spec[0], spec[1])
 
         self._server.append_handlers(host, handlers)
 

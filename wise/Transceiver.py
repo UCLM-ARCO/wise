@@ -3,6 +3,7 @@
 import traceback
 import json
 import logging
+from threading import Event
 
 from tornado import websocket
 
@@ -26,14 +27,33 @@ class TransceiverApp(WebApplication):
 class Transceiver:
     _handler = None
     _request_id = 0
+    _pending_responses = {}
 
     def __init__(self, handler):
         self._handler = handler
+        self._handler.set_response_callback(self.on_response)
 
     def send_request(self, request):
-        request['request_id'] = self._request_id
+        request_id = self._request_id
+        self._request_id += 1
+
+        request['request_id'] = request_id
         request = json.dumps(request)
         self.send(request)
+
+        return self._wait_response(request_id)
+
+    def _wait_response(self, request_id):
+        barrier = Event()
+        self._pending_responses[request_id] = [barrier, None]
+        barrier.wait()
+
+        return self._pending_responses.pop(request_id)[1]
+
+    def on_response(self, response):
+        self._pending_responses[response.request_id][1] = response.result
+        barrier = self._pending_responses[response.request_id][0]
+        barrier.set()
 
     def send(self, request):
         self._handler.write_message(request)
@@ -45,6 +65,7 @@ class TransceiverFactory:
 
     @classmethod
     def register_handler(cls, endpoint, handler):
+        print "TransceiverFactory: register handler for '{}'".format(endpoint)
         cls._handlers[endpoint] = handler
 
     @classmethod
@@ -53,12 +74,15 @@ class TransceiverFactory:
 
     @classmethod
     def get(cls, endpoint):
+        print "TransceiverFactory: get for endpoint '{}'".format(endpoint)
+
         transceiver = cls._transceivers.get(endpoint, None)
         if transceiver:
             return transceiver
 
         handler = cls._handlers.get(endpoint, None)
         if not handler:
+            print "TransceiverFactory: ERROR: there is no handler for that endpoint"
             return None
 
         transceiver = Transceiver(handler)
@@ -136,7 +160,9 @@ class MessageHandler(websocket.WebSocketHandler):
 
             current = Current(self, self._adapter)
             retval = method(current=current, **request.params)
-            print "RETVAL:", retval
+            if not isinstance(retval, dict):
+                retval = {'result': retval}
+
             self._response(request.request_id, retval)
 
         except ProtocolException as e:

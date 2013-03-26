@@ -46,8 +46,8 @@ Transceiver: Class.extend({
     },
 
     // args: adapter
-    link_to_adapter: function(args) {
-	this._object_adapter = args.adapter;
+    link_to_adapter: function(adapter) {
+	this._object_adapter = adapter;
     },
 
     toString: function() {
@@ -56,6 +56,8 @@ Transceiver: Class.extend({
     },
 
     _on_ws_message: function(event) {
+	log.debug("ws message", event);
+
     	var message = JSON.parse(event.data);
 
     	// request for async notification (like DUO Active)
@@ -76,11 +78,28 @@ Transceiver: Class.extend({
     },
 
     _parse_request: function(message) {
+	log.debug("parse request (", message, ") using:", this._object_adapter);
+
     	if (! this._object_adapter) {
     	    return;
     	}
 
-    	this._object_adapter.process_request(message);
+    	var result = this._object_adapter.process_request(message);
+	this._send_response({
+	    request_id: message.request_id,
+	    result: result
+	});
+    },
+
+    // args: request_id, result
+    _send_response: function(args) {
+    	if (this._websocket.readyState != WebSocket.OPEN) {
+    	    log.error("socket not ready, state: " +
+		      this._websocket.readyState);
+    	    return;
+    	}
+
+    	this._websocket.send(JSON.stringify(args));
     },
 
     _parse_response: function(message) {
@@ -135,11 +154,11 @@ TransceiverFactory: Class.extend({
 	}
 
 	this._server_admin.create_socket({
-	    endpoint: args.endpoint,
-	    on_ready: bind(this, on_create_socket_ready),
+	    params: { endpoint: args.endpoint },
+	    on_response: bind(this, on_create_socket_ready),
 	});
 
-	function on_create_socket_ready(result) {
+	function on_create_socket_ready() {
 	    this._new_transceiver(args);
 	}
     },
@@ -149,7 +168,6 @@ TransceiverFactory: Class.extend({
 	// FIXME: this (ws://127.0.0.1:8080) should go in endpoint
 	var socket_url = "ws://127.0.0.1:8080/" + args.endpoint;
 
-	log.info("New transceiver for: ", socket_url);
 	var transceiver = new wise.Transceiver({
 	    socket_url: socket_url,
 	    on_ready: args.on_ready,
@@ -170,7 +188,6 @@ ObjectAdapter: Class.extend({
 
     // args: servant, identity
     add: function(args) {
-    	log.info("object_adapter: add of '" + JSON.stringify(args) + "'");
     	this._asm[args.identity] = args.servant;
 
 	return this.createProxy({
@@ -204,8 +221,7 @@ ObjectAdapter: Class.extend({
     		return;
     	    }
 
-    	    // FIXME: no response done!
-    	    method(request.params);
+    	    return method(request.params);
     	}
     	catch(e) {
     	    log.error("in processing request: " + e.message);
@@ -377,7 +393,6 @@ initialize: function(args) {
     var ic = new wise.Communicator();
 
     // create server admin proxy
-    var AdminPrx = wise.newDerivedProxy({ methods: ['create_socket'] });
     var proxy = ic.stringToProxy({
 	proxy: "WiseAdmin -e wise",
 	on_ready: bind(this, on_admin_proxy_ready),
@@ -385,6 +400,7 @@ initialize: function(args) {
 
     // result: proxy
     function on_admin_proxy_ready(result) {
+        var AdminPrx = wise.newDerivedProxy({ methods: ['create_socket'] });
 	wise.TransceiverFactory.prototype._server_admin =
 	    new AdminPrx({ base: result.proxy });
 

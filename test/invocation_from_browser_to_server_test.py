@@ -1,9 +1,10 @@
 # -*- mode: python; coding: utf-8 -*-
 
 from unittest import TestCase
-from doublex import Spy, called
+from doublex import Spy, called, ANY_ARG
 from hamcrest import assert_that, anything
-from commodity.testing import wait_that
+from commodity.testing import wait_that, bind_method
+from selenium.webdriver.remote.webelement import WebElement
 
 from chromehandler import Chrome
 from examples.BrowserToServer import Server
@@ -14,21 +15,16 @@ class TestBrowserToServer(TestCase):
     def setUpClass(cls):
         cls._expected_message = "other message"
 
-        # create spied servant
         with Spy() as servant:
-            servant.get_message().returns(
+            servant.get_message(ANY_ARG).returns(
                 {'message': cls._expected_message})
             cls._servant = servant
 
-        # create server with servant
         cls._server = Server(cls._servant)
-
-        # create chrome
         cls._browser = Chrome(headless=False, left_open=True)
 
     @classmethod
     def tearDownClass(cls):
-        # delete chrome
         del cls._server
         del cls._browser
 
@@ -58,4 +54,7 @@ class TestBrowserToServer(TestCase):
         wait_that(self._servant.get_message,
                   called().with_args(current=anything()))
 
-        self._server.loop()
+        banner = self._browser.find_element('#banner')
+        has_attribute = bind_method(WebElement.get_attribute)
+        assert_that(
+            banner, has_attribute(("value",), result=self._expected_message))

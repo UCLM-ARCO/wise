@@ -7,10 +7,10 @@ class MethodHandler:
         self._transceiver = transceiver
         self._method_name = method_name
 
-    def __call__(self, args):
+    def __call__(self, **args):
         assert isinstance(args, dict)
 
-        self._transceiver.send_request(
+        return self._transceiver.send_request(
             {'identity': self._identity,
              'method': self._method_name,
              'params': args})

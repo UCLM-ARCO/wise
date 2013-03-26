@@ -17,7 +17,7 @@ class Servant:
 
 
 class Server:
-    def __init__(self, servant):
+    def __init__(self, servant=None):
         self._ic = wise.initialize()
         adapter = self._ic.createObjectAdapter("ServerAdapter", "ws")
 

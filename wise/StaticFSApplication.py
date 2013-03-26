@@ -21,7 +21,7 @@ class StaticFSApplication(WebApplication):
         self._index = index
         WebApplication.__init__(self, communicator=communicator, url=path)
 
-        print "Serving content from: {}".format(self._path)
+        print "Serving static content from: {}".format(self._path)
 
     def get_handler_url(self):
         return r"{}(.*)".format(self._locator)
