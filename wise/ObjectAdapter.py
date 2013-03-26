@@ -6,6 +6,17 @@ from .Transceiver import TransceiverApp
 from .Exceptions import AlreadyRegisteredException
 
 
+class WiseServant(object):
+    def __init__(self, servant):
+        self._servant = servant
+
+    def __getattr__(self, name):
+        return getattr(self._servant, name)
+
+    def wise_getMethodNames(self, current=None):
+        return [x for x in dir(self._servant) if not x.startswith("_")]
+
+
 class ObjectAdapter:
     def __init__(self, communicator, name, endpoint):
         self._communicator = communicator
@@ -33,7 +44,7 @@ class ObjectAdapter:
     def add(self, servant, identity):
         if not self._asm.get(identity) is None:
             raise AlreadyRegisteredException("Object: " + identity)
-        self._asm[identity] = servant
+        self._asm[identity] = WiseServant(servant)
 
     def addWithUUID(self, servant):
         identity = str(uuid.uuid1())

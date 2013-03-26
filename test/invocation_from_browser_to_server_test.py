@@ -16,12 +16,13 @@ class TestBrowserToServer(TestCase):
         cls._expected_message = "other message"
 
         with Spy() as servant:
+            servant.set_message()
             servant.get_message(ANY_ARG).returns(
                 {'message': cls._expected_message})
             cls._servant = servant
 
         cls._server = Server(cls._servant)
-        cls._browser = Chrome()
+        cls._browser = Chrome()  # headless=False, left_open=True)
 
     @classmethod
     def tearDownClass(cls):

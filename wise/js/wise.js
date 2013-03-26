@@ -60,7 +60,7 @@ Transceiver: Class.extend({
 
     	var message = JSON.parse(event.data);
 
-    	// request for async notification (like DUO Active)
+    	// request of method invocation
     	if (message.method !== undefined)
     	    this._parse_request(message);
 
@@ -128,11 +128,11 @@ TransceiverFactory: Class.extend({
     },
 
     // used by stringToProxy
-    // args: endpoint, on_ready
+    // args: endpoint, on_response
     get_transceiver: function(args) {
 	var transceiver = this._transceivers[args.endpoint];
 	if (transceiver) {
-	    args.on_ready({ transceiver: transceiver });
+	    args.on_response({ transceiver: transceiver });
 	    return;
 	}
 
@@ -140,7 +140,7 @@ TransceiverFactory: Class.extend({
     },
 
     // used by createObjectadapter
-    // args: endpoint, on_ready
+    // args: endpoint, on_response
     create_transceiver: function(args) {
 	var transceiver = this._transceivers[args.endpoint];
 	if (transceiver) {
@@ -155,22 +155,22 @@ TransceiverFactory: Class.extend({
 
 	this._server_admin.create_socket({
 	    params: { endpoint: args.endpoint },
-	    on_response: bind(this, on_create_socket_ready),
+	    on_response: bind(this, on_create_socket_response),
 	});
 
-	function on_create_socket_ready() {
+	function on_create_socket_response() {
 	    this._new_transceiver(args);
 	}
     },
 
-    // args: endpoint, on_ready
+    // args: endpoint, on_response
     _new_transceiver: function(args) {
 	// FIXME: this (ws://127.0.0.1:8080) should go in endpoint
 	var socket_url = "ws://127.0.0.1:8080/" + args.endpoint;
 
 	var transceiver = new wise.Transceiver({
 	    socket_url: socket_url,
-	    on_ready: args.on_ready,
+	    on_ready: args.on_response,
 	});
 
 	this._transceivers[args.endpoint] = transceiver;
@@ -322,48 +322,61 @@ Communicator: Class.extend({
 	this._transceiverFactory = new wise.TransceiverFactory();
     },
 
-    // args: name, endpoint, on_ready
+    // args: name, endpoint, on_response
     createObjectAdapter: function(args) {
 	if (args.name in this._adapters)
 	    throw "AlreadyRegisteredException"
 
 	var transceiver = this._transceiverFactory.create_transceiver({
 	    endpoint: args.endpoint,
-	    on_ready: bind(this, on_transceiver_ready),
+	    on_response: bind(this, on_create_transceiver_response),
 	});
 
-	// result: transceiver
-	function on_transceiver_ready(result) {
+	// response: transceiver
+	function on_create_transceiver_response(response) {
 	    var adapter = new wise.ObjectAdapter({
-		transceiver: result.transceiver
+		transceiver: response.transceiver
 	    });
 
 	    this._adapters[args.name] = adapter;
-	    args.on_ready({ adapter: adapter });
+	    args.on_response({ adapter: adapter });
 	}
     },
 
-    // args: proxy, on_ready
+    // args: proxy, on_response
     stringToProxy: function(args) {
 	var fields = this._get_proxy_fields(args.proxy);
 
 	var identity = fields[0];
 	this._transceiverFactory.get_transceiver({
 	    endpoint: fields[1],
-	    on_ready: bind(this, on_transceiver_ready),
+	    on_response: bind(this, on_get_transceiver_response),
 	});
 
-	// result: transceiver
-	function on_transceiver_ready(result) {
-	    var proxy = new wise.ObjectPrx({
-		identity: identity,
-		transceiver: result.transceiver,
+	// response: transceiver
+	function on_get_transceiver_response(response) {
+	    var WisePrx = wise.newDerivedProxy({
+	    	methods: ['wise_getMethodNames']
 	    });
 
-	    args.on_ready({
-		proxy: proxy
+	    var base = new WisePrx({
+	    	identity: identity,
+	    	transceiver: response.transceiver,
 	    });
-	};
+
+	    // build dynamic methods for remote object
+	    var transceiver = response.transceiver;
+	    base.wise_getMethodNames({ on_response: function(response) {
+
+		var DerivedPrx = wise.newDerivedProxy({ methods: response.result });
+		var proxy = new DerivedPrx({
+		    identity: identity,
+		    transceiver: transceiver
+		});
+
+		args.on_response({ proxy: proxy });
+	    }});
+	}
     },
 
     _get_proxy_fields: function(proxy) {
@@ -375,7 +388,7 @@ Communicator: Class.extend({
     },
 }),
 
-// args: on_ready
+// args: on_response
 initialize: function(args) {
 
     // create root logger for Wise
@@ -395,14 +408,14 @@ initialize: function(args) {
     // create server admin proxy
     var proxy = ic.stringToProxy({
 	proxy: "WiseAdmin -e wise",
-	on_ready: bind(this, on_admin_proxy_ready),
+	on_response: bind(this, on_stringToProxy_response),
     });
 
-    // result: proxy
-    function on_admin_proxy_ready(result) {
+    // response: proxy
+    function on_stringToProxy_response(response) {
         var AdminPrx = wise.newDerivedProxy({ methods: ['create_socket'] });
 	wise.TransceiverFactory.prototype._server_admin =
-	    new AdminPrx({ base: result.proxy });
+	    new AdminPrx({ base: response.proxy });
 
 	// finish intialization
 	args.on_ready({ communicator: ic });
@@ -417,6 +430,9 @@ newDerivedProxy: function(args) {
 
 	// args: params, on_response
 	return function(args) {
+	    if (! args)
+		args = {};
+
 	    this.wise_invoke({
 		request: {
 		    method: name,

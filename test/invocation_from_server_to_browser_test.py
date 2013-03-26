@@ -1,7 +1,7 @@
 # -*- mode: python; coding: utf-8 -*-
 
 from unittest import TestCase
-from hamcrest import assert_that, anything, equal_to
+from hamcrest import assert_that, equal_to
 from commodity.testing import wait_that, bind_method
 from selenium.webdriver.remote.webelement import WebElement
 
@@ -17,7 +17,7 @@ class TestServerToBrowser(TestCase):
     def setUpClass(cls):
         cls._expected_message = "some message"
         cls._server = Server()
-        cls._browser = Chrome()
+        cls._browser = Chrome()  # headless=False, left_open=True)
 
     @classmethod
     def tearDownClass(cls):

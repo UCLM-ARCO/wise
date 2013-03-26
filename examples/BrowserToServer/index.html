@@ -11,10 +11,6 @@
 
     <script type="text/javascript">
 
-    BannerPrx = wise.newDerivedProxy({
-	methods: ['set_message', 'get_message'],
-    });
-
     // create communicator and proxy to server
     $(window).ready(function() {
 	wise.initialize({ on_ready: on_communicator_ready });
@@ -23,14 +19,14 @@
 	function on_communicator_ready(args) {
 	    args.communicator.stringToProxy({
 		proxy: "Server -e ws",
-		on_ready: on_server_ready
+		on_response: on_stringToProxy_response
 	    });
 	}
 
-	// args: proxy
-	function on_server_ready(args) {
-	    log.info("Server @ '" + args.proxy + "'");
-	    banner = new BannerPrx({ base: args.proxy });
+	// response: proxy
+	function on_stringToProxy_response(response) {
+	    log.info("Server @ '" + response.proxy + "'");
+	    banner = response.proxy;
 	}
     });
 
@@ -46,7 +42,6 @@
 	banner.get_message({
 	    params: {},
 	    on_response: function(args) {
-		console.info("RESPONSE:", JSON.stringify(args));
 		$('#banner').val(args.message);
 	    }
 	});
