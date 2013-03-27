@@ -17,7 +17,7 @@ class TestServerToBrowser(TestCase):
     def setUpClass(cls):
         cls._expected_message = "some message"
         cls._server = Server()
-        cls._browser = Chrome()  # headless=False, left_open=True)
+        cls._browser = Chrome(headless=False, left_open=True)
 
     @classmethod
     def tearDownClass(cls):
@@ -28,21 +28,29 @@ class TestServerToBrowser(TestCase):
         self._ic = wise.initialize()
 
     def test_server_to_browser_no_response(self):
+        #-- GIVEN --------------------
         self._browser.open(self._server.url)
         wait_that(self._browser, bind_method(Chrome.is_ready, result=True))
+
+        element = self._browser.find_element('#banner')
+        element.clear()
 
         # wait until object in browser is ready
         ready = self._browser.find_element("#ready")
         wait_that(ready, has_attribute(('checked',), result="true"))
 
+        #-- WHEN --------------------
         # set message on remote object
         banner = self._ic.stringToProxy("Banner -e browser")
         banner.set_message(message=self._expected_message)
 
+        #-- THEN --------------------
         # assure that invocation is dispatched correctly
         element = self._browser.find_element('#banner')
         wait_that(
             element, has_attribute(("value",), result=self._expected_message))
+
+        self._ic.waitForShutdown()
 
     def test_browser_to_server_with_response(self):
         # open server url

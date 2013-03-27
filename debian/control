@@ -1,4 +1,4 @@
-Source: wise
+Source: python-wise
 Section: python
 Priority: extra
 Maintainer: Oscar Aceña Herrera <oscaracena@gmail.com>
@@ -7,7 +7,7 @@ Build-Depends: debhelper (>= 8.0.0), python-support (>= 0.6),
 Standards-Version: 3.9.3
 Homepage: https://bitbucket.org/arco_group/wise
 
-Package: wise
+Package: python-wise
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}
 Description: Middleware between web and server

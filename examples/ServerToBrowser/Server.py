@@ -11,7 +11,8 @@ class Server:
 
         # register static files handler
         pwd = os.path.abspath(os.path.dirname(__file__))
-        frontend = wise.StaticFSApplication(self._ic, '/static/', pwd, "index.html")
+        frontend = wise.StaticFSApplication(
+            self._ic, '/static/', pwd, "index.html")
         self._ic.registerApplication(frontend)
 
     def update_banner_message(self, message="hello"):

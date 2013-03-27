@@ -3,8 +3,9 @@
 
 from distutils.core import setup
 
-setup(name = 'wise',
+setup(name = 'python-wise',
       version = '0.1',
-      packages = ['wise'],
-      package_data = {'wise': ['js/*']},
+      packages = ['wise', 'chromehandler'],
+      package_data = {'wise': ['js/*'],
+                      'chromehandler': ['chromedriver-xvfb.sh']},
       )
