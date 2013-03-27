@@ -13,3 +13,5 @@ test:
 clean:
 	find . -name "*.pyc" -delete
 	find . -name "*~" -delete
+	find . -name "*.log" -delete
+	$(RM) -rfv dist MANIFEST

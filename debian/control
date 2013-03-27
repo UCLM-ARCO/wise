@@ -1,0 +1,16 @@
+Source: wise
+Section: python
+Priority: extra
+Maintainer: Oscar Aceña Herrera <oscaracena@gmail.com>
+Build-Depends: debhelper (>= 8.0.0), python-support (>= 0.6),
+	        python-all-dev
+Standards-Version: 3.9.3
+Homepage: https://bitbucket.org/arco_group/wise
+
+Package: wise
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}
+Description: Middleware between web and server
+ Gives support for remote method invocation from objects in Server
+ from Browser and viceversa. It uses a ZeroC Ice like API, to make it
+ confortable for those who know it.
