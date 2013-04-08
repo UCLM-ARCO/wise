@@ -52,10 +52,11 @@ class TestBrowserToServer(TestCase):
         button.click()
 
         # verify that div has content from servant
+        # FIXME: if you do not mean args, remove with_args assertion
         wait_that(self._servant.get_message,
                   called().with_args(current=anything()))
 
         banner = self._browser.find_element('#banner')
         has_attribute = bind_method(WebElement.get_attribute)
-        assert_that(
-            banner, has_attribute(("value",), result=self._expected_message))
+        assert_that(banner,
+                    has_attribute(("value",), result=self._expected_message))

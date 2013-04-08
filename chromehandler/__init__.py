@@ -17,8 +17,7 @@ class Chrome(object):
 
         if headless:
             xvfb_chrome = os.path.join(pwd, "./chromedriver-xvfb.sh")
-            self.driver = webdriver.Chrome(
-                executable_path=xvfb_chrome)
+            self.driver = webdriver.Chrome(executable_path=xvfb_chrome)
         else:
             self.driver = webdriver.Chrome()
 
@@ -39,8 +38,12 @@ class Chrome(object):
         status = self.driver.execute_script("return document.readyState;")
         return status == "complete"
 
+    # FIXME: rename -> find_by_css
     def find_element(self, query):
         return self.driver.find_element_by_css_selector(query)
+
+    def find_by_id(self, query):
+        return self.driver.find_element_by_id(query)
 
     def set_attribute(self, node, key, value):
         if isinstance(value, bool) and not value:
