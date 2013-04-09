@@ -1,11 +1,18 @@
 <html>
   <head>
-<title>Sample</title>
-</head>
-<body>
-<h1>Sample</h1>
+    <title>Sample</title>
+  </head>
+  <body>
 
-<div id="present">My id is "present"</div>
+    <h1>Sample</h1>
+    <div id="present">My id is "present"</div>
 
-</body>
+    <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <script type="text/javascript">
+      setTimeout(function() {
+          $('body').append($("<div id='newitem'>dynamic item</div>"));
+      }, 1000);
+    </script>
+
+  </body>
 </html>

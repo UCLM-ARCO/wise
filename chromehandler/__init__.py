@@ -3,6 +3,7 @@
 import os
 import json
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
 
 from commodity.testing import wait_that, bind_method
 
@@ -11,7 +12,7 @@ logging.getLogger().setLevel(logging.INFO)
 
 
 class Chrome(object):
-    def __init__(self, headless=True, left_open=False):
+    def __init__(self, headless=False, left_open=False):
         self._left_open = left_open
         pwd = os.path.abspath(os.path.dirname(__file__))
 
@@ -38,12 +39,11 @@ class Chrome(object):
         status = self.driver.execute_script("return document.readyState;")
         return status == "complete"
 
-    # FIXME: rename -> find_by_css
     def find_element(self, query):
-        return self.driver.find_element_by_css_selector(query)
-
-    def find_by_id(self, query):
-        return self.driver.find_element_by_id(query)
+        try:
+            return self.driver.find_element_by_css_selector(query)
+        except NoSuchElementException:
+            return None
 
     def set_attribute(self, node, key, value):
         if isinstance(value, bool) and not value:
