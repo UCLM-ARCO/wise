@@ -6,7 +6,7 @@ from commodity.testing import wait_that, bind_method
 from selenium.webdriver.remote.webelement import WebElement
 
 import wise
-from chromehandler import Chrome
+from sulfurium import Chrome
 from examples.ServerToBrowser import Server
 
 has_attribute = bind_method(WebElement.get_attribute)
@@ -17,7 +17,7 @@ class TestServerToBrowser(TestCase):
     def setUpClass(cls):
         cls._expected_message = "some message"
         cls._server = Server()
-        cls._browser = Chrome(headless=False, left_open=True)
+        cls._browser = Chrome()
 
     @classmethod
     def tearDownClass(cls):
@@ -49,8 +49,6 @@ class TestServerToBrowser(TestCase):
         element = self._browser.find_element('#banner')
         wait_that(
             element, has_attribute(("value",), result=self._expected_message))
-
-        self._ic.waitForShutdown()
 
     def test_browser_to_server_with_response(self):
         # open server url

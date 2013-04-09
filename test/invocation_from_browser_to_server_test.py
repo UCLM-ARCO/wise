@@ -6,7 +6,7 @@ from hamcrest import assert_that, anything
 from commodity.testing import wait_that, bind_method
 from selenium.webdriver.remote.webelement import WebElement
 
-from chromehandler import Chrome
+from sulfurium import Chrome
 from examples.BrowserToServer import Server
 
 
@@ -22,7 +22,7 @@ class TestBrowserToServer(TestCase):
             cls._servant = servant
 
         cls._server = Server(cls._servant)
-        cls._browser = Chrome()  # headless=False, left_open=True)
+        cls._browser = Chrome()
 
     @classmethod
     def tearDownClass(cls):
