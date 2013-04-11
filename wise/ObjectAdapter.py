@@ -46,9 +46,13 @@ class ObjectAdapter:
             raise AlreadyRegisteredException("Object: " + identity)
         self._asm[identity] = WiseServant(servant)
 
+        return "{} -w {} -h {} -p {}".format(
+            identity, self._endpoint,
+            self._communicator.host, self._communicator.port)
+
     def addWithUUID(self, servant):
         identity = str(uuid.uuid1())
-        self.add(servant, identity)
+        return self.add(servant, identity)
 
     def find(self, identity):
         return self._asm.get(identity)

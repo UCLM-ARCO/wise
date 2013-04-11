@@ -17,17 +17,24 @@ Transceiver: Class.extend({
     	this._response_callbacks = {};
     	this._request_id = 0;
 
+	log.debug("new WebSocket @ " + args.socket_url);
     	this._websocket = new WebSocket(args.socket_url);
 
     	var transceiver = this;
-    	this._websocket.onmessage = function(event) {
-    	    transceiver._on_ws_message(event);
-    	}
     	this._websocket.onopen = function(event) {
     	    args.on_ready({
 		transceiver: transceiver,
 	    });
-    	}
+    	};
+    	this._websocket.onmessage = function(event) {
+    	    transceiver._on_ws_message(event);
+    	};
+	this._websocket.onerror = function(event) {
+	    log.error("Socket error:", event);
+	};
+	this._websocket.onclose = function(event) {
+	    log.debug("Socket closed:", event);
+	};
     },
 
     // args: request, on_response
@@ -130,7 +137,7 @@ TransceiverFactory: Class.extend({
     // used by stringToProxy
     // args: endpoint, on_response
     get_transceiver: function(args) {
-	var transceiver = this._transceivers[args.endpoint];
+	var transceiver = this._transceivers[args.endpoint.ws_name];
 	if (transceiver) {
 	    args.on_response({ transceiver: transceiver });
 	    return;
@@ -142,7 +149,7 @@ TransceiverFactory: Class.extend({
     // used by createObjectadapter
     // args: endpoint, on_response
     create_transceiver: function(args) {
-	var transceiver = this._transceivers[args.endpoint];
+	var transceiver = this._transceivers[args.endpoint.ws_name];
 	if (transceiver) {
 	    throw "AlreadyUsedEndpoints";
 	}
@@ -165,15 +172,51 @@ TransceiverFactory: Class.extend({
 
     // args: endpoint, on_response
     _new_transceiver: function(args) {
-	// FIXME: this (ws://127.0.0.1:8080) should go in endpoint
-	var socket_url = "ws://127.0.0.1:8080/" + args.endpoint;
+	var socket_url = ("ws://" + args.endpoint.host +
+			  ":" +  args.endpoint.port + "/" +
+			  args.endpoint.ws_name);
 
 	var transceiver = new wise.Transceiver({
 	    socket_url: socket_url,
 	    on_ready: args.on_response,
 	});
 
-	this._transceivers[args.endpoint] = transceiver;
+	this._transceivers[args.endpoint.ws_name] = transceiver;
+    },
+}),
+
+EndpointInfo: Class.extend({
+    init: function(endpoint) {
+	endpoint = endpoint.trim();
+
+	// remove two spaces in string
+	while (true) {
+	    if (endpoint.indexOf("  ") == -1)
+		break;
+	    endpoint = endpoint.replace("  ", " ");
+	}
+
+	// split components
+	var index = -1;
+	var items = endpoint.split(" ");
+
+	// web service locator
+	this.ws_name = "";
+	index = items.indexOf("-w");
+	if (index != -1)
+	    this.ws_name = items[index + 1];
+
+	// hostname
+	this.host = "";
+	index = items.indexOf("-h");
+	if (index != -1)
+	    this.host = items[index + 1];
+
+	// port
+	this.port = "";
+	index = items.indexOf("-p");
+	if (index != -1)
+	    this.port = items[index + 1];
     },
 }),
 
@@ -280,7 +323,7 @@ ObjectPrx: Class.extend({
     },
 
     toString: function() {
-	return this._identity + " -e " + this._transceiver.toString();
+	return this._identity + " " + this._transceiver.toString();
     },
 }),
 
@@ -328,7 +371,7 @@ Communicator: Class.extend({
 	    throw "AlreadyRegisteredException"
 
 	var transceiver = this._transceiverFactory.create_transceiver({
-	    endpoint: args.endpoint,
+	    endpoint: new wise.EndpointInfo(args.endpoint),
 	    on_response: bind(this, on_create_transceiver_response),
 	});
 
@@ -347,9 +390,8 @@ Communicator: Class.extend({
     stringToProxy: function(args) {
 	var fields = this._get_proxy_fields(args.proxy);
 
-	var identity = fields[0];
 	this._transceiverFactory.get_transceiver({
-	    endpoint: fields[1],
+	    endpoint: fields.endpoint,
 	    on_response: bind(this, on_get_transceiver_response),
 	});
 
@@ -360,7 +402,7 @@ Communicator: Class.extend({
 	    });
 
 	    var base = new WisePrx({
-	    	identity: identity,
+	    	identity: fields.identity,
 	    	transceiver: response.transceiver,
 	    });
 
@@ -368,9 +410,11 @@ Communicator: Class.extend({
 	    var transceiver = response.transceiver;
 	    base.wise_getMethodNames({ on_response: function(response) {
 
-		var DerivedPrx = wise.newDerivedProxy({ methods: response.result });
+		var DerivedPrx = wise.newDerivedProxy({
+		    methods: response.result
+		});
 		var proxy = new DerivedPrx({
-		    identity: identity,
+		    identity: fields.identity,
 		    transceiver: transceiver
 		});
 
@@ -380,11 +424,19 @@ Communicator: Class.extend({
     },
 
     _get_proxy_fields: function(proxy) {
-	var retval = proxy.split("-e");
-	for (var name in retval) {
-	    retval[name] = retval[name].trim();
-	}
-	return retval;
+	// example: "ObjectId -w ws -h 127.0.0.1 -p 8080"
+
+	proxy = proxy.trim();
+
+	// split identity and endpoint
+	var items = proxy.split(" ");
+	var identity = items[0];
+	var endpoint = items.slice(1).join(" ");
+
+	return {
+	    identity: identity,
+	    endpoint: new wise.EndpointInfo(endpoint),
+	};
     },
 }),
 
@@ -407,7 +459,7 @@ initialize: function(args) {
 
     // create server admin proxy
     var proxy = ic.stringToProxy({
-	proxy: "WiseAdmin -e wise",
+	proxy: "WiseAdmin -w wise -h 127.0.0.1 -p 8000",
 	on_response: bind(this, on_stringToProxy_response),
     });
 
