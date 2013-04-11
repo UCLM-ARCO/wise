@@ -7,20 +7,13 @@ from .WiseAdmin import WiseAdmin
 from .WebApplication import WebApplication
 from .StaticFSApplication import StaticFSApplication
 
-__ic = None
-
 
 def initialize(host="127.0.0.1", port=8080):
-    global __ic
+    ic = Communicator(host=host, port=port)
+    ic.is_ready.wait()
 
-    if not __ic is None:
-        return __ic
-
-    __ic = Communicator(host=host, port=port)
-    __ic.is_ready.wait()
-
-    admin_adapter = __ic.createObjectAdapter("WiseAdmin", "wise")
-    servant = WiseAdmin(__ic)
+    admin_adapter = ic.createObjectAdapter("WiseAdmin", "wise")
+    servant = WiseAdmin(ic)
     admin_adapter.add(servant, "WiseAdmin")
 
-    return __ic
+    return ic

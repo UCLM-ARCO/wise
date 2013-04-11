@@ -63,6 +63,11 @@ class Communicator(Thread):
         self.start()
 
     def run(self):
+
+        # FIXME: use HTTPServer instead of Application.listen(). This
+        # would allow you closing sockets on shutdown.
+        # See: http://www.tornadoweb.org/en/stable/httpserver.html#tornado.httpserver.HTTPServer
+
         self._server = TornadoApplication()
         self._server.listen(self.port, self.host)
         self._ioloop = ioloop.IOLoop.instance()
@@ -74,6 +79,7 @@ class Communicator(Thread):
 
     def shutdown(self):
         self._ioloop.stop()
+        del self._server
 
     def stringToProxy(self, stringfied_proxy):
         return ProxyFactory.create(self, stringfied_proxy)
