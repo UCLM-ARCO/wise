@@ -14,7 +14,8 @@ class WiseServant(object):
         return getattr(self._servant, name)
 
     def wise_getMethodNames(self, current=None):
-        return [x for x in dir(self._servant) if not x.startswith("_")]
+        return [x for x in dir(self._servant) if not x.startswith("_") and
+                callable(getattr(self._servant, x))]
 
 
 class ObjectAdapter:

@@ -2,7 +2,7 @@
 
 import os
 from threading import Thread, Event
-from tornado import web, ioloop
+from tornado import web, ioloop, httpserver
 
 from .ObjectAdapter import ObjectAdapter
 from .Exceptions import AlreadyRegisteredException
@@ -63,23 +63,17 @@ class Communicator(Thread):
         self.start()
 
     def run(self):
-
-        # FIXME: use HTTPServer instead of Application.listen(). This
-        # would allow you closing sockets on shutdown.
-        # See: http://www.tornadoweb.org/en/stable/httpserver.html#tornado.httpserver.HTTPServer
-
-        self._server = TornadoApplication()
-        self._server.listen(self.port, self.host)
-        self._ioloop = ioloop.IOLoop.instance()
+        self._tornado = TornadoApplication()
+        self._http_server = httpserver.HTTPServer(self._tornado)
+        self._http_server.listen(self.port, self.host)
 
         self._register_static_files_handler()
-
         self.is_ready.set()
-        self._ioloop.start()
+        ioloop.IOLoop.instance().start()
 
     def shutdown(self):
-        self._ioloop.stop()
-        del self._server
+        ioloop.IOLoop.instance().stop()
+        self._http_server.stop()
 
     def stringToProxy(self, stringfied_proxy):
         return ProxyFactory.create(self, stringfied_proxy)
@@ -98,9 +92,10 @@ class Communicator(Thread):
     # handlers is a list of (url, class, params)
     def registerHandlers(self, handlers, host=".*$"):
         for spec in handlers:
-            print "Handler for '{}' registered as '{}'".format(spec[0], spec[1])
+            print ("Handler for '{}' registered as '{}'"
+                   .format(spec[0], spec[1]))
 
-        self._server.append_handlers(host, handlers)
+        self._tornado.append_handlers(host, handlers)
 
     # return adapter name, find by its endpoint
     def resolveAdapter(self, endpoint):
