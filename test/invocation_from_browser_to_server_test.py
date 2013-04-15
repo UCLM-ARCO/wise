@@ -3,7 +3,7 @@
 from unittest import TestCase
 from doublex import Spy, called, ANY_ARG
 from hamcrest import assert_that, anything
-from commodity.testing import wait_that, bind_method
+from commodity.testing import wait_that, call_with
 from selenium.webdriver.remote.webelement import WebElement
 
 from sulfurium import Chrome
@@ -58,5 +58,5 @@ class TestBrowserToServer(TestCase):
 
         banner = self._browser.find_element('#banner')
         has_attribute = bind_method(WebElement.get_attribute)
-        assert_that(banner,
-                    has_attribute(("value",), result=self._expected_message))
+        assert_that(banner.get_attribute,
+                    call_with("value").returns(self._expected_message))
