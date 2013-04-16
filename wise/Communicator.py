@@ -27,6 +27,11 @@ class TornadoApplication(web.Application):
             self.add_handlers(host_pattern, host_handlers)
             return
 
+        print "---- >> append handlers", host_handlers
+        print "---- >> specs found?"
+        for i in specs:
+            print "---- >> ", i.regex.pattern
+
         for spec in host_handlers:
             if isinstance(spec, tuple):
                 assert len(spec) in (2, 3)
@@ -92,8 +97,8 @@ class Communicator(Thread):
     # handlers is a list of (url, class, params)
     def registerHandlers(self, handlers, host=".*$"):
         for spec in handlers:
-            print ("Handler for '{}' registered as '{}'"
-                   .format(spec[0], spec[1]))
+            print ("---- Handler for '{}' registered as '{}', params={}"
+                   .format(spec[0], spec[1], spec[2]))
 
         self._tornado.append_handlers(host, handlers)
 

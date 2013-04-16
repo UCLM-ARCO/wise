@@ -162,7 +162,12 @@ class MessageHandler(websocket.WebSocketHandler):
                 return
 
             current = Current(self, self._adapter)
-            retval = method(current=current, **request.params)
+            try:
+                retval = method(current=current, **request.params)
+            except TypeError as e:
+                logging.error("Invalid Params: '{}'".format(request.params))
+                raise
+
             if not isinstance(retval, dict):
                 retval = {'result': retval}
 
