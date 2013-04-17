@@ -27,11 +27,6 @@ class TornadoApplication(web.Application):
             self.add_handlers(host_pattern, host_handlers)
             return
 
-        print "---- >> append handlers", host_handlers
-        print "---- >> specs found?"
-        for i in specs:
-            print "---- >> ", i.regex.pattern
-
         for spec in host_handlers:
             if isinstance(spec, tuple):
                 assert len(spec) in (2, 3)
@@ -69,7 +64,14 @@ class Communicator(Thread):
 
     def run(self):
         self._tornado = TornadoApplication()
-        self._http_server = httpserver.HTTPServer(self._tornado)
+
+        # NOTE: no_keep_alive is True, because otherwise, if the
+        # handler is changed (or the communicator is destroyed and
+        # created again), an old client will be served using the old
+        # handler (binded on HTTPConnection)
+
+        self._http_server = httpserver.HTTPServer(
+            self._tornado, no_keep_alive=True)
         self._http_server.listen(self.port, self.host)
 
         self._register_static_files_handler()
@@ -77,8 +79,11 @@ class Communicator(Thread):
         ioloop.IOLoop.instance().start()
 
     def shutdown(self):
-        ioloop.IOLoop.instance().stop()
+        if not hasattr(self, "_http_server"):
+            return
+
         self._http_server.stop()
+        ioloop.IOLoop.instance().stop()
 
     def stringToProxy(self, stringfied_proxy):
         return ProxyFactory.create(self, stringfied_proxy)
@@ -96,10 +101,6 @@ class Communicator(Thread):
 
     # handlers is a list of (url, class, params)
     def registerHandlers(self, handlers, host=".*$"):
-        for spec in handlers:
-            print ("---- Handler for '{}' registered as '{}', params={}"
-                   .format(spec[0], spec[1], spec[2]))
-
         self._tornado.append_handlers(host, handlers)
 
     # return adapter name, find by its endpoint

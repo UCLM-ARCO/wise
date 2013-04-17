@@ -20,8 +20,6 @@ class WiseServant(object):
 
 class ObjectAdapter:
     def __init__(self, communicator, name, endpoint):
-        print "---- NEW OBJECT ADAPTER {}({})".format(name, id(self))
-
         self._communicator = communicator
         self._name = name
         self._endpoint = endpoint
@@ -45,9 +43,6 @@ class ObjectAdapter:
         return self._endpoint
 
     def add(self, servant, identity):
-        print ("---- ADD OBJECT TO '{}'({}): {} -> {}"
-               .format(self._name, id(self), identity, servant))
-
         if not self._asm.get(identity) is None:
             raise AlreadyRegisteredException("Object: " + identity)
         self._asm[identity] = WiseServant(servant)
@@ -61,8 +56,6 @@ class ObjectAdapter:
         return self.add(servant, identity)
 
     def find(self, identity):
-        print "---- FIND OF {} IN {}({}) {}".format(
-            identity, self._name, id(self), self._asm)
         return self._asm.get(identity)
 
     def __repr__(self):

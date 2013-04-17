@@ -1,5 +1,8 @@
 # -*- mode: python; coding: utf-8 -*-
 
+from tornado.web import RequestHandler
+import urllib2
+
 from unittest import TestCase
 from hamcrest import assert_that, is_not
 from prego.net import localhost, listen_port
@@ -40,37 +43,45 @@ class TestCommunicator(TestCase):
         ic = wise.initialize(host, port)
         self.addCleanup(ic.shutdown)
 
-        from tornado.web import RequestHandler
-        myAppClass_spy = Spy()
-
-        class MyAppClass(RequestHandler):
-            def initialize(self, *args, **kwargs):
-                myAppClass_spy.initialize(*args, **kwargs)
-
-            def get(self):
-                pass
-
         args = {'param1': 'a param'}
-        handlers = [("^{}$".format(path), MyAppClass, args)]
-        ic.registerHandlers(handlers)
+        spy = self.register_handler_on_communicator(ic, path, args)
 
-        import urllib2
         urllib2.urlopen(url)
-        assert_that(myAppClass_spy.initialize, called().with_args(**args))
+        assert_that(spy.initialize, called().with_args(**args))
 
     def test_do_not_preserve_handlers_on_deleting(self):
+        host = "127.0.0.1"
+        port = "9999"
+        path = "/myapp"
+        url = "http://{}:{}{}".format(host, port, path)
+
         # create a communicator
         ic1 = wise.initialize(host, port)
 
         # register a handler and use it
+        args = {'param1': 'a param'}
+        spy = self.register_handler_on_communicator(ic1, path, args)
+        urllib2.urlopen(url)
+
         # verify that params are correct on initialize
+        assert_that(spy.initialize, called().with_args(**args))
+
         # destroy communicator
+        ic1.shutdown()
 
         # create another communicator
-        # register another handler and use it
-        # verify that params are correct again
+        ic2 = wise.initialize(host, port)
+        self.addCleanup(ic2.shutdown)
 
-    def register_handler_on_communicator(self, ic, url, handler, args):
+        # register another handler to the same path, and use it
+        args = {'param2': 'another param'}
+        spy = self.register_handler_on_communicator(ic2, path, args)
+        urllib2.urlopen(url)
+
+        # verify that params are correct again
+        assert_that(spy.initialize, called().with_args(**args))
+
+    def register_handler_on_communicator(self, ic, url, args):
         spy = Spy()
 
         class MyAppClass(RequestHandler):
@@ -79,4 +90,10 @@ class TestCommunicator(TestCase):
 
             def get(self):
                 pass
+
+        handlers = [("^{}$".format(url), MyAppClass, args)]
+        ic.registerHandlers(handlers)
+        return spy
+
+
 
