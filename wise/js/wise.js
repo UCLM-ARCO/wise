@@ -27,6 +27,7 @@ Transceiver: Class.extend({
 	    });
     	};
     	this._websocket.onmessage = function(event) {
+	    log.debug("Socket opened:", event);
     	    transceiver._on_ws_message(event);
     	};
 	this._websocket.onerror = function(event) {
@@ -206,17 +207,26 @@ EndpointInfo: Class.extend({
 	if (index != -1)
 	    this.ws_name = items[index + 1];
 
+	if (this.ws_name == "")
+	    throw "Invalid endpoint, no WebSocket especified";
+
 	// hostname
 	this.host = "";
 	index = items.indexOf("-h");
 	if (index != -1)
 	    this.host = items[index + 1];
 
+	if (this.host == "")
+	    throw "Invalid endpoint, no host especified";
+
 	// port
 	this.port = "";
 	index = items.indexOf("-p");
 	if (index != -1)
 	    this.port = items[index + 1];
+
+	if (this.host == "")
+	    throw "Invalid endpoint, no port especified";
     },
 }),
 
@@ -440,8 +450,12 @@ Communicator: Class.extend({
     },
 }),
 
-// args: on_response
+// args: host, post, on_response
 initialize: function(args) {
+    if (args.port == undefined)
+	args.port = 8000;
+    if (args.host == undefined)
+	args.host = "127.0.0.1";
 
     // create root logger for Wise
     if (console) {
@@ -459,7 +473,7 @@ initialize: function(args) {
 
     // create server admin proxy
     var proxy = ic.stringToProxy({
-	proxy: "WiseAdmin -w wise -h 127.0.0.1 -p 8000",
+	proxy: "WiseAdmin -w wise -h "+ args.host +" -p "+ args.port,
 	on_response: bind(this, on_stringToProxy_response),
     });
 

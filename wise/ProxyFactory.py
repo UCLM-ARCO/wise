@@ -24,10 +24,10 @@ class ProxyFactory:
 
     @classmethod
     def _get_proxy_fields(cls, ic, string):
-        # proxy should be like: "Object -e ws"
-        assert '-e' in string, "Invalid proxy format: '{}'".format(string)
+        # proxy should be like: "Object -w ws -h host -p port"
+        assert '-w' in string, "Invalid proxy format: '{}'".format(string)
 
-        fields = string.split("-e")
+        fields = string.split("-w")
         identity = fields[0].strip()
         endpoint = fields[1].strip()
         adapter = ic.resolveAdapter(endpoint = endpoint)

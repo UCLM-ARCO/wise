@@ -13,21 +13,25 @@
 
     // create communicator and proxy to server
     $(window).ready(function() {
-	wise.initialize({ on_ready: on_communicator_ready });
+	wise.initialize({
+	    host: "127.0.0.1",
+	    port: 7000,
+	    on_ready: on_communicator_ready,
+	});
 
 	// response: communicator
 	function on_communicator_ready(response) {
 	    response.communicator.stringToProxy({
-		proxy: "Server -e ws",
+		proxy: "Server -w ws -h 127.0.0.1 -p 7000",
 		on_response: on_stringToProxy_response
 	    });
-	}
+	};
 
 	// response: proxy
 	function on_stringToProxy_response(response) {
 	    log.info("Server @ '" + response.proxy + "'");
 	    banner = response.proxy;
-	}
+	};
     });
 
     // UI callbacks
@@ -40,9 +44,8 @@
 
     function on_get_clicked() {
 	banner.get_message({
-	    params: {},
 	    on_response: function(args) {
-		$('#banner').val(args.message);
+		$('#banner').val(args.result);
 	    }
 	});
     }

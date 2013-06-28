@@ -18,7 +18,10 @@ class Servant:
 
 class Server:
     def __init__(self, servant=None):
-        self._ic = wise.initialize()
+        self._port = 7000
+        self._host = "127.0.0.1"
+
+        self._ic = wise.initialize(host=self._host, port=self._port)
         adapter = self._ic.createObjectAdapter("ServerAdapter", "ws")
 
         if servant is None:
@@ -42,7 +45,8 @@ class Server:
 
     @property
     def url(self):
-        return "http://127.0.0.1:8080/static/index.html"
+        return "http://{}:{}/static/index.html".format(
+            self._host, self._port)
 
 
 if __name__ == "__main__":
