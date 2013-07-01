@@ -147,12 +147,12 @@ TransceiverFactory: Class.extend({
 	this._new_transceiver(args);
     },
 
-    // used by createObjectadapter
+    // used by createObjectAdapter
     // args: endpoint, on_response
     create_transceiver: function(args) {
 	var transceiver = this._transceivers[args.endpoint.ws_name];
 	if (transceiver) {
-	    throw "AlreadyUsedEndpoints";
+	    throw "AlreadyUsedEndpoint";
 	}
 
 	// contact with server and create a new websocket
@@ -187,7 +187,7 @@ TransceiverFactory: Class.extend({
 }),
 
 EndpointInfo: Class.extend({
-    init: function(endpoint) {
+    init: function(endpoint, defaults) {
 	endpoint = endpoint.trim();
 
 	// remove two spaces in string
@@ -216,8 +216,11 @@ EndpointInfo: Class.extend({
 	if (index != -1)
 	    this.host = items[index + 1];
 
-	if (this.host == "")
-	    throw "Invalid endpoint, no host especified";
+	if (this.host == "") {
+	    if (! defaults || ! defaults.host)
+		throw "Invalid endpoint, no host especified";
+	    this.host = defaults.host
+	}
 
 	// port
 	this.port = "";
@@ -225,8 +228,11 @@ EndpointInfo: Class.extend({
 	if (index != -1)
 	    this.port = items[index + 1];
 
-	if (this.host == "")
-	    throw "Invalid endpoint, no port especified";
+	if (this.port == "") {
+	    if (! defaults || ! defaults.port)
+		throw "Invalid endpoint, no port especified";
+	    this.port = defaults.port;
+	}
     },
 }),
 
@@ -370,7 +376,9 @@ Logger: Class.extend({
 }),
 
 Communicator: Class.extend({
-    init: function() {
+    init: function(args) {
+	this._host = args.host;
+	this._port = args.port;
 	this._adapters = {};
 	this._transceiverFactory = new wise.TransceiverFactory();
     },
@@ -381,7 +389,9 @@ Communicator: Class.extend({
 	    throw "AlreadyRegisteredException"
 
 	var transceiver = this._transceiverFactory.create_transceiver({
-	    endpoint: new wise.EndpointInfo(args.endpoint),
+	    endpoint: new wise.EndpointInfo(
+		args.endpoint,
+		{host: this._host, port: this._port}),
 	    on_response: bind(this, on_create_transceiver_response),
 	});
 
@@ -453,7 +463,7 @@ Communicator: Class.extend({
 // args: host, post, on_response
 initialize: function(args) {
     if (args.port == undefined)
-	args.port = 8000;
+	args.port = 8080;
     if (args.host == undefined)
 	args.host = "127.0.0.1";
 
@@ -469,7 +479,7 @@ initialize: function(args) {
     }
 
     // create communicator
-    var ic = new wise.Communicator();
+    var ic = new wise.Communicator({ host: args.host, port: args.port });
 
     // create server admin proxy
     var proxy = ic.stringToProxy({

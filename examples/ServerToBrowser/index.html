@@ -31,7 +31,7 @@
 	      // create adapter
 	      args.communicator.createObjectAdapter({
 		  name: "WebAdapter",
-		  endpoint: "browser",
+		  endpoint: "-w browser",
 		  on_response: on_adapter_ready,
 	      });
 	  }
@@ -40,8 +40,8 @@
 	  function on_adapter_ready(args) {
 	      var servant = new BannerI();
 	      args.adapter.add({
-		  servant: servant,
-		  identity: "Banner",
+	      	  servant: servant,
+	      	  identity: "Banner",
 	      });
 
 	      // notify that I am ready
@@ -52,7 +52,7 @@
 
     </script>
 
-    Banner: <input type="text" id="banner" value="the message" /><br>
+    Banner: <input type="text" id="banner" value="old message" /><br>
 
     <!-- this is a flag to notify that I am ready -->
     <input type="checkbox" id="ready" style="display:none" />

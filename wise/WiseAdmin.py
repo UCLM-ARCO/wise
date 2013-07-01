@@ -47,7 +47,9 @@ class WiseAdmin:
         self._ic = ic
 
     def create_socket(self, endpoint, current=None):
-        print "WiseAdmin: create socket for '{}' endpoint".format(endpoint)
+        print "WiseAdmin: create socket for '-w {} -h {} -p {}' endpoint".format(
+            endpoint['ws_name'], endpoint['host'], endpoint['port'])
 
-        handler = ("^/{}$".format(endpoint), ActiveHandler, {})
+        handler = ("^/{}$".format(endpoint['ws_name']), ActiveHandler, {})
         self._ic.registerHandlers([handler])
+        print "WiseAdmin: handler registered, {}".format(handler)

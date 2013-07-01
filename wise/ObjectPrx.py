@@ -23,3 +23,6 @@ class ObjectPrx:
 
     def __getattr__(self, name):
         return MethodHandler(self._identity, self._transceiver, name)
+
+    def __nonzero__(self):
+        return self._identity != None and self._transceiver != None

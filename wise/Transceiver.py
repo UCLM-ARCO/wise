@@ -59,6 +59,10 @@ class Transceiver:
         self._handler.write_message(request)
 
 
+#
+# FIXME: add support for multiple handlers, i.e. multiple browsers
+# navigating the same web application
+#
 class TransceiverFactory:
     _handlers = {}
     _transceivers = {}
@@ -85,7 +89,9 @@ class TransceiverFactory:
 
         handler = cls._handlers.get(endpoint, None)
         if not handler:
-            print "TransceiverFactory: ERROR: there is no handler for that endpoint"
+            print "TransceiverFactory: ERROR: no handler for endpoint '{}'".format(
+                endpoint)
+
             return None
 
         print ("TransceiverFactory: creating new for endpoint '{}'"

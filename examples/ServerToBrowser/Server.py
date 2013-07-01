@@ -3,6 +3,8 @@
 
 import os
 import wise
+from sulfurium import Chrome
+from commodity.testing import wait_that, call_with
 
 
 class Server:
@@ -15,8 +17,17 @@ class Server:
             self._ic, '/static/', pwd, "index.html")
         self._ic.registerApplication(frontend)
 
-    def update_banner_message(self, message="hello"):
-        banner = self._ic.stringToProxy("Banner -e browser")
+        # open browser
+        self._browser = Chrome(left_open=True)
+        self._browser.open(self.url)
+        wait_that(self._browser.is_ready, call_with().returns(True))
+
+    def update_banner_message(self, message="hello from the server"):
+        banner = self._ic.stringToProxy("Banner -w browser")
+        if not banner:
+            print "ERROR: could not create proxy to in-browser object!"
+            return
+
         banner.set_message(message=message)
 
     @property
