@@ -12,28 +12,46 @@ class ProxyFactory:
         fields = cls._get_proxy_fields(ic, string)
 
         # FIXME: make this lazy, get transceiver only when needed.
-        #        This allows creation of proxies that does not exist (yet).
+        #   That would allow the creation of proxies that does not exist (yet).
 
-        transceiver = TransceiverFactory.get(fields['endpoint'])
+        transceiver = TransceiverFactory.get(fields['ws_name'])
         if not transceiver:
             logging.warning("Transceiver for endpoint '{}' not available"
-                            .format(fields['endpoint']))
+                            .format(fields['ws_name']))
             return None
 
-        return ObjectPrx(fields['identity'], transceiver)
+        return ObjectPrx(fields['identity'], fields['endpoint'], transceiver)
 
     @classmethod
     def _get_proxy_fields(cls, ic, string):
         # proxy should be like: "Object -w ws -h host -p port"
-        assert '-w' in string, "Invalid proxy format: '{}'".format(string)
+        fields = string.split()
 
-        fields = string.split("-w")
-        identity = fields[0].strip()
-        endpoint = fields[1].strip()
+        identity = fields[0]
+
+        if not '-w' in fields:
+            raise ValueError("Invalid proxy format: '{}'".format(string))
+        websocket = fields[fields.index('-w') + 1]
+
+        if '-h' in fields:
+            host = fields[fields.index('-h') + 1]
+
+        if '-p' in fields:
+            port = fields[fields.index('-p') + 1]
+
+        endpoint = "-w {}".format(websocket)
+        if host:
+            endpoint += " -h {}".format(host)
+        if port:
+            endpoint += " -p {}".format(port)
+
         adapter = ic.resolveAdapter(endpoint = endpoint)
 
         return {
             'identity': identity,
-            'endpoint': endpoint,
+            'ws_name': websocket,
+            'host': host,
+            'port': port,
             'adapter': adapter,
+            'endpoint': endpoint
         }

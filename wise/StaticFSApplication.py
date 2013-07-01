@@ -8,6 +8,13 @@ from .WebApplication import WebApplication
 
 class StaticFSApplication(WebApplication):
     def __init__(self, communicator, locator, path, index=""):
+        if locator == "/":
+            logging.warning("Do not register applications on '/', "
+                            "it will interfere with websocket handlers")
+
+        if not locator.endswith("/"):
+            locator += "/"
+
         self._locator = locator
         self._path = path
         self._index = index

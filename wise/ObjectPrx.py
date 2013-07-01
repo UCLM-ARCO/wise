@@ -8,17 +8,50 @@ class MethodHandler:
         self._method_name = method_name
 
     def __call__(self, **args):
-        assert isinstance(args, dict)
+        params = {}
+        for name, value in args.items():
+            params[name] = self._convert_to_json_compatible(value)
 
         return self._transceiver.send_request(
             {'identity': self._identity,
              'method': self._method_name,
-             'params': args})
+             'params': params})
+
+    def _convert_to_json_compatible(self, value):
+        if isinstance(value, (str, unicode, int, bool, float, long)):
+            return value
+
+        if value is None:
+            return value
+
+        if isinstance(value, (list, tuple)):
+            return [self._convert_to_json_compatible(x) for x in value]
+
+        if isinstance(value, dict):
+            fields = {}
+            for k,v in value.items():
+                fields[k] = self._convert_to_json_compatible(v)
+            return fields
+
+        # NOTE: let this be the final step
+        attrs = {}
+        for name in dir(value):
+            if name.startswith("__"):
+                continue
+
+            attr = getattr(value, name)
+            if callable(attr):
+                continue
+
+            attrs[name] = self._convert_to_json_compatible(attr)
+
+        return attrs
 
 
 class ObjectPrx:
-    def __init__(self, identity, transceiver):
+    def __init__(self, identity, endpoint, transceiver):
         self._identity = identity
+        self._endpoint = endpoint
         self._transceiver = transceiver
 
     def __getattr__(self, name):
@@ -26,3 +59,6 @@ class ObjectPrx:
 
     def __nonzero__(self):
         return self._identity != None and self._transceiver != None
+
+    def __str__(self):
+        return "{} {}".format(self._identity, self._endpoint)

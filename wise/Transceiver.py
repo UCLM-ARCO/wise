@@ -68,36 +68,37 @@ class TransceiverFactory:
     _transceivers = {}
 
     @classmethod
-    def register_handler(cls, endpoint, handler):
-        print "TransceiverFactory: register handler for '{}'".format(endpoint)
-        cls._handlers[endpoint] = handler
+    def register_handler(cls, wslocator, handler):
+        print "TransceiverFactory: register handler for '{}'".format(wslocator)
+        cls._handlers[wslocator] = handler
 
     @classmethod
-    def unregister_handler(cls, endpoint):
+    def unregister_handler(cls, wslocator):
         print ("TransceiverFactory: un-register handler for '{}'"
-               .format(endpoint))
-        cls._handlers.pop(endpoint, None)
-        cls._transceivers.pop(endpoint, None)
+               .format(wslocator))
+        cls._handlers.pop(wslocator, None)
+        cls._transceivers.pop(wslocator, None)
 
     @classmethod
-    def get(cls, endpoint):
-        print "TransceiverFactory: get for endpoint '{}'".format(endpoint)
+    def get(cls, wslocator):
+        print "TransceiverFactory: get for websocket '{}'".format(wslocator)
 
-        transceiver = cls._transceivers.get(endpoint, None)
+        transceiver = cls._transceivers.get(wslocator, None)
         if transceiver:
             return transceiver
 
-        handler = cls._handlers.get(endpoint, None)
+        handler = cls._handlers.get(wslocator, None)
         if not handler:
-            print "TransceiverFactory: ERROR: no handler for endpoint '{}'".format(
-                endpoint)
+            print "TransceiverFactory: ERROR: no handler for websocket '{}'".format(
+                wslocator)
+            print "  - available:", cls._handlers.keys()
 
             return None
 
-        print ("TransceiverFactory: creating new for endpoint '{}'"
-               .format(endpoint))
+        print ("TransceiverFactory: creating new for websocket '{}'"
+               .format(wslocator))
         transceiver = Transceiver(handler)
-        cls._transceivers[endpoint] = transceiver
+        cls._transceivers[wslocator] = transceiver
         return transceiver
 
 
