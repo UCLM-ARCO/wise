@@ -56,7 +56,14 @@ class Transceiver:
         barrier.set()
 
     def send(self, request):
-        self._handler.write_message(request)
+        if self._handler is None:
+            raise RuntimeError("Can not reach remote object!")
+
+        try:
+            self._handler.write_message(request)
+        except Exception as e:
+            self._handler = None
+            raise RuntimeError("Error sending message to remote object: {}".format(e))
 
 
 #
