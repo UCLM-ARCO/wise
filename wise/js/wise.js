@@ -84,13 +84,18 @@ function bind(scope, fn) {
 wise = {
 
 Transceiver: Class.extend({
-    // args: socket_url, on_ready
+    // args: endpoint, on_ready
     init: function(args) {
     	this._response_callbacks = {};
     	this._request_id = 0;
+	this._endpoint_info = args.endpoint;
 
-	log.debug("new WebSocket @ " + args.socket_url);
-    	this._websocket = new WebSocket(args.socket_url);
+	var socket_url = "ws://" + args.endpoint.host +
+	    ":" +  args.endpoint.port + "/" +
+	    args.endpoint.ws_name;
+
+	log.debug("new WebSocket @ " + socket_url);
+    	this._websocket = new WebSocket(socket_url);
 
     	var transceiver = this;
     	this._websocket.onopen = function(event) {
@@ -121,6 +126,7 @@ Transceiver: Class.extend({
     	    return;
     	}
 
+	this._prepare_params(args.request.params);
     	this._websocket.send(JSON.stringify(args.request));
     	this._request_id++;
     },
@@ -131,8 +137,17 @@ Transceiver: Class.extend({
     },
 
     toString: function() {
-	var fields = this._websocket.url.split("/");
-	return fields.splice(-1, 1)[0];
+	return "-w " + this._endpoint_info.ws_name
+	    + " -h " + this._endpoint_info.host
+	    + " -p " + this._endpoint_info.port;
+
+	// var fields = this._websocket.url.split("/");
+	// return fields.splice(-1, 1)[0];
+    },
+
+    _prepare_params: function(params) {
+	if (params == undefined)
+	    return;
     },
 
     _on_ws_message: function(event) {
@@ -245,12 +260,8 @@ TransceiverFactory: Class.extend({
 
     // args: endpoint, on_response
     _new_transceiver: function(args) {
-	var socket_url = ("ws://" + args.endpoint.host +
-			  ":" +  args.endpoint.port + "/" +
-			  args.endpoint.ws_name);
-
 	var transceiver = new wise.Transceiver({
-	    socket_url: socket_url,
+	    endpoint: args.endpoint,
 	    on_ready: args.on_response,
 	});
 
@@ -527,7 +538,9 @@ Communicator: Class.extend({
 
 	return {
 	    identity: identity,
-	    endpoint: new wise.EndpointInfo(endpoint),
+	    endpoint: new wise.EndpointInfo(
+		endpoint,
+		{host: this._host, port: this._port}),
 	};
     },
 }),
