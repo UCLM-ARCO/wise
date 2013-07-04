@@ -6,6 +6,7 @@ from .WiseAdmin import WiseAdmin
 # Imports not used here, made available for the rest of users
 from .WebApplication import WebApplication
 from .StaticFSApplication import StaticFSApplication
+from .Object import Observable
 
 
 def initialize(host="127.0.0.1", port=8080):

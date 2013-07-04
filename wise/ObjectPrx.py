@@ -7,9 +7,9 @@ class MethodHandler:
         self._transceiver = transceiver
         self._method_name = method_name
 
-    def __call__(self, **args):
+    def __call__(self, *args, **kwargs):
         params = {}
-        for name, value in args.items():
+        for name, value in kwargs.items():
             params[name] = self._convert_to_json_compatible(value)
 
         return self._transceiver.send_request(
@@ -29,7 +29,7 @@ class MethodHandler:
 
         if isinstance(value, dict):
             fields = {}
-            for k,v in value.items():
+            for k, v in value.items():
                 fields[k] = self._convert_to_json_compatible(v)
             return fields
 
@@ -55,10 +55,17 @@ class ObjectPrx:
         self._transceiver = transceiver
 
     def __getattr__(self, name):
+        if name.startswith("__"):
+            raise AttributeError(name)
+
         return MethodHandler(self._identity, self._transceiver, name)
 
     def __nonzero__(self):
-        return self._identity != None and self._transceiver != None
+        return self._identity is not None and self._transceiver is not None
+
+    def __eq__(self, other):
+        return (self._identity == other._identity and
+                self._endpoint == other._endpoint)
 
     def __str__(self):
         return "{} {}".format(self._identity, self._endpoint)

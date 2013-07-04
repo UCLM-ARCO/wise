@@ -45,8 +45,17 @@ class ActiveHandler(websocket.WebSocketHandler):
 class WiseAdmin:
     def __init__(self, ic):
         self._ic = ic
+        self._already_registered = []
 
     def create_socket(self, endpoint, current=None):
+        locator = "^/{}$".format(endpoint['ws_name'])
+        if locator in self._already_registered:
+            print ("WiseAdmin: already registered handler for '{}', "
+                   "nothing done".format(locator))
+            return
+
+        self._already_registered.append(locator)
+
         print "WiseAdmin: create socket for '-w {} -h {} -p {}' endpoint".format(
             endpoint['ws_name'], endpoint['host'], endpoint['port'])
 

@@ -12,6 +12,17 @@ from .Exceptions import ProtocolException
 from .Current import Current
 
 
+def print_msg(head, body):
+    print "\033[01;33m{}:\033[00m{}".format(head, body)
+
+
+def info(msg):
+    if not ":" in msg:
+        return print_msg("", msg)
+    fields = msg.split(":")
+    print_msg(fields[0], ":".join(fields[1:]))
+
+
 class TransceiverApp(WebApplication):
     def __init__(self, communicator, url, adapter):
         WebApplication.__init__(self, communicator, url)
@@ -66,29 +77,24 @@ class Transceiver:
             raise RuntimeError("Error sending message to remote object: {}".format(e))
 
 
-#
-# FIXME: add support for multiple handlers, i.e. multiple browsers
-# navigating the same web application
-#
 class TransceiverFactory:
     _handlers = {}
     _transceivers = {}
 
     @classmethod
     def register_handler(cls, wslocator, handler):
-        print "TransceiverFactory: register handler for '{}'".format(wslocator)
+        info("TransceiverFactory: register handler for '{}'".format(wslocator))
         cls._handlers[wslocator] = handler
 
     @classmethod
     def unregister_handler(cls, wslocator):
-        print ("TransceiverFactory: un-register handler for '{}'"
-               .format(wslocator))
+        info("TransceiverFactory: un-register handler for '{}'".format(wslocator))
         cls._handlers.pop(wslocator, None)
         cls._transceivers.pop(wslocator, None)
 
     @classmethod
     def get(cls, wslocator):
-        print "TransceiverFactory: get for websocket '{}'".format(wslocator)
+        info("TransceiverFactory: get for websocket '{}'".format(wslocator))
 
         transceiver = cls._transceivers.get(wslocator, None)
         if transceiver:
@@ -96,14 +102,14 @@ class TransceiverFactory:
 
         handler = cls._handlers.get(wslocator, None)
         if not handler:
-            print "TransceiverFactory: ERROR: no handler for websocket '{}'".format(
-                wslocator)
+            info("TransceiverFactory: ERROR: no handler for websocket '{}'".format(
+                wslocator))
             print "  - available:", cls._handlers.keys()
 
             return None
 
-        print ("TransceiverFactory: creating new for websocket '{}'"
-               .format(wslocator))
+        info("TransceiverFactory: creating new for websocket '{}'"
+             .format(wslocator))
         transceiver = Transceiver(handler)
         cls._transceivers[wslocator] = transceiver
         return transceiver

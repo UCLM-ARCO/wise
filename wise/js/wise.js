@@ -89,22 +89,22 @@ Transceiver: Class.extend({
     	this._response_callbacks = {};
     	this._request_id = 0;
 	this._endpoint_info = args.endpoint;
+	this._waiting_callbacks = [args.on_ready];
+	this._is_ready = false;
 
 	var socket_url = "ws://" + args.endpoint.host +
 	    ":" +  args.endpoint.port + "/" +
 	    args.endpoint.ws_name;
 
-	log.debug("new WebSocket @ " + socket_url);
+	log.debug("new WebSocket: " + socket_url);
     	this._websocket = new WebSocket(socket_url);
 
     	var transceiver = this;
     	this._websocket.onopen = function(event) {
-    	    args.on_ready({
-		transceiver: transceiver,
-	    });
+	    log.debug("Socket opened (" + this.url + "),", event);
+	    transceiver._notify_waiting_callbacks();
     	};
     	this._websocket.onmessage = function(event) {
-	    log.debug("Socket opened:", event);
     	    transceiver._on_ws_message(event);
     	};
 	this._websocket.onerror = function(event) {
@@ -113,16 +113,21 @@ Transceiver: Class.extend({
 	this._websocket.onclose = function(event) {
 	    log.debug("Socket closed:", event);
 	};
+
+	log.debug("Transceiver created");
     },
 
     // args: request, on_response
     send_request: function(args) {
+	log.debug("Transceiver send_request: ", args.request);
+
     	args.request.request_id = this._request_id;
     	this._response_callbacks[this._request_id] = args.on_response;
 
     	if (this._websocket.readyState != WebSocket.OPEN) {
-    	    log.error("socket not ready, state: " +
-		      this._websocket.readyState);
+    	    log.error("socket for " + this._websocket.url + " not ready, readyState: " +
+		      this._websocket.readyState + ", should be " + WebSocket.OPEN,
+		      this._websocket);
     	    return;
     	}
 
@@ -131,7 +136,6 @@ Transceiver: Class.extend({
     	this._request_id++;
     },
 
-    // args: adapter
     link_to_adapter: function(adapter) {
 	this._object_adapter = adapter;
     },
@@ -140,18 +144,37 @@ Transceiver: Class.extend({
 	return "-w " + this._endpoint_info.ws_name
 	    + " -h " + this._endpoint_info.host
 	    + " -p " + this._endpoint_info.port;
-
-	// var fields = this._websocket.url.split("/");
-	// return fields.splice(-1, 1)[0];
     },
 
+    _notify_waiting_callbacks: function() {
+	for (var i=0; i<this._waiting_callbacks.length; i++) {
+	    this._waiting_callbacks[i]({
+		transceiver: this,
+	    });
+	}
+	this._is_ready = true;
+	this._waiting_callbacks = [];
+    },
+
+    // args: on_ready
+    notify_when_ready: function(args) {
+	if (this._is_ready) {
+	    args.on_ready({ transceiver: this });
+	    return;
+	}
+
+	this._waiting_callbacks.push(args.on_ready);
+    },
+
+    // FIXME: if there is a proxy in params, change it for the
+    // stringfied version of the proxy
     _prepare_params: function(params) {
 	if (params == undefined)
 	    return;
     },
 
     _on_ws_message: function(event) {
-	log.debug("ws message", event);
+	log.debug("Transceiver Incomming message", event);
 
     	var message = JSON.parse(event.data);
 
@@ -227,7 +250,7 @@ TransceiverFactory: Class.extend({
     get_transceiver: function(args) {
 	var transceiver = this._transceivers[args.endpoint.ws_name];
 	if (transceiver) {
-	    args.on_response({ transceiver: transceiver });
+	    transceiver.notify_when_ready({ on_ready: args.on_response });
 	    return;
 	}
 
@@ -237,6 +260,8 @@ TransceiverFactory: Class.extend({
     // used by createObjectAdapter
     // args: endpoint, on_response
     create_transceiver: function(args) {
+	log.debug("TransceiverFactory: create_transceiver,", args.endpoint.ws_name);
+
 	var transceiver = this._transceivers[args.endpoint.ws_name];
 	if (transceiver) {
 	    throw "AlreadyUsedEndpoint";
@@ -260,6 +285,7 @@ TransceiverFactory: Class.extend({
 
     // args: endpoint, on_response
     _new_transceiver: function(args) {
+	log.debug("TransceiverFactory._new_transceiver,", args.endpoint.ws_name);
 	var transceiver = new wise.Transceiver({
 	    endpoint: args.endpoint,
 	    on_ready: args.on_response,
@@ -271,6 +297,9 @@ TransceiverFactory: Class.extend({
 
 EndpointInfo: Class.extend({
     init: function(endpoint, defaults) {
+	if (endpoint == undefined)
+	    endpoint = "";
+
 	endpoint = endpoint.trim();
 
 	// remove two spaces in string
@@ -291,7 +320,7 @@ EndpointInfo: Class.extend({
 	    this.ws_name = items[index + 1];
 
 	if (this.ws_name == "")
-	    throw "Invalid endpoint, no WebSocket especified";
+	    this.ws_name = this._get_random_ws_name();
 
 	// hostname
 	this.host = "";
@@ -317,6 +346,10 @@ EndpointInfo: Class.extend({
 	    this.port = defaults.port;
 	}
     },
+
+    _get_random_ws_name: function() {
+	return wise.Util.S4() + wise.Util.S4();
+    },
 }),
 
 ObjectAdapter: Class.extend({
@@ -339,7 +372,7 @@ ObjectAdapter: Class.extend({
 
     // args: servant
     addWithUUID: function(args) {
-	args.identity = Util.generate_UUID();
+	args.identity = wise.Util.generate_UUID();
 	return this.add(args);
     },
 
@@ -354,7 +387,7 @@ ObjectAdapter: Class.extend({
     // args: request
     process_request: function(request) {
     	try {
-    	    log.info("request received: " + request.identity + "."
+    	    log.debug("request received: " + request.identity + "."
     		     + request.method + "(" +
 		     JSON.stringify(request.params) + ")");
 
@@ -428,12 +461,13 @@ ObjectPrx: Class.extend({
 
 Util: {
     // taken from: http://guid.us/GUID/JavaScript
-    generate_UUID: function() {
-	function S4() {
-	    return (((1+Math.random())*0x10000)|0).toString(16)
-		.substring(1);
-	}
+    S4: function() {
+	return (((1+Math.random())*0x10000)|0).toString(16)
+	    .substring(1);
+    },
 
+    generate_UUID: function() {
+	var S4 = wise.Util.S4;
 	return (S4() + S4() + "-" + S4() + "-4" + S4().substr(0,3)
 		+ "-" + S4() + "-" + S4() + S4() + S4()).toUpperCase();
     },
