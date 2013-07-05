@@ -1,21 +1,20 @@
 # -*- mode: python; coding: utf-8 -*-
 
+from . import Logging as logging
+
 
 class Observable:
     def __init__(self):
         self.observers = []
 
-    def attach_view(self, observer, current):
+    def attach(self, observer, current):
         wc = current.adapter.getCommunicator()
         observer = wc.stringToProxy(observer)
 
-        if observer is None:
+        if observer is None or observer in self.observers:
             return
 
-        if observer in self.observers:
-            return
-
-        print "{}: attach view, '{}'".format(self.__class__.__name__, observer)
+        logging.info("{}: attach view, '{}'".format(self.__class__.__name__, observer))
         self.observers.append(observer)
 
     def notify(self, method_name, **kwargs):
@@ -23,7 +22,9 @@ class Observable:
             try:
                 method = getattr(observer, method_name)
                 method(**kwargs)
-            except Exception:
+            except Exception as e:
                 self.observers.remove(observer)
-                raise
-
+                logging.warning(
+                    "Exception raised when reaching observer: {}".format(e))
+                logging.warning(
+                    "Removing observer '{}'".format(observer))

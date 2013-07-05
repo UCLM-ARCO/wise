@@ -582,9 +582,10 @@ Communicator: Class.extend({
 // args: host, post, on_response
 initialize: function(args) {
     if (args.port == undefined)
-	args.port = 8080;
+	args.port = location.port;
+
     if (args.host == undefined)
-	args.host = "127.0.0.1";
+	args.host = location.hostname;
 
     // create root logger for Wise
     if (console) {

@@ -2,7 +2,6 @@
 
 import traceback
 import json
-import logging
 from threading import Event
 
 from tornado import websocket
@@ -10,17 +9,7 @@ from tornado import websocket
 from .WebApplication import WebApplication
 from .Exceptions import ProtocolException
 from .Current import Current
-
-
-def print_msg(head, body):
-    print "\033[01;33m{}:\033[00m{}".format(head, body)
-
-
-def info(msg):
-    if not ":" in msg:
-        return print_msg("", msg)
-    fields = msg.split(":")
-    print_msg(fields[0], ":".join(fields[1:]))
+from . import Logging as logging
 
 
 class TransceiverApp(WebApplication):
@@ -83,18 +72,18 @@ class TransceiverFactory:
 
     @classmethod
     def register_handler(cls, wslocator, handler):
-        info("TransceiverFactory: register handler for '{}'".format(wslocator))
+        logging.info("TransceiverFactory: register handler for '{}'".format(wslocator))
         cls._handlers[wslocator] = handler
 
     @classmethod
     def unregister_handler(cls, wslocator):
-        info("TransceiverFactory: un-register handler for '{}'".format(wslocator))
+        logging.info("TransceiverFactory: un-register handler for '{}'".format(wslocator))
         cls._handlers.pop(wslocator, None)
         cls._transceivers.pop(wslocator, None)
 
     @classmethod
     def get(cls, wslocator):
-        info("TransceiverFactory: get for websocket '{}'".format(wslocator))
+        logging.info("TransceiverFactory: get for websocket '{}'".format(wslocator))
 
         transceiver = cls._transceivers.get(wslocator, None)
         if transceiver:
@@ -102,14 +91,13 @@ class TransceiverFactory:
 
         handler = cls._handlers.get(wslocator, None)
         if not handler:
-            info("TransceiverFactory: ERROR: no handler for websocket '{}'".format(
-                wslocator))
-            print "  - available:", cls._handlers.keys()
+            logging.error("TransceiverFactory: ERROR: no handler for websocket '{}'".format(
+                          wslocator))
 
             return None
 
-        info("TransceiverFactory: creating new for websocket '{}'"
-             .format(wslocator))
+        logging.info("TransceiverFactory: creating new for websocket '{}'"
+                     .format(wslocator))
         transceiver = Transceiver(handler)
         cls._transceivers[wslocator] = transceiver
         return transceiver

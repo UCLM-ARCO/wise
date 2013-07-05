@@ -1,3 +1,9 @@
+python-wise (0.2-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Oscar Aceña Herrera <oscaracena@gmail.com>  Fri, 05 Jul 2013 09:40:05 +0200
+
 python-wise (0.1-1) unstable; urgency=low
 
   * Initial release

@@ -5,6 +5,7 @@ from tornado import websocket
 
 from .Transceiver import TransceiverFactory
 from .Exceptions import ProtocolException
+from . import Logging as logging
 
 
 class ResponseMessage:
@@ -28,7 +29,7 @@ class ActiveHandler(websocket.WebSocketHandler):
         self._endpoint = self.request.uri.strip('/')
         TransceiverFactory.register_handler(self._endpoint, self)
 
-        print "ActiveHandler: new handler for '{}' endpoint".format(self._endpoint)
+        logging.info("ActiveHandler: new handler for '{}' endpoint".format(self._endpoint))
 
     def on_close(self):
         if not self._endpoint is None:
@@ -50,15 +51,15 @@ class WiseAdmin:
     def create_socket(self, endpoint, current=None):
         locator = "^/{}$".format(endpoint['ws_name'])
         if locator in self._already_registered:
-            print ("WiseAdmin: already registered handler for '{}', "
-                   "nothing done".format(locator))
+            logging.info(("WiseAdmin: already registered handler for '{}', "
+                          "nothing done".format(locator)))
             return
 
         self._already_registered.append(locator)
 
-        print "WiseAdmin: create socket for '-w {} -h {} -p {}' endpoint".format(
-            endpoint['ws_name'], endpoint['host'], endpoint['port'])
+        logging.info("WiseAdmin: create socket for '-w {} -h {} -p {}' endpoint".format(
+                     endpoint['ws_name'], endpoint['host'], endpoint['port']))
 
         handler = ("^/{}$".format(endpoint['ws_name']), ActiveHandler, {})
         self._ic.registerHandlers([handler])
-        print "WiseAdmin: handler registered, {}".format(handler)
+        logging.info("WiseAdmin: handler registered, {}".format(handler))
