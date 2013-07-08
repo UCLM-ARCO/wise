@@ -3,12 +3,12 @@ Section: python
 Priority: extra
 Maintainer: Oscar Aceña Herrera <oscaracena@gmail.com>
 Build-Depends: debhelper (>= 8.0.0), python-support (>= 0.6),
-	        python-all-dev
+ python-all-dev
 Standards-Version: 3.9.3
 Homepage: https://bitbucket.org/arco_group/wise
 
 Package: python-wise
-Architecture: any
+Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}
 Description: Middleware between web and server
  Gives support for remote method invocation from objects in Server
