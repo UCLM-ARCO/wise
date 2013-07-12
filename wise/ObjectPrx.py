@@ -18,7 +18,10 @@ class MethodHandler:
              'params': params})
 
     def _convert_to_json_compatible(self, value):
-        if isinstance(value, (str, unicode, int, bool, float, long)):
+        if isinstance(value, str):
+            return unicode(value)
+
+        if isinstance(value, (unicode, int, bool, float, long)):
             return value
 
         if value is None:

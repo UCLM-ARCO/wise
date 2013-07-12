@@ -49,21 +49,32 @@ class TornadoApplication(web.Application):
 
 
 class Communicator(Thread):
-    def __init__(self, host, port):
+    def __init__(self, host, port, properties={}):
         Thread.__init__(self)
 
         self.port = port
         self.host = host
         self.url = "http://{}:{}".format(self.host, self.port)
-
+        assert isinstance(properties, dict)
+        self._properties = properties
         self._adapters = {}
 
         self.is_ready = Event()
         self.daemon = True
         self.start()
 
+    def getPropertiesForPrefix(self, prefix, remove_prefix=False):
+        retval = {}
+        for k, v in self._properties.items():
+            if k.startswith(prefix):
+                retval[k] = v
+
+        return retval
+
     def run(self):
-        self._tornado = TornadoApplication()
+        prefix = "TornadoApp."
+        properties = self.getPropertiesForPrefix(prefix, True)
+        self._tornado = TornadoApplication(**properties)
 
         # NOTE: no_keep_alive is True, because otherwise, if the
         # handler is changed (or the communicator is destroyed and

@@ -9,8 +9,8 @@ from .StaticFSApplication import StaticFSApplication
 from .Object import Observable
 
 
-def initialize(host="127.0.0.1", port=8080):
-    ic = Communicator(host=host, port=port)
+def initialize(host="127.0.0.1", port=8080, properties={}):
+    ic = Communicator(host=host, port=port, properties=properties)
     ic.is_ready.wait()
 
     admin_adapter = ic.createObjectAdapter("WiseAdmin", "wise")

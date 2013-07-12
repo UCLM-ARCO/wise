@@ -25,6 +25,5 @@ class Observable:
             except Exception as e:
                 self.observers.remove(observer)
                 logging.warning(
-                    "Exception raised when reaching observer: {}".format(e))
-                logging.warning(
-                    "Removing observer '{}'".format(observer))
+                    "Exception raised when reaching observer: {}\n"
+                    "Removing observer '{}'".format(e, observer))
