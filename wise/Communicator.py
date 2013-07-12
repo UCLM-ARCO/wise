@@ -67,6 +67,8 @@ class Communicator(Thread):
         retval = {}
         for k, v in self._properties.items():
             if k.startswith(prefix):
+                if remove_prefix:
+                    k = k[len(prefix):]
                 retval[k] = v
 
         return retval
@@ -74,6 +76,8 @@ class Communicator(Thread):
     def run(self):
         prefix = "TornadoApp."
         properties = self.getPropertiesForPrefix(prefix, True)
+
+        print properties
         self._tornado = TornadoApplication(**properties)
 
         # NOTE: no_keep_alive is True, because otherwise, if the
