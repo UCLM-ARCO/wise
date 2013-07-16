@@ -650,3 +650,9 @@ newDerivedProxy: function(args) {
 };
 
 
+$(window).ready(function() {
+    wise.initialize({ on_ready: function(args) {
+	wise_application(args);
+	jsReady = true;
+    }});
+});
