@@ -79,7 +79,32 @@ function bind(scope, fn) {
 	var args = Array.prototype.slice.call(arguments);
         return fn.apply(scope, args);
     };
-}
+};
+
+
+function apply_async(callable, args_vector, on_ready) {
+    var barrier = new Barrier(args_vector.length, on_ready);
+
+    for (var i in args_vector) {
+	args_vector[i].push(function() { barrier.notify(); });
+	callable.apply(undefined, args_vector[i]);
+    }
+};
+
+
+Barrier = Class.extend({
+    init: function(state, callback) {
+	this.state = state;
+	this.callback = callback;
+    },
+
+    notify: function() {
+	this.state--;
+        if (this.state == 0)
+            this.callback();
+    }
+});
+
 
 wise = {
 
@@ -474,21 +499,53 @@ Util: {
 },
 
 Logger: Class.extend({
+    init: function(level) {
+	this._observers = [];
 
-    // args: element_id
-    init: function(args) {
-	this._element_id = args.element_id;
+	if (level == undefined)
+	    level = 1;
+
+	this._level = level;
+    },
+
+    attach: function(observer) {
+	this._observers.push(observer);
+    },
+
+    set_level: function(level) {
+	this._level = level;
+    },
+
+    debug: function(message) {
+	if (this._level > 0)
+	    return;
+
+	this._notify(arguments, 'debug');
     },
 
     info: function(message) {
-	$('#' + this._element_id).append(
-	    "[" + new Date().toISOString() + "] "
-		+ message + '<br>');
+	if (this._level > 1)
+	    return;
+
+	this._notify(arguments, 'info');
     },
 
     error: function(message) {
-	message = '<b style="color:red">[ERROR]' + message + "</b>";
-	this.info(message);
+	if (this._level > 2)
+	    return;
+
+	this._notify(arguments, 'error');
+    },
+
+    _notify: function(args, method) {
+	args = Array.prototype.slice.call(args, 0);
+	args.unshift(method);
+	args.unshift(new Date().toLocaleString());
+
+	for (var i in this._observers) {
+	    var o = this._observers[i];
+	    o[method].apply(o, args);
+	}
     },
 }),
 
@@ -577,6 +634,11 @@ Communicator: Class.extend({
 		{host: this._host, port: this._port}),
 	};
     },
+
+    ready: function() {
+	// notify to sulfurium that we are ready
+	jsReady = true;
+    },
 }),
 
 // args: host, post, on_response
@@ -588,14 +650,9 @@ initialize: function(args) {
 	args.host = location.hostname;
 
     // create root logger for Wise
+    log = new wise.Logger();
     if (console) {
-	log = console;
-    }
-    else {
-	if ($('#log').length == 0) {
-	    $('body').append($('<div id="log">'));
-	}
-	log = new wise.Logger({ element_id: "log"});
+	log.attach(console);
     }
 
     // create communicator
@@ -653,6 +710,5 @@ newDerivedProxy: function(args) {
 $(window).ready(function() {
     wise.initialize({ on_ready: function(args) {
 	wise_application(args);
-	jsReady = true;
     }});
 });
