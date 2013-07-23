@@ -92,6 +92,24 @@ function apply_async(callable, args_vector, on_ready) {
 };
 
 
+/*
+  from: http://stackoverflow.com/questions/610406/javascript-equivalent-to-printf-string-format
+*/
+
+// first, checks if it isn't implemented yet
+if (!String.prototype.format) {
+  String.prototype.format = function() {
+    var args = arguments;
+    return this.replace(/{(\d+)}/g, function(match, number) {
+      return typeof args[number] != 'undefined'
+        ? args[number]
+        : match
+      ;
+    });
+  };
+}
+
+
 Barrier = Class.extend({
     init: function(state, callback) {
 	this.state = state;
@@ -516,21 +534,21 @@ Logger: Class.extend({
 	this._level = level;
     },
 
-    debug: function(message) {
+    debug: function() {
 	if (this._level > 0)
 	    return;
 
 	this._notify(arguments, 'debug');
     },
 
-    info: function(message) {
+    info: function() {
 	if (this._level > 1)
 	    return;
 
 	this._notify(arguments, 'info');
     },
 
-    error: function(message) {
+    error: function() {
 	if (this._level > 2)
 	    return;
 
@@ -539,7 +557,6 @@ Logger: Class.extend({
 
     _notify: function(args, method) {
 	args = Array.prototype.slice.call(args, 0);
-	args.unshift(method);
 	args.unshift(new Date().toLocaleString());
 
 	for (var i in this._observers) {
@@ -651,7 +668,7 @@ initialize: function(args) {
 
     // create root logger for Wise
     log = new wise.Logger();
-    if (console) {
+    if (typeof console != "undefined") {
 	log.attach(console);
     }
 
@@ -708,6 +725,16 @@ newDerivedProxy: function(args) {
 
 
 $(window).ready(function() {
+    if (typeof wise_application == "undefined") {
+
+	// no log created yet, so try to say something
+	if (typeof console != "undefined") {
+	    console.error("'wise_application' is not defined, nothing to do");
+	}
+
+	return;
+    }
+
     wise.initialize({ on_ready: function(args) {
 	wise_application(args);
     }});
