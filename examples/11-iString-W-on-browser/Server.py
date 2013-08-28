@@ -18,6 +18,8 @@ class Server:
         self._ic.registerApplication(frontend)
 
         # open browser
+        print "Openning browser, please wait..."
+
         self._browser = Chrome(left_open=True)
         self._browser.open(self.url)
         wait_that(self._browser.is_ready, call_with().returns(True))

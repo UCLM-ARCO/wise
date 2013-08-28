@@ -96,17 +96,32 @@ function apply_async(callable, args_vector, on_ready) {
   from: http://stackoverflow.com/questions/610406/javascript-equivalent-to-printf-string-format
 */
 
-// first, checks if it isn't implemented yet
-if (!String.prototype.format) {
-  String.prototype.format = function() {
-    var args = arguments;
-    return this.replace(/{(\d+)}/g, function(match, number) {
-      return typeof args[number] != 'undefined'
-        ? args[number]
-        : match
-      ;
-    });
-  };
+if (typeof String.prototype.format != 'function') {
+    String.prototype.format = function() {
+	var args = arguments;
+	return this.replace(/{(\d+)}/g, function(match, number) {
+	    return typeof args[number] != 'undefined'
+		? args[number]
+		: match
+	    ;
+	});
+    };
+}
+
+
+/*
+  from: http://stackoverflow.com/questions/646628/javascript-startswith
+*/
+if (typeof String.prototype.startsWith != 'function') {
+    String.prototype.startsWith = function(str) {
+	return this.slice(0, str.length) == str;
+    };
+}
+
+if (typeof String.prototype.endsWith != 'function') {
+    String.prototype.endsWith = function(str) {
+	return this.slice(-str.length) == str;
+    };
 }
 
 

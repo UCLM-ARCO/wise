@@ -33,9 +33,11 @@ class ProxyFactory:
             raise ValueError("Invalid proxy format: '{}'".format(string))
         websocket = fields[fields.index('-w') + 1]
 
+        host = ""
         if '-h' in fields:
             host = fields[fields.index('-h') + 1]
 
+        port = ""
         if '-p' in fields:
             port = fields[fields.index('-p') + 1]
 

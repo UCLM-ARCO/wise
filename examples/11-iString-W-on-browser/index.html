@@ -22,19 +22,15 @@
 	  },
       });
 
-      // create communicator and proxy to server
-      $(window).ready(function() {
-	  wise.initialize({ on_ready: on_communicator_ready });
+      function wise_application(args) {
+	  ws = args.communicator;
 
- 	  // args: communicator
- 	  function on_communicator_ready(args) {
-	      // create adapter
-	      args.communicator.createObjectAdapter({
-		  name: "WebAdapter",
-		  endpoint: "-w browser",
-		  on_response: on_adapter_ready,
-	      });
-	  }
+	  console.log(location.host);
+	  ws.createObjectAdapter({
+	      name: "WebAdapter",
+	      endpoint: "-w browser",
+	      on_response: on_adapter_ready,
+	  });
 
 	  // args: adapter
 	  function on_adapter_ready(args) {
@@ -45,17 +41,13 @@
 	      });
 
 	      // notify that I am ready
-	      $('#ready').prop("checked", true);
+	      ws.ready();
 	  }
 
-      });
-
+      }
     </script>
 
     Banner: <input type="text" id="banner" value="old message" /><br>
-
-    <!-- this is a flag to notify that I am ready -->
-    <input type="checkbox" id="ready" style="display:none" />
 
   </body>
 </html>

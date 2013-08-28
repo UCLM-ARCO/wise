@@ -10,7 +10,6 @@
     <script src="/wise/js/wise.js"></script>
 
     <script type="text/javascript">
-
     // create communicator and proxy to server
     $(window).ready(function() {
 	wise.initialize({
@@ -49,16 +48,12 @@
 	    }
 	});
     }
-
     </script>
 
     Banner: <input type="text" id="banner" value="the message" /><br>
 
-    <input type="button" id="set_button" value="set"
-           onClick="on_set_clicked()" />
-
-    <input type="button" id="get_button" value="get"
-           onClick="on_get_clicked()" />
+    <button id="set_button" onClick="on_set_clicked()">set</button>
+    <button id="get_button" onClick="on_get_clicked()">get</button>
 
   </body>
 </html>

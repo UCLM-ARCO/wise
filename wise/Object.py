@@ -8,8 +8,8 @@ class Observable:
         self.observers = []
 
     def attach(self, observer, current):
-        wc = current.adapter.getCommunicator()
-        observer = wc.stringToProxy(observer)
+        ws = current.adapter.getCommunicator()
+        observer = ws.stringToProxy(observer)
 
         if observer is None or observer in self.observers:
             return
