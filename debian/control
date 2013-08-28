@@ -2,9 +2,8 @@ Source: python-wise
 Section: python
 Priority: extra
 Maintainer: Oscar Aceña Herrera <oscaracena@gmail.com>
-Build-Depends: debhelper (>= 8.0.0), python-support (>= 0.6),
- python-all-dev
-Standards-Version: 3.9.3
+Build-Depends: debhelper (>= 8.0.0), python-support (>= 0.6), python
+Standards-Version: 3.9.4
 Homepage: https://bitbucket.org/arco_group/wise
 
 Package: python-wise
