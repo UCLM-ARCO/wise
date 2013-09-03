@@ -423,6 +423,7 @@ ObjectAdapter: Class.extend({
     add: function(args) {
     	this._asm[args.identity] = args.servant;
 
+	log.debug("Adding object: " + args.identity);
 	return this.createProxy({
 	    identity: args.identity
 	});
@@ -432,6 +433,12 @@ ObjectAdapter: Class.extend({
     addWithUUID: function(args) {
 	args.identity = wise.Util.generate_UUID();
 	return this.add(args);
+    },
+
+    // args: identity
+    remove: function(args) {
+	log.debug("Removing object: " + args.identity);
+	delete this._asm[args.identity];
     },
 
     // args: identity
@@ -449,7 +456,7 @@ ObjectAdapter: Class.extend({
     		     + request.method + "(" +
 		     JSON.stringify(request.params) + ")");
 
-    	    method = this._get_object_method(request);
+   	    method = this._get_object_method(request);
     	    if (! method) {
     		return;
     	    }
@@ -471,6 +478,7 @@ ObjectAdapter: Class.extend({
     	var method = object[args.method];
     	if (! method) {
     	    log.error("Unknown method: '" + args.method + "'");
+	    return;
     	}
 
     	return bind(object, method);
@@ -576,6 +584,8 @@ Logger: Class.extend({
 
 	for (var i in this._observers) {
 	    var o = this._observers[i];
+	    if (o[method] == undefined)
+		continue;
 	    o[method].apply(o, args);
 	}
     },

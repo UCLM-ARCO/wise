@@ -17,6 +17,16 @@ class Observable:
         logging.info("{}: attach view, '{}'".format(self.__class__.__name__, observer))
         self.observers.append(observer)
 
+    def detach(self, observer, current):
+        ws = current.adapter.getCommunicator()
+        observer = ws.stringToProxy(observer)
+
+        try:
+            self.observers.remove(observer)
+            logging.info("{}: detach view, '{}'".format(self.__class__.__name__, observer))
+        except ValueError:
+            pass
+
     def notify(self, method_name, **kwargs):
         for observer in self.observers[:]:
             try:
