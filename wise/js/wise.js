@@ -1,5 +1,9 @@
 // -*- mode: js; coding: utf-8 -*-
 
+// FIXME: remove this, used only for DEBUG
+_ = bind(console, console.info);
+
+
 (function() {
     /*
      * Simple JavaScript Inheritance
@@ -136,6 +140,34 @@ Barrier = Class.extend({
         if (this.state == 0)
             this.callback();
     }
+});
+
+
+Observable = Class.extend({
+    init: function() {
+	this._observers = [];
+    },
+
+    attach: function(observer) {
+	if (this._observers.indexOf(observer) != -1)
+	    return;
+	this._observers.push(observer);
+    },
+
+    detach: function(observer) {
+	var index = this._observers.indexOf(observer);
+	if (index == -1) {
+	    return;
+	}
+
+	this._observers.splice(index, 1);
+    },
+
+    notify: function(args) {
+	for (var i in this._observers) {
+	    this._observers[i].notify(args);
+	}
+    },
 });
 
 

@@ -27,7 +27,7 @@ class Observable:
         except ValueError:
             pass
 
-    def notify(self, method_name, **kwargs):
+    def notify(self, method_name="notify", **kwargs):
         for observer in self.observers[:]:
             try:
                 method = getattr(observer, method_name)
