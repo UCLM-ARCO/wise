@@ -1,0 +1,22 @@
+<html>
+  <body>
+    <script src="/wise/js/jquery-2.0.3.min.js"></script>
+    <script src="/wise/js/wise.js"></script>
+
+    <script type="text/javascript">
+    function wise_application(args) {
+	ws = args.communicator;
+
+	ws.stringToProxy({
+	    proxy: "Server -w testws -h 127.0.0.1 -p 8888",
+	    on_response: on_stringToProxy_response
+	});
+
+	function on_stringToProxy_response(response) {
+	    remote = response.proxy;
+	    ws.ready();
+	}
+    }
+    </script>
+  </body>
+</html>

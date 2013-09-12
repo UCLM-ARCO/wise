@@ -19,8 +19,8 @@ class Server:
         adapter = ic.createObjectAdapter("ServerAdapter", "ws")
         adapter.add(Servant(), "Server")
 
-        # register static files handler to serve 'index.html'
-        frontend = wise.StaticFSApplication(ic, '/static/', pwd, "index.html")
+        # register static files handler to serve static files
+        frontend = wise.StaticFSApplication(ic, '/static/', pwd)
         ic.registerApplication(frontend)
 
         print "Visit: http://{}:{}/static/index.html".format(ic.host, ic.port)

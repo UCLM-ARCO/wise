@@ -174,6 +174,8 @@ Observable = Class.extend({
 wise = {
 
 Transceiver: Class.extend({
+    _reconnect_retries: 30,
+
     // args: endpoint, on_ready
     init: function(args) {
     	this._response_callbacks = {};
@@ -182,29 +184,64 @@ Transceiver: Class.extend({
 	this._waiting_callbacks = [args.on_ready];
 	this._is_ready = false;
 
-	var socket_url = "ws://" + args.endpoint.host +
+	this._socket_url = "ws://" + args.endpoint.host +
 	    ":" +  args.endpoint.port + "/" +
 	    args.endpoint.ws_name;
 
-	log.debug("new WebSocket: " + socket_url);
-    	this._websocket = new WebSocket(socket_url);
-
-    	var transceiver = this;
-    	this._websocket.onopen = function(event) {
-	    log.debug("Socket opened (" + this.url + "),", event);
-	    transceiver._notify_waiting_callbacks();
-    	};
-    	this._websocket.onmessage = function(event) {
-    	    transceiver._on_ws_message(event);
-    	};
-	this._websocket.onerror = function(event) {
-	    log.error("Socket error:", event);
-	};
-	this._websocket.onclose = function(event) {
-	    log.debug("Socket closed:", event);
-	};
+	log.debug("new WebSocket: " + this._socket_url);
+	this._create_socket(bind(this, this._notify_waiting_callbacks));
 
 	log.debug("Transceiver created");
+    },
+
+    _create_socket: function(on_ready) {
+    	var websocket = new WebSocket(this._socket_url);
+
+	var self = this;
+    	websocket.onopen = function(event) {
+	    self._websocket = this;
+
+	    log.debug("Socket opened (" + this.url + "),", event);
+	    on_ready();
+
+	    websocket.onclose = function(event) {
+		log.debug("Socket closed:", event);
+		self._try_reconnect();
+	    };
+    	};
+    	websocket.onmessage = function(event) {
+    	    self._on_ws_message(event);
+    	};
+	websocket.onerror = function(event) {
+	    log.error("Socket error:", event);
+	};
+    },
+
+    // FIXME: notify of connection lost
+    // FIXME: remove notification when connection is restablished
+    _try_reconnect: function() {
+	var self = this;
+	var connect_count = 0;
+
+	var timer = setInterval(function() {
+	    log.info("WebSocket closed, trying to restablish connection (try {0})..."
+		     .format(connect_count));
+
+	    self._is_ready = false;
+	    delete self._websocket;
+
+	    self._create_socket(function() {
+		clearInterval(timer);
+		self._notify_waiting_callbacks();
+	    });
+
+	    connect_count++;
+	    if (connect_count > self._reconnect_retries) {
+		log.error("Connection lost with server");
+		clearInterval(timer);
+	    }
+
+	}, 2000);
     },
 
     // args: request, on_response
