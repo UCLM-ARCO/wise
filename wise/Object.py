@@ -37,3 +37,13 @@ class Observable:
                 logging.warning(
                     "Exception raised when reaching observer: {}\n"
                     "Removing observer '{}'".format(e, observer))
+
+
+class PersistentObservable(Observable):
+    def __init__(self, db, namespace):
+        # db es un objeto que encapsula el acceso a la persistencia
+        # namespace es un dominio a usar cada vez que se accede a db
+        # db.get_observers(namespace)
+        # db.add_observer(namespace, observer)
+        pass
+
