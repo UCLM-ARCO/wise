@@ -18,3 +18,4 @@ def initialize(host="127.0.0.1", port=8080, properties={}):
     admin_adapter.add(servant, "WiseAdmin")
 
     return ic
+

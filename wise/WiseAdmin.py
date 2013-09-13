@@ -2,6 +2,9 @@
 
 import json
 from tornado import websocket
+import cPickle as pickle
+import os
+import time
 
 from .Transceiver import TransceiverFactory
 from .Exceptions import ProtocolException
@@ -46,17 +49,50 @@ class ActiveHandler(websocket.WebSocketHandler):
 class WiseAdmin:
     def __init__(self, ic):
         self._ic = ic
+        self._endpoints = []
         self._already_registered = []
 
+        self._db_filename = self._ic.getProperty("WiseSaver.dbfile")
+        if self._db_filename is None:
+            self._db_filename = "WiseSaver.db"
+
+        self._restore_from_db()
+
     def create_socket(self, endpoint, current=None):
+        self._do_create_socket(endpoint)
+        self._save_on_db(endpoint)
+
+    def _restore_from_db(self):
+        if not os.path.exists(self._db_filename):
+            return
+
+        with file(self._db_filename) as src:
+            endpoints = pickle.load(src)
+            for ts, e in endpoints:
+                self._do_create_socket(e)
+
+    def _save_on_db(self, endpoint):
+        now = int(time.time() / 60)  # stored in minutes
+        self._endpoints.append((now, endpoint))
+
+        # remove oldest endpoints
+        endpoints = []
+        for ts, endp in self._endpoints:
+            if (now - ts) > 14400:   # 10 days (24*60*10)
+                continue
+            endpoints.append((ts, endp))
+
+        with file(self._db_filename, "w") as dst:
+            pickle.dump(endpoints, dst)
+
+    def _do_create_socket(self, endpoint):
         locator = "^/{}$".format(endpoint['ws_name'])
         if locator in self._already_registered:
-            logging.info(("WiseAdmin: already registered handler for '{}', "
-                          "nothing done".format(locator)))
+            logging.info("WiseAdmin: already registered handler for '{}', "
+                         "nothing done".format(locator))
             return
 
         self._already_registered.append(locator)
-
         logging.info("WiseAdmin: create socket for '-w {} -h {} -p {}' endpoint".format(
                      endpoint['ws_name'], endpoint['host'], endpoint['port']))
 

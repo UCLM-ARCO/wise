@@ -73,6 +73,15 @@ class Communicator(Thread):
 
         return retval
 
+    def getProperty(self, key):
+        return self._properties.get(key, None)
+
+    def getPropertyWithDefault(self, key, default):
+        try:
+            return self._properties[key]
+        except KeyError:
+            return default
+
     def run(self):
         prefix = "TornadoApp."
         properties = self.getPropertiesForPrefix(prefix, True)
