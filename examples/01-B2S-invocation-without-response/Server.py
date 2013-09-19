@@ -7,24 +7,24 @@ pwd = os.path.abspath(os.path.dirname(__file__))
 import wise
 
 
-class Servant:
-    def set_message(self, message, current=None):
+class Printer:
+    def write(self, message, current=None):
         print "Message received: '{}'".format(message)
 
 
 class Server:
     def __init__(self):
-        ic = wise.initialize()
+        broker = wise.initialize()
 
-        adapter = ic.createObjectAdapter("ServerAdapter", "ws")
-        adapter.add(Servant(), "Server")
+        adapter = broker.createObjectAdapter("ServerAdapter", "ws")
+        adapter.add(Printer(), "printer1")
 
         # register static files handler to serve static files
-        frontend = wise.StaticFSApplication(ic, '/static/', pwd)
-        ic.registerApplication(frontend)
+        frontend = wise.StaticFSApplication(broker, '/static/', pwd)
+        broker.registerApplication(frontend)
 
-        print "Visit: http://{}:{}/static/index.html".format(ic.host, ic.port)
-        ic.waitForShutdown()
+        print "Visit: http://{}:{}/static/index.html".format(broker.host, broker.port)
+        broker.waitForShutdown()
 
 
 if __name__ == "__main__":

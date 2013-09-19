@@ -9,6 +9,7 @@ import wise
 from sulfurium import Chrome
 from examples.ServerToBrowser import Server
 
+
 class TestServerToBrowser(TestCase):
     @classmethod
     def setUpClass(cls):

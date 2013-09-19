@@ -4,10 +4,17 @@ import os
 from threading import Thread, Event
 from tornado import web, ioloop, httpserver
 
+import commodity.path as path
+
 from .ObjectAdapter import ObjectAdapter
 from .Exceptions import AlreadyRegisteredException
 from .StaticFSApplication import StaticFSApplication
 from .ProxyFactory import ProxyFactory
+
+
+WISE_JS_DIR = path.resolve_path('wise', [
+        path.find_in_ancestors('project.mk', __file__),
+        '/usr/share/pyshared'])[0]
 
 
 # Tornado has not support to dynamically adding new handlers for
@@ -149,9 +156,6 @@ class Communicator(Thread):
 
     def _register_static_files_handler(self):
         # register static files handler (to serve wise.js and others)
-        pwd = os.path.dirname(__file__)
         static_files = StaticFSApplication(
-            communicator=self,
-            locator='/wise/',
-            path=pwd)
+            communicator=self, locator='/wise/', path=WISE_JS_DIR)
         self.registerApplication(static_files)

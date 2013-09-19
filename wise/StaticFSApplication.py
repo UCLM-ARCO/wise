@@ -20,7 +20,7 @@ class StaticFSApplication(WebApplication):
         self._index = index
 
         WebApplication.__init__(self, communicator=communicator, url=path)
-        logging.debug("Serving static content from: {}".format(self._path))
+        logging.debug("Serving static content '{}' as '{}'".format(path, locator))
 
     def get_handler_url(self):
         return r"{}(.*)".format(self._locator)
