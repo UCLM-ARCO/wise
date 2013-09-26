@@ -1,20 +1,18 @@
 # -*- mode: python; coding: utf-8 -*-
 
-import os
 from threading import Thread, Event
 from tornado import web, ioloop, httpserver
-
-import commodity.path as path
+from commodity import path
 
 from .ObjectAdapter import ObjectAdapter
 from .Exceptions import AlreadyRegisteredException
 from .StaticFSApplication import StaticFSApplication
 from .ProxyFactory import ProxyFactory
+from . import Logging as logging
 
 
-WISE_JS_DIR = path.resolve_path('wise', [
-        path.find_in_ancestors('project.mk', __file__),
-        '/usr/share/pyshared'])[0]
+PROJECT_DIR = path.find_in_ancestors('project.mk', __file__)
+WISE_JS_DIR = path.resolve_path('wise', ['/usr/share/pyshared', PROJECT_DIR or ""])[0]
 
 
 # Tornado has not support to dynamically adding new handlers for
@@ -101,6 +99,7 @@ class Communicator(Thread):
 
         self._http_server = httpserver.HTTPServer(
             self._tornado, no_keep_alive=True)
+        logging.info("Communicator: http server on {}:{}".format(self.host, self.port))
         self._http_server.listen(self.port, self.host)
 
         self._register_static_files_handler()
