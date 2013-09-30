@@ -1,10 +1,18 @@
 # -*- mode: python; coding: utf-8 -*-
 
 import logging
-logging.basicConfig(level=logging.DEBUG)
+
+logging.basicConfig()
+logger = logging.getLogger("wise")
+logger.setLevel(logging.DEBUG)
+
+WHITE_BOLD = "01;01"
+YELLOW_BOLD = "01;33"
+RED_BOLD = "01;31"
+WHITE_NORMAL = "01;00"
 
 
-def _colourize(msg, color="01;00"):
+def _colourize(msg, color=WHITE_NORMAL):
     head = ""
     body = ""
 
@@ -16,15 +24,15 @@ def _colourize(msg, color="01;00"):
 
 
 def info(msg):
-    msg = _colourize(msg, "01;01")
-    logging.info(msg)
+    msg = _colourize(msg, WHITE_BOLD)
+    logger.info(msg)
 
 
 def warning(msg):
-    msg = _colourize(msg, "01;33")
-    logging.warning(msg)
+    msg = _colourize(msg, YELLOW_BOLD)
+    logger.warning(msg)
 
 
 def error(msg):
-    msg = _colourize(msg, "01;31")
-    logging.error(msg)
+    msg = _colourize(msg, RED_BOLD)
+    logger.error(msg)
