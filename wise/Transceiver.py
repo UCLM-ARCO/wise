@@ -46,9 +46,14 @@ class Transceiver:
     def _wait_response(self, request_id):
         barrier = Event()
         self._pending_responses[request_id] = [barrier, None]
-        barrier.wait()
+        ok = barrier.wait(60)
 
-        return self._pending_responses.pop(request_id)[1]
+        b, retval = self._pending_responses.pop(request_id)
+
+        if not ok:
+            raise RuntimeError("Remote object did not response in time!")
+
+        return retval
 
     def on_response(self, response):
         self._pending_responses[response.request_id][1] = response.result
