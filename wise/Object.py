@@ -1,42 +1,47 @@
 # -*- mode: python; coding: utf-8 -*-
 
 from . import Logging as logging
+from threading import Semaphore
 
 
 class Observable:
     def __init__(self):
         self.observers = []
+        self.observers_lock = Semaphore()
 
     def attach(self, observer, current):
         ws = current.adapter.getCommunicator()
         observer = ws.stringToProxy(observer)
 
-        if observer is None or observer in self.observers:
-            return
+        with self.observers_lock:
+            if observer is None or observer in self.observers:
+                return
 
-        logging.info("{}: attach view, '{}'".format(self.__class__.__name__, observer))
-        self.observers.append(observer)
+            logging.info("{}: attach view, '{}'".format(self.__class__.__name__, observer))
+            self.observers.append(observer)
 
     def detach(self, observer, current):
         ws = current.adapter.getCommunicator()
         observer = ws.stringToProxy(observer)
 
         try:
-            self.observers.remove(observer)
+            with self.observers_lock:
+                self.observers.remove(observer)
             logging.info("{}: detach view, '{}'".format(self.__class__.__name__, observer))
         except ValueError:
             pass
 
     def notify(self, method_name="notify", **kwargs):
-        for observer in self.observers[:]:
-            try:
-                method = getattr(observer, method_name)
-                method(**kwargs)
-            except Exception as e:
-                self.observers.remove(observer)
-                logging.warning(
-                    "Exception raised when reaching observer: {}\n"
-                    "Removing observer '{}'".format(e, observer))
+        with self.observers_lock:
+            for observer in self.observers[:]:
+                try:
+                    method = getattr(observer, method_name)
+                    method(**kwargs)
+                except Exception as e:
+                    self.observers.remove(observer)
+                    logging.warning(
+                        "Exception raised when reaching observer: {}\n"
+                        "Removing observer '{}'".format(e, observer))
 
 
 class PersistentObservable(Observable):
