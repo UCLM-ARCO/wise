@@ -2,7 +2,7 @@
 
 import traceback
 import json
-from threading import Event
+from threading import Event, Lock
 
 from tornado import websocket
 
@@ -25,30 +25,26 @@ class TransceiverApp(WebApplication):
 
 
 class Transceiver:
-    _handler = None
-    _request_id = 0
-    _pending_responses = {}
-
     def __init__(self, handler):
         self._handler = handler
         self._handler.set_response_callback(self.on_response)
+        self._request_id = 0
+        self._request_id_lock = Lock()
+        self._pending_responses = {}
 
     def send_request(self, request):
-        request_id = self._request_id
-        self._request_id += 1
+        with self._request_id_lock:
+            request_id = self._request_id
+            self._request_id += 1
 
         request['request_id'] = request_id
         request = json.dumps(request)
-        self.send(request)
 
-        return self._wait_response(request_id)
-
-    def _wait_response(self, request_id):
         barrier = Event()
         self._pending_responses[request_id] = [barrier, None]
+        self.send(request)
         ok = barrier.wait(60)
-
-        b, retval = self._pending_responses.pop(request_id)
+        retval = self._pending_responses.pop(request_id)[1]
 
         if not ok:
             raise RuntimeError("Remote object did not response in time!")

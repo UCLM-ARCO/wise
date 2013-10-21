@@ -174,7 +174,7 @@ Observable = Class.extend({
 wise = {
 
 Transceiver: Class.extend({
-    _reconnect_retries: 30,
+    _reconnect_retries: 15,
 
     // args: endpoint, on_ready
     init: function(args) {

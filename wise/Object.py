@@ -1,11 +1,17 @@
 # -*- mode: python; coding: utf-8 -*-
 
+from threading import Lock
+from commodity.thread_ import SimpleThreadPool
+
 from . import Logging as logging
 
 
 class Observable:
     def __init__(self):
         self.observers = []
+        self.observers_lock = Lock()
+
+        self.pool = SimpleThreadPool(10)
 
     def attach(self, observer, current):
         ws = current.adapter.getCommunicator()
@@ -21,19 +27,31 @@ class Observable:
         ws = current.adapter.getCommunicator()
         observer = ws.stringToProxy(observer)
 
-        try:
+        self._do_detach(observer)
+
+    def _do_detach(self, observer):
+        with self.observers_lock:
+            if not observer in self.observers:
+                return False
+
             self.observers.remove(observer)
-            logging.info("{}: detach view, '{}'".format(self.__class__.__name__, observer))
-        except ValueError:
-            pass
+        logging.info("{}: detach view, '{}'".format(self.__class__.__name__, observer))
+        return True
 
     def notify(self, method_name="notify", **kwargs):
         for observer in self.observers[:]:
-            try:
-                method = getattr(observer, method_name)
-                method(**kwargs)
-            except Exception as e:
-                self.observers.remove(observer)
+            fields = observer.endpoint.split()
+            wsid = fields[fields.index("-w") + 1]
+
+            channel = self.pool.get_channel(int(wsid, 16))
+            channel.add(self._notify_observer, (observer, method_name,), kwargs)
+
+    def _notify_observer(self, observer, method_name, **kwargs):
+        try:
+            method = getattr(observer, method_name)
+            method(**kwargs)
+        except Exception as e:
+            if self._do_detach(observer):
                 logging.warning(
                     "Exception raised when reaching observer: {}\n"
                     "Removing observer '{}'".format(e, observer))

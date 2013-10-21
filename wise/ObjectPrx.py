@@ -53,22 +53,22 @@ class MethodHandler:
 
 class ObjectPrx:
     def __init__(self, identity, endpoint, transceiver):
-        self._identity = identity
-        self._endpoint = endpoint
+        self.identity = identity
+        self.endpoint = endpoint
         self._transceiver = transceiver
 
     def __getattr__(self, name):
         if name.startswith("__"):
             raise AttributeError(name)
 
-        return MethodHandler(self._identity, self._transceiver, name)
+        return MethodHandler(self.identity, self._transceiver, name)
 
     def __nonzero__(self):
-        return self._identity is not None and self._transceiver is not None
+        return self.identity is not None and self._transceiver is not None
 
     def __eq__(self, other):
-        return (self._identity == other._identity and
-                self._endpoint == other._endpoint)
+        return (self.identity == other.identity and
+                self.endpoint == other.endpoint)
 
     def __str__(self):
-        return "{} {}".format(self._identity, self._endpoint)
+        return "{} {}".format(self.identity, self.endpoint)
