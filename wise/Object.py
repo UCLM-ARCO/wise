@@ -1,7 +1,7 @@
 # -*- mode: python; coding: utf-8 -*-
 
 from threading import Lock
-from commodity.thread_ import SimpleThreadPool
+from commodity.thread_ import WorkerGroup
 
 from . import Logging as logging
 
@@ -11,7 +11,7 @@ class Observable:
         self.observers = []
         self.observers_lock = Lock()
 
-        self.pool = SimpleThreadPool(10)
+        self.group = WorkerGroup(10)
 
     def attach(self, observer, current):
         ws = current.adapter.getCommunicator()
@@ -43,8 +43,8 @@ class Observable:
             fields = observer.endpoint.split()
             wsid = fields[fields.index("-w") + 1]
 
-            channel = self.pool.get_channel(int(wsid, 16))
-            channel.add(self._notify_observer, (observer, method_name,), kwargs)
+            worker = self.group.get_worker(int(wsid, 16))
+            worker.add(self._notify_observer, (observer, method_name,), kwargs)
 
     def _notify_observer(self, observer, method_name, **kwargs):
         try:
