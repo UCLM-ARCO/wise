@@ -1,0 +1,40 @@
+#!/usr/bin/python -u
+# -*- mode: python; coding: utf-8 -*-
+
+import os
+import wise
+
+
+class Servant:
+    def __init__(self):
+        self.message = "initial message"
+
+    def set_message(self, message, current=None):
+        self.message = message
+
+    def get_message(self, current=None):
+        return self.message
+
+
+class Server:
+    def __init__(self, servant=None):
+        self.ic = wise.initialize()
+
+        if servant is None:
+            servant = Servant()
+
+        adapter = self.ic.createObjectAdapter("ServerAdapter", "ws")
+        adapter.add(servant, "Server")
+
+        # register static files handler to serve 'index.html'
+        pwd = os.path.abspath(os.path.dirname(__file__))
+        pwd = os.path.join(pwd, 'static')
+        frontend = wise.StaticFSApplication(self.ic, '/static/', pwd)
+        self.ic.registerApplication(frontend)
+
+    def loop(self):
+        self.ic.waitForShutdown()
+
+
+if __name__ == "__main__":
+    Server().loop()

@@ -12,7 +12,7 @@ from . import Logging as logging
 
 
 PROJECT_DIR = path.find_in_ancestors('project.mk', __file__)
-WISE_JS_DIR = path.resolve_path('wise', ['/usr/share/pyshared', PROJECT_DIR or ""])[0]
+WISE_JS_DIR = path.resolve_path('wise', [PROJECT_DIR or "", '/usr/share/pyshared'])[0]
 
 
 # Tornado has not support to dynamically adding new handlers for

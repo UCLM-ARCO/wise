@@ -1,60 +1,83 @@
 # -*- mode: python; coding: utf-8 -*-
 
+import sys
+import os
 from unittest import TestCase
 from doublex import Spy, called, ANY_ARG
 from hamcrest import assert_that, anything
 from commodity.testing import wait_that, call_with
 
 from sulfurium import Chrome
-from examples.BrowserToServer import Server
+
+sys.path.insert(0, os.path.dirname(__file__))
+from server import Server
 
 
 class TestBrowserToServer(TestCase):
+    base_url = "http://127.0.0.1:8080/static/"
+
     @classmethod
     def setUpClass(cls):
-        cls._expected_message = "other message"
+        cls.expected_message = "other message"
 
         with Spy() as servant:
             servant.set_message()
             servant.get_message(ANY_ARG).returns(
-                {'message': cls._expected_message})
-            cls._servant = servant
+                {'message': cls.expected_message})
+            servant.get_error().raises(RuntimeError("Error"))
+            cls.servant = servant
 
-        cls._server = Server(cls._servant)
-        cls._browser = Chrome()
+        cls.server = Server(cls.servant)
+        cls.browser = Chrome(left_open=False)
 
     @classmethod
     def tearDownClass(cls):
-        del cls._server
-        del cls._browser
+        del cls.server
+        del cls.browser
 
     def test_browser_to_server_no_response(self):
         # open server url
-        self._browser.open(self._server.url)
+        url = self.base_url + "invocation_from_browser_to_server_test.html"
+        self.browser.open(url)
+
+        message = 'the message'
+        self.browser.find_element("#message").set_value(message)
 
         # click on button 'set'
-        button = self._browser.find_element('#set_button')
+        button = self.browser.find_element('#set-button')
         button.click()
 
         # verify spy is called
-        wait_that(self._servant.set_message, called())
-        assert_that(self._servant.set_message,
-                    called().with_args(message='the message',
-                                       current=anything()))
+        wait_that(self.servant.set_message,
+                  called().with_args(message=message, current=anything()))
 
     def test_browser_to_server_with_response(self):
         # open server url
-        self._browser.open(self._server.url)
+        url = self.base_url + "invocation_from_browser_to_server_test.html"
+        self.browser.open(url)
 
         # click on button
-        button = self._browser.find_element('#get_button')
+        button = self.browser.find_element('#get-button')
         button.click()
 
         # verify that div has content from servant
-        # FIXME: if you do not mean args, remove with_args assertion
-        wait_that(self._servant.get_message,
-                  called().with_args(current=anything()))
+        wait_that(self.servant.get_message, called())
 
-        banner = self._browser.find_element('#banner')
-        assert_that(banner.get_attribute,
-                    call_with("value").returns(self._expected_message))
+        message = self.browser.find_element('#message')
+        assert_that(message.get_value,
+                    call_with().returns(self.expected_message))
+
+    def test_browser_to_server_with_exception(self):
+        # open server url
+        url = self.base_url + "invocation_from_browser_to_server_test.html"
+        self.browser.open(url)
+
+        # click on button
+        button = self.browser.find_element('#error-button')
+        button.click()
+
+        # verify that div has content from servant
+        wait_that(self.servant.get_message, called())
+
+        message = self.browser.find_element('#error')
+        assert_that(message.get_value, call_with().returns("WHAT?"))

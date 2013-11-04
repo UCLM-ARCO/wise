@@ -213,7 +213,7 @@ Transceiver: Class.extend({
     	    self._on_ws_message(event);
     	};
 	websocket.onerror = function(event) {
-	    log.error("Socket error:", event);
+	    log.debug("Socket error:", event);
 	};
     },
 
@@ -244,12 +244,12 @@ Transceiver: Class.extend({
 	}, 2000);
     },
 
-    // args: request, on_response
+    // args: request, callback
     send_request: function(args) {
 	log.debug("Transceiver send_request: ", args.request);
 
     	args.request.request_id = this._request_id;
-    	this._response_callbacks[this._request_id] = args.on_response;
+    	this._response_callbacks[this._request_id] = args.callback;
 
     	if (this._websocket.readyState != WebSocket.OPEN) {
     	    log.error("socket for " + this._websocket.url + " not ready, readyState: " +
@@ -353,12 +353,24 @@ Transceiver: Class.extend({
     	    return;
     	}
 
-    	callback(message.result);
+    	callback.response(message.result);
     	delete this._response_callbacks[message.request_id];
     },
 
     _parse_error: function(message) {
-    	log.error('received error from server: ' + message.error);
+    	var callback = this._response_callbacks[message.request_id];
+    	if (! callback) {
+    	    return;
+    	}
+
+	if (callback.exception == undefined) {
+	    log.error("Error received, no callback to handle it:", message.error);
+	}
+	else {
+    	    callback.exception(message.error);
+	}
+
+    	delete this._response_callbacks[message.request_id];
     },
 
     _report_invalid_message: function(message) {
@@ -373,11 +385,13 @@ TransceiverFactory: Class.extend({
     },
 
     // used by stringToProxy
-    // args: endpoint, on_response
+    // args: endpoint, callback
     get_transceiver: function(args) {
 	var transceiver = this._transceivers[args.endpoint.ws_name];
 	if (transceiver) {
-	    transceiver.notify_when_ready({ on_ready: args.on_response });
+	    transceiver.notify_when_ready({
+		on_ready: args.callback.response
+	    });
 	    return;
 	}
 
@@ -415,7 +429,7 @@ TransceiverFactory: Class.extend({
 	log.debug("TransceiverFactory._new_transceiver,", args.endpoint.ws_name);
 	var transceiver = new wise.Transceiver({
 	    endpoint: args.endpoint,
-	    on_ready: args.on_response,
+	    on_ready: args.callback.response,
 	});
 
 	this._transceivers[args.endpoint.ws_name] = transceiver;
@@ -575,7 +589,7 @@ ObjectPrx: Class.extend({
     	this._transceiver = args.transceiver;
     },
 
-    // args: request, on_response
+    // args: request, callback
     wise_invoke: function(args) {
     	args.request.identity = this._identity;
     	this._transceiver.send_request(args);
@@ -677,7 +691,7 @@ Communicator: Class.extend({
 	    endpoint: new wise.EndpointInfo(
 		args.endpoint,
 		{host: this._host, port: this._port}),
-	    on_response: bind(this, on_create_transceiver_response),
+	    callback: { response: bind(this, on_create_transceiver_response) },
 	});
 
 	// response: transceiver
@@ -691,13 +705,13 @@ Communicator: Class.extend({
 	}
     },
 
-    // args: proxy, on_response
+    // args: proxy, callback
     stringToProxy: function(args) {
 	var fields = this._get_proxy_fields(args.proxy);
 
 	this._transceiverFactory.get_transceiver({
 	    endpoint: fields.endpoint,
-	    on_response: bind(this, on_get_transceiver_response),
+	    callback: {response: bind(this, on_get_transceiver_response)},
 	});
 
 	// response: transceiver
@@ -713,17 +727,19 @@ Communicator: Class.extend({
 
 	    // build dynamic methods for remote object
 	    var transceiver = response.transceiver;
-	    base.wise_getMethodNames({ on_response: function(response) {
+	    base.wise_getMethodNames({ callback: {
+		response: function(response) {
 
-		var DerivedPrx = wise.newDerivedProxy({
-		    methods: response.result
-		});
-		var proxy = new DerivedPrx({
-		    identity: fields.identity,
-		    transceiver: transceiver
-		});
+		    var DerivedPrx = wise.newDerivedProxy({
+			methods: response.result
+		    });
+		    var proxy = new DerivedPrx({
+			identity: fields.identity,
+			transceiver: transceiver
+		    });
 
-		args.on_response({ proxy: proxy });
+		    args.callback.response({ proxy: proxy });
+		}
 	    }});
 	}
     },
@@ -748,7 +764,7 @@ Communicator: Class.extend({
 
     ready: function() {
 	// notify to sulfurium that we are ready
-	jsReady = true;
+	wiseReady = true;
     },
 }),
 
@@ -772,7 +788,7 @@ initialize: function(args) {
     // create server admin proxy
     var proxy = ic.stringToProxy({
 	proxy: "WiseAdmin -w wise -h "+ args.host +" -p "+ args.port,
-	on_response: bind(this, on_stringToProxy_response),
+	callback: {response: bind(this, on_stringToProxy_response)},
     });
 
     // response: proxy
@@ -792,7 +808,7 @@ newDerivedProxy: function(args) {
 
     function new_method(name) {
 
-	// args: params, on_response
+	// args: params, callback
 	return function(args) {
 	    if (! args)
 		args = {};
@@ -802,7 +818,7 @@ newDerivedProxy: function(args) {
 		    method: name,
 		    params: args.params
 		},
-		on_response: args.on_response
+		callback: args.callback
 	    });
 	};
     }

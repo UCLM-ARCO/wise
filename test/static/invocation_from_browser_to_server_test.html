@@ -1,0 +1,62 @@
+<html>
+  <body style="font-family: helvetica">
+
+    <script src="/wise/js/jquery-1.9.1.min.js"></script>
+    <script src="/wise/js/wise.js"></script>
+
+    <input id="message" type="text" value="Hello, World!"/>
+    <button id="set-button" onClick="set_message()">Set</button>
+    <button id="get-button" onClick="get_message()">Get</button>
+    <br>
+
+    <input id="error" type="text" value="Hello, World!"/>
+    <button id="get-error" onClick="get_error()">Get</button>
+
+    <script type="text/javascript">
+    // create the entry point which will be called automatically
+    function wise_application(args) {
+	ws = args.communicator;
+
+	// create a proxy to object in server
+	ws.stringToProxy({
+	    proxy: "Server -w ws -h 127.0.0.1 -p 8080",
+	    callback: {
+		response: on_stringToProxy_response
+	    }
+	});
+
+	// response: proxy
+	function on_stringToProxy_response(response) {
+	    // store it globally, as it would be used on UI callbacks
+	    remote = response.proxy;
+	    ws.ready();
+	}
+    }
+
+    // UI callbacks
+    function set_message() {
+	var message = $('#message').val();
+	remote.set_message({ params: {
+	    message: message
+	}});
+    }
+
+    function get_message() {
+	remote.get_message({ callback: {
+	    response: function(args) {
+		$('#message').val(args.message);
+	    },
+	}});
+    }
+
+    function get_error() {
+	remote.get_error({ callback: {
+	    exception: function(args) {
+		$('#error').val(args.error);
+	    },
+	}});
+    }
+    </script>
+
+  </body>
+</html>

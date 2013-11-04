@@ -1,0 +1,54 @@
+<html>
+  <body style="font-family: helvetica">
+
+    <script src="/wise/js/jquery-1.9.1.min.js"></script>
+    <script src="/wise/js/class.js"></script>
+    <script src="/wise/js/wise.js"></script>
+
+    <h3>12: Browser to Server, invocation with an exception</h3>
+
+    This example will send an invocation from browser to server, and server will<br>
+    raise an exception, which will be sent back to browser. <br>
+    <br>
+
+    <button onClick="send()">Make Invocation!</button>
+
+    <br><br>
+    <b>Responses from Server:</b><br>
+    <div id="responses" style="border: 1px solid #CCC; padding: 5px"></div>
+
+    <script type="text/javascript">
+    AsyncCallback = Class.extend({
+	response: function() {
+	},
+
+	exception: function(e) {
+	    $('#responses').prepend("response: '{0}'<br>".format(e));
+	},
+    });
+
+    // create the entry point which will be called automatically
+    function wise_application(args) {
+	ws = args.communicator;
+
+	// create a proxy to object in server
+	ws.stringToProxy({
+	    proxy: "Server -w ws -h 127.0.0.1 -p 8080",
+	    on_response: on_stringToProxy_response
+	});
+
+	// response: proxy
+	function on_stringToProxy_response(response) {
+	    // store it globally, as it would be used on UI callbacks
+	    remote = response.proxy;
+	}
+    }
+
+    // UI callbacks
+    function send() {
+	remote.send({ callback: new AsyncCallback() });
+    }
+    </script>
+
+  </body>
+</html>
