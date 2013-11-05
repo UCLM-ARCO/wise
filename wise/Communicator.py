@@ -158,3 +158,7 @@ class Communicator(Thread):
         static_files = StaticFSApplication(
             communicator=self, locator='/wise/', path=WISE_JS_DIR)
         self.registerApplication(static_files)
+
+    def get_url(self, location):
+        "returns a uri within the server"
+        return "http://{}:{}/{}".format(self.host, self.port, location)

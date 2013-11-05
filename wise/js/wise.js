@@ -173,6 +173,8 @@ Observable = Class.extend({
 
 wise = {
 
+no_reconnect: false,
+
 Transceiver: Class.extend({
     _reconnect_retries: 15,
 
@@ -206,7 +208,8 @@ Transceiver: Class.extend({
 
 	    websocket.onclose = function(event) {
 		log.debug("Socket closed:", event);
-		self._try_reconnect();
+		if (! wise.no_reconnect)
+		    self._try_reconnect();
 	    };
     	};
     	websocket.onmessage = function(event) {

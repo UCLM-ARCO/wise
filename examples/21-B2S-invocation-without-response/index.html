@@ -1,0 +1,47 @@
+<html>
+  <body style="font-family: helvetica">
+
+    <script src="/wise/js/jquery-1.9.1.min.js"></script>
+    <script src="/wise/js/wise.js"></script>
+
+    <h3>01: Browser to Server, invocation without response</h3>
+
+    This example will send an invocation from browser to server.<br>
+    It will send the content of the text input below.</br>
+    <br>
+
+    <input id="content" type="text" value="Hello, World!"/>
+    <button onClick="submit_message()">Submit</button>
+
+    <script type="text/javascript">
+    // wise_application() is a special function that is automatically
+    // called when the page load is completed
+    function wise_application(args) {
+	ws = args.communicator;
+
+	// create a proxy to the object in server
+	ws.stringToProxy({
+	    proxy: "printer1 -h 127.0.0.1 -p 8080 -w ws",
+	    on_response: on_stringToProxy_response
+	});
+
+	// response: proxy
+	function on_stringToProxy_response(response) {
+	    // store it globally, as it would be used on UI callbacks
+	    remote = response.proxy;
+	}
+    }
+
+    // UI callbacks
+    function submit_message() {
+	var message = $('#content').val();
+
+	// send message using the obtained proxy
+	remote.write({
+	    params: { message: message }
+	});
+    }
+    </script>
+
+  </body>
+</html>

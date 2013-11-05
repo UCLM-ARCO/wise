@@ -1,5 +1,6 @@
 # -*- mode: python; coding: utf-8 -*-
 
+import os
 import logging
 from tornado import web
 
@@ -14,6 +15,12 @@ class StaticFSApplication(WebApplication):
 
         if not locator.endswith("/"):
             locator += "/"
+
+        if not os.path.isabs(path):
+            path = os.path.abspath(path)
+
+        if not os.path.isdir(path):
+            path = os.path.dirname(path)
 
         self._locator = locator
         self._path = path
