@@ -31,7 +31,21 @@
 		identity: "Marshall",
 	    });
 
-	    ws.ready();
+	    create_proxy();
+	}
+
+	function create_proxy() {
+	    ws.stringToProxy({
+		proxy: "Server -w ws",
+		callback: {
+		    response: on_stringToProxy_response
+		}
+	    });
+
+	    function on_stringToProxy_response(response) {
+		server = response.proxy;
+		ws.ready();
+	    }
 	}
     }
     </script>

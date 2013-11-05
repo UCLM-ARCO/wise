@@ -4,6 +4,9 @@ import sys
 import os
 from unittest import TestCase
 from sulfurium import Chrome
+from doublex import Spy, called
+from hamcrest import anything
+from commodity.testing import wait_that
 
 import wise
 sys.path.insert(0, os.path.dirname(__file__))
@@ -111,32 +114,33 @@ class TestMarshalling_FromBrowserToServer(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.server = Server()
-        cls.browser = Chrome(left_open=False)
-        cls.ws = wise.initialize(port=8081)
+        with Spy() as servant:
+            servant.send_number()
+
+        cls.server = Server(servant)
+        cls.browser = Chrome(left_open=True)
+        cls.servant = servant
 
     @classmethod
     def tearDownClass(cls):
         del cls.server
         del cls.browser
-        cls.ws.shutdown()
 
     def setUp(self):
         self.browser.open(self.url)
         self.browser.js('wise.no_reconnect = true;')
-        self.remote = self.ws.stringToProxy("Marshall -w browser")
 
     def test_send_positive_integer_32bits(self):
-        pass
+        self.check_number(2 ** 32)
 
     def test_send_negative_integer_32bits(self):
-        pass
+        self.check_number(-2 ** 32)
 
     def test_send_positive_float(self):
-        pass
+        self.check_number(54450.254468)
 
     def test_send_negative_float(self):
-        pass
+        self.check_number(-54450.254468)
 
     def test_send_string(self):
         pass
@@ -155,3 +159,10 @@ class TestMarshalling_FromBrowserToServer(TestCase):
 
     def test_send_object(self):
         pass
+
+    def check_number(self, number):
+        params = "{params: { number: " + str(number) + " }}"
+        self.browser.js("server.send_number({});".format(params))
+
+        wait_that(self.servant.send_number,
+                  called().with_args(number=number, current=anything()))
