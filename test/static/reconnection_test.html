@@ -9,7 +9,7 @@
 
 	ws.stringToProxy({
 	    proxy: "Server -w testws -h 127.0.0.1 -p 8888",
-	    on_response: on_stringToProxy_response
+	    callback: { response: on_stringToProxy_response },
 	});
 
 	function on_stringToProxy_response(response) {

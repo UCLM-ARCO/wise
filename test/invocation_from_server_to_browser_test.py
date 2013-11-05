@@ -1,70 +1,72 @@
 # -*- mode: python; coding: utf-8 -*-
 
+import sys
+import os
 from unittest import TestCase
-from hamcrest import assert_that, equal_to
 from commodity.testing import wait_that, call_with
-from selenium.webdriver.remote.webelement import WebElement
+from sulfurium import Chrome
 
 import wise
-from sulfurium import Chrome
-from examples.ServerToBrowser import Server
+from wise.Exceptions import UnknownLocalException
+sys.path.insert(0, os.path.dirname(__file__))
+from server import Server
 
 
 class TestServerToBrowser(TestCase):
+    url = "http://127.0.0.1:8080/static/invocation_from_server_to_browser_test.html"
+
     @classmethod
     def setUpClass(cls):
-        cls._expected_message = "some message"
-        cls._server = Server()
-        cls._browser = Chrome()
+        cls.expected_message = "some message"
+        cls.server = Server()
+        cls.browser = Chrome(left_open=False)
+        cls.ws = wise.initialize(port = 8081)
 
     @classmethod
     def tearDownClass(cls):
-        del cls._server
-        del cls._browser
-
-    def setUp(self):
-        self._ic = wise.initialize()
+        del cls.server
+        del cls.browser
 
     def test_server_to_browser_no_response(self):
-        #-- GIVEN --------------------
-        self._browser.open(self._server.url)
-        wait_that(self._browser.is_ready, call_with().returns(True))
+        self.browser.open(self.url)
 
-        element = self._browser.find_element('#banner')
+        element = self.browser.find_element('#message')
         element.clear()
 
-        # wait until object in browser is ready
-        ready = self._browser.find_element("#ready")
-        wait_that(ready.get_attribute, call_with('checked').returns("true"))
-
-        #-- WHEN --------------------
         # set message on remote object
-        banner = self._ic.stringToProxy("Banner -e browser")
-        banner.set_message(message=self._expected_message)
+        banner = self.ws.stringToProxy("Message -w browser")
+        banner.set_message(message = self.expected_message)
 
-        #-- THEN --------------------
         # assure that invocation is dispatched correctly
-        element = self._browser.find_element('#banner')
+        element = self.browser.find_element('#message')
         wait_that(element.get_attribute,
-                  call_with("value").returns(self._expected_message))
+                  call_with("value").returns(self.expected_message))
 
-    def test_browser_to_server_with_response(self):
-        # open server url
-        self._browser.open(self._server.url)
-        wait_that(self._browser.is_ready, call_with().returns(True))
-
-        # wait until object in browser is ready
-        ready = self._browser.find_element("#ready")
-        wait_that(ready.get_attribute, call_with('checked').returns("true"))
+    def test_server_to_browser_with_response(self):
+        self.browser.open(self.url)
 
         # set message on element
-        element = self._browser.find_element('#banner')
+        element = self.browser.find_element('#message')
         element.clear()
-        element.send_keys(self._expected_message)
+        element.send_keys(self.expected_message)
 
         # get message from remote object
-        banner = self._ic.stringToProxy("Banner -e browser")
-        message = banner.get_message()
+        message = self.ws.stringToProxy("Message -w browser")
 
-        # verify that message is correct
-        assert_that(message, equal_to(self._expected_message))
+        wait_that(
+            message.get_message, call_with().returns(self.expected_message))
+
+    def test_server_to_browser_with_exception(self):
+        self.browser.open(self.url)
+
+        # get message from remote object
+        message = self.ws.stringToProxy("Message -w browser")
+
+        def object_throws_exception():
+            try:
+                message.get_error()
+                return False
+            except UnknownLocalException:
+                return True
+
+        wait_that(object_throws_exception, call_with().returns(True))

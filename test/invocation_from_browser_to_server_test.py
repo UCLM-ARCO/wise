@@ -20,11 +20,17 @@ class TestBrowserToServer(TestCase):
     def setUpClass(cls):
         cls.expected_message = "other message"
 
+        class CustomException(Exception):
+            def __init__(self, message):
+                self.message = message
+
+        cls.exception = CustomException("An error message")
+
         with Spy() as servant:
             servant.set_message()
             servant.get_message(ANY_ARG).returns(
                 {'message': cls.expected_message})
-            servant.get_error().raises(RuntimeError("Error"))
+            servant.get_error(ANY_ARG).raises(cls.exception)
             cls.servant = servant
 
         cls.server = Server(cls.servant)
@@ -77,7 +83,7 @@ class TestBrowserToServer(TestCase):
         button.click()
 
         # verify that div has content from servant
-        wait_that(self.servant.get_message, called())
+        wait_that(self.servant.get_error, called())
 
         message = self.browser.find_element('#error')
-        assert_that(message.get_value, call_with().returns("WHAT?"))
+        assert_that(message.get_value, call_with().returns(self.exception.message))

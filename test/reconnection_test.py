@@ -3,32 +3,31 @@
 import os
 from threading import Thread
 from unittest import TestCase
-
 from doublex import Spy, called
 from hamcrest import anything
-from commodity.testing import wait_that  # , call_with
-
+from commodity.testing import wait_that
 from sulfurium import Chrome
+
 import wise
 
 
 class Instance(Thread):
     def __init__(self, servant):
         Thread.__init__(self)
-        self.ic = wise.initialize(host="127.0.0.1", port=8888)
+        self.ws = wise.initialize(host="127.0.0.1", port=8888)
 
-        pwd = os.path.abspath(os.path.dirname(__file__))
-        frontend = wise.StaticFSApplication(self.ic, '/static/', pwd)
-        self.ic.registerApplication(frontend)
+        pwd = os.path.abspath(os.path.dirname(__file__) + "/static")
+        frontend = wise.StaticFSApplication(self.ws, '/static/', pwd)
+        self.ws.registerApplication(frontend)
 
-        adapter = self.ic.createObjectAdapter("ServerAdapter", "testws")
+        adapter = self.ws.createObjectAdapter("ServerAdapter", "testws")
         adapter.add(servant, "Server")
 
     def run(self):
-        self.ic.waitForShutdown()
+        self.ws.waitForShutdown()
 
     def stop(self):
-        self.ic.shutdown()
+        self.ws.shutdown()
 
 
 class Server:
@@ -66,7 +65,7 @@ class TestReconnection(TestCase):
     def test_reconnect_for_knwon_websocket_locator(self):
         self.server.start()
 
-        self.browser = Chrome(left_open=True)
+        self.browser = Chrome(left_open=False)
         self.browser.open("http://127.0.0.1:8888/static/reconnection_test.html")
 
         self.check_data_is_received(times=1)
@@ -79,56 +78,3 @@ class TestReconnection(TestCase):
                   .with_args(message="hello", current=anything())
                   .times(times))
 
-
-
-
-
-# class TestBrowserToServer(TestCase):
-#     @classmethod
-#     def setUpClass(cls):
-#         cls._expected_message = "other message"
-
-#         with Spy() as servant:
-#             servant.set_message()
-#             servant.get_message(ANY_ARG).returns(
-#                 {'message': cls._expected_message})
-#             cls._servant = servant
-
-#         cls._server = Server(cls._servant)
-#         cls._browser = Chrome()
-
-#     @classmethod
-#     def tearDownClass(cls):
-#         del cls._server
-#         del cls._browser
-
-#     def test_browser_to_server_no_response(self):
-#         # open server url
-#         self._browser.open(self._server.url)
-
-#         # click on button 'set'
-#         button = self._browser.find_element('#set_button')
-#         button.click()
-
-#         # verify spy is called
-#         wait_that(self._servant.set_message, called())
-#         assert_that(self._servant.set_message,
-#                     called().with_args(message='the message',
-#                                        current=anything()))
-
-#     def test_browser_to_server_with_response(self):
-#         # open server url
-#         self._browser.open(self._server.url)
-
-#         # click on button
-#         button = self._browser.find_element('#get_button')
-#         button.click()
-
-#         # verify that div has content from servant
-#         # FIXME: if you do not mean args, remove with_args assertion
-#         wait_that(self._servant.get_message,
-#                   called().with_args(current=anything()))
-
-#         banner = self._browser.find_element('#banner')
-#         assert_that(banner.get_attribute,
-#                     call_with("value").returns(self._expected_message))

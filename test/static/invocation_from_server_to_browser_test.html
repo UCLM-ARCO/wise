@@ -1,0 +1,48 @@
+<html>
+  <body style="font-family: helvetica">
+
+    <script src="/wise/js/jquery-1.9.1.min.js"></script>
+    <script src="/wise/js/wise.js"></script>
+
+    <input id="message" type="text" value="initial value"></input>
+
+    <script type="text/javascript">
+    Servant = Class.extend({
+	set_message: function(args) {
+	    $('#message').val(args.message)
+	},
+
+	get_message: function() {
+	    return $('#message').val();
+	},
+
+	get_error: function() {
+	    var except = { message: "There were some error" };
+	    throw except;
+	},
+    });
+
+    function wise_application(args) {
+	ws = args.communicator;
+
+	// create an object adapter to register our servant
+	ws.createObjectAdapter({
+	    name: "WebAdapter",
+	    endpoint: "-w browser",
+	    on_response: on_adapter_ready,
+	});
+
+	// args: adapter
+	function on_adapter_ready(args) {
+	    args.adapter.add({
+		servant: new Servant(),
+		identity: "Message",
+	    });
+
+	    ws.ready();
+	}
+    }
+    </script>
+
+  </body>
+</html>

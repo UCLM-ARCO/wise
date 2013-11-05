@@ -5,6 +5,11 @@ import os
 import wise
 
 
+class CustomException(Exception):
+    def __init__(self, message):
+        self.message = message
+
+
 class Servant:
     def __init__(self):
         self.message = "initial message"
@@ -14,6 +19,9 @@ class Servant:
 
     def get_message(self, current=None):
         return self.message
+
+    def get_error(self, current=None):
+        raise CustomException("There were some kind of error")
 
 
 class Server:

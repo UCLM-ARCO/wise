@@ -1,13 +1,12 @@
 # -*- mode: python; coding: utf-8 -*-
 
 import traceback
-import json
+import jsonpickle
 from threading import Event, Lock
-
 from tornado import websocket
 
 from .WebApplication import WebApplication
-from .Exceptions import ProtocolException
+from .Exceptions import ProtocolException, UnknownLocalException
 from .Current import Current
 from . import Logging as logging
 
@@ -38,21 +37,24 @@ class Transceiver:
             self._request_id += 1
 
         request['request_id'] = request_id
-        request = json.dumps(request)
+        request = jsonpickle.encode(request)
 
         barrier = Event()
         self._pending_responses[request_id] = [barrier, None]
         self.send(request)
         ok = barrier.wait(60)
-        retval = self._pending_responses.pop(request_id)[1]
+        response = self._pending_responses.pop(request_id)[1]
+
+        if response.exception:
+            raise UnknownLocalException(**response.exception)
 
         if not ok:
             raise RuntimeError("Remote object did not response in time!")
 
-        return retval
+        return response.result
 
     def on_response(self, response):
-        self._pending_responses[response.request_id][1] = response.result
+        self._pending_responses[response.request_id][1] = response
         barrier = self._pending_responses[response.request_id][0]
         barrier.set()
 
@@ -106,7 +108,7 @@ class TransceiverFactory:
 
 class RequestMessage:
     def __init__(self, message):
-        data = json.loads(message)
+        data = jsonpickle.decode(message)
 
         try:
             self.request_id = data['request_id']
@@ -186,7 +188,7 @@ class MessageHandler(websocket.WebSocketHandler):
 
         except ProtocolException as e:
             logging.warning(str(e))
-            self._notify_error(-1, str(e))
+            self._notify_error(-1, e)
 
         except Exception as e:
             traceback.print_exc()
@@ -195,7 +197,7 @@ class MessageHandler(websocket.WebSocketHandler):
             message = ("Error while calling method '{}.{}': '{}'".
                        format(request.identity, request.method, e))
             logging.warning(message)
-            self._notify_error(request.request_id, message)
+            self._notify_error(request.request_id, e)
 
     def _get_object_method(self, request):
         obj = self._find_object(request)
@@ -217,16 +219,16 @@ class MessageHandler(websocket.WebSocketHandler):
                 .format(request.identity))
         return obj
 
-    def _notify_error(self, request_id, message):
+    def _notify_error(self, request_id, error):
         response = {
             'request_id': request_id,
-            'error': message
+            'error': error
         }
-        self.write_message(json.dumps(response))
+        self.write_message(jsonpickle.encode(response))
 
     def _response(self, request_id, result):
         response = {
             'request_id': request_id,
             'result': result
         }
-        self.write_message(json.dumps(response))
+        self.write_message(jsonpickle.encode(response))

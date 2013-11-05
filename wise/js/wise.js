@@ -329,14 +329,22 @@ Transceiver: Class.extend({
     	    return;
     	}
 
-    	var result = this._object_adapter.process_request(message);
-	this._send_response({
-	    request_id: message.request_id,
-	    result: result
-	});
+	try {
+    	    var result = this._object_adapter.process_request(message);
+	    this._send_response({
+		request_id: message.request_id,
+		result: result
+	    });
+	}
+	catch (exception) {
+	    this._send_response({
+		request_id: message.request_id,
+		exception: exception
+	    });
+    	}
     },
 
-    // args: request_id, result
+    // args: request_id, result, exception
     _send_response: function(args) {
     	if (this._websocket.readyState != WebSocket.OPEN) {
     	    log.error("socket not ready, state: " +
@@ -399,7 +407,7 @@ TransceiverFactory: Class.extend({
     },
 
     // used by createObjectAdapter
-    // args: endpoint, on_response
+    // args: endpoint, callback
     create_transceiver: function(args) {
 	log.debug("TransceiverFactory: create_transceiver,", args.endpoint.ws_name);
 
@@ -416,7 +424,7 @@ TransceiverFactory: Class.extend({
 
 	this._server_admin.create_socket({
 	    params: { endpoint: args.endpoint },
-	    on_response: bind(this, on_create_socket_response),
+	    callback: {response: bind(this, on_create_socket_response) },
 	});
 
 	function on_create_socket_response() {
@@ -424,8 +432,9 @@ TransceiverFactory: Class.extend({
 	}
     },
 
-    // args: endpoint, on_response
+    // args: endpoint, callback
     _new_transceiver: function(args) {
+
 	log.debug("TransceiverFactory._new_transceiver,", args.endpoint.ws_name);
 	var transceiver = new wise.Transceiver({
 	    endpoint: args.endpoint,
@@ -534,21 +543,16 @@ ObjectAdapter: Class.extend({
 
     // args: request
     process_request: function(request) {
-    	try {
-    	    log.debug("request received: " + request.identity + "."
-    		     + request.method + "(" +
-		     JSON.stringify(request.params) + ")");
+    	log.debug("request received: " + request.identity + "."
+    		  + request.method + "(" +
+		  JSON.stringify(request.params) + ")");
 
-   	    method = this._get_object_method(request);
-    	    if (! method) {
-    		return;
-    	    }
+   	method = this._get_object_method(request);
+    	if (! method) {
+    	    return;
+    	}
 
-    	    return method(request.params);
-    	}
-    	catch(e) {
-    	    log.error("in processing request: " + e.message);
-    	}
+    	return method(request.params);
     },
 
     // args: identity, method

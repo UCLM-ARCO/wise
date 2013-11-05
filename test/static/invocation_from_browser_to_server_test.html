@@ -4,13 +4,15 @@
     <script src="/wise/js/jquery-1.9.1.min.js"></script>
     <script src="/wise/js/wise.js"></script>
 
+    Message:
     <input id="message" type="text" value="Hello, World!"/>
     <button id="set-button" onClick="set_message()">Set</button>
     <button id="get-button" onClick="get_message()">Get</button>
     <br>
 
+    Exception:
     <input id="error" type="text" value="Hello, World!"/>
-    <button id="get-error" onClick="get_error()">Get</button>
+    <button id="error-button" onClick="get_error()">Get</button>
 
     <script type="text/javascript">
     // create the entry point which will be called automatically
@@ -51,8 +53,8 @@
 
     function get_error() {
 	remote.get_error({ callback: {
-	    exception: function(args) {
-		$('#error').val(args.error);
+	    exception: function(except) {
+		$('#error').val(except.message);
 	    },
 	}});
     }

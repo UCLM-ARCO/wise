@@ -18,6 +18,7 @@ class ResponseMessage:
         try:
             self.request_id = data['request_id']
             self.result = data.get('result', None)
+            self.exception = data.get('exception', None)
         except KeyError as e:
             raise ProtocolException(
                 "Invalid message format: missing {}, received: '{}'"
