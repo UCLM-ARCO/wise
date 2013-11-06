@@ -26,22 +26,25 @@ class Servant:
 
 class Server:
     def __init__(self, servant=None):
-        self.ic = wise.initialize()
+        self.ws = wise.initialize()
 
         if servant is None:
             servant = Servant()
 
-        adapter = self.ic.createObjectAdapter("ServerAdapter", "ws")
+        adapter = self.ws.createObjectAdapter("ServerAdapter", "ws")
         adapter.add(servant, "Server")
 
         # register static files handler to serve 'index.html'
         pwd = os.path.abspath(os.path.dirname(__file__))
         pwd = os.path.join(pwd, 'static')
-        frontend = wise.StaticFSApplication(self.ic, '/static/', pwd)
-        self.ic.registerApplication(frontend)
+        frontend = wise.StaticFSApplication(self.ws, '/static/', pwd)
+        self.ws.registerApplication(frontend)
 
     def loop(self):
-        self.ic.waitForShutdown()
+        self.ws.waitForShutdown()
+
+    def stop(self):
+        self.ws.shutdown()
 
 
 if __name__ == "__main__":

@@ -121,20 +121,14 @@ class RequestMessage:
                 .format(e, message))
 
     def _convert_params(self, data):
-        retval = {}
         if not 'params' in data:
-            return retval
+            return {}
 
         params = data['params']
         if not isinstance(params, dict):
             raise ValueError("Invalid params: '{}'".format(params))
 
-        for name, value in params.items():
-            if value is None:
-                continue
-
-            retval[name] = value
-        return retval
+        return params
 
     def __str__(self):
         retval = (
