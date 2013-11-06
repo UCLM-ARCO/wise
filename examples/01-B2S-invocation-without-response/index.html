@@ -22,7 +22,7 @@
 	// create a proxy to the object in server
 	ws.stringToProxy({
 	    proxy: "printer1 -h 127.0.0.1 -p 8080 -w ws",
-	    on_response: on_stringToProxy_response
+            callback: { response: on_stringToProxy_response },
 	});
 
 	// response: proxy

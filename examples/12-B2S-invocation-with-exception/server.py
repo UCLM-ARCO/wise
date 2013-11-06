@@ -5,12 +5,17 @@ import os
 import wise
 
 
+class SomeException(Exception):
+    def __init__(self, message):
+        self.message = message
+
+
 class Servant:
     count = 0
 
     def send(self, current):
         self.count += 1
-        raise RuntimeError("This is an error condition ({})".format(self.count))
+        raise SomeException("This is an error condition ({})".format(self.count))
 
 
 class Server:

@@ -30,7 +30,7 @@
 	ws.createObjectAdapter({
 	    name: "WebAdapter",
 	    endpoint: "-w browser",
-	    on_response: on_adapter_ready,
+	    callback: { response: on_adapter_ready },
 	});
 
 	// args: adapter

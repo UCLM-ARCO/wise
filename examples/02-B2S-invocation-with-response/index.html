@@ -26,7 +26,7 @@
 	// create a proxy to object in server
 	ws.stringToProxy({
 	    proxy: "Server -w ws -h 127.0.0.1 -p 8080",
-	    on_response: on_stringToProxy_response
+	    callback: { response: on_stringToProxy_response },
 	});
 
 	// response: proxy
@@ -43,9 +43,9 @@
 	// send message using the obtained proxy
 	remote.get_chars({
 	    params: { message: message },
-	    on_response: function(args) {
+	    callback: { response: function(args) {
 		$('#responses').prepend("response: '{0}'<br>".format(args.result));
-	    }
+	    }}
 	});
     }
     </script>

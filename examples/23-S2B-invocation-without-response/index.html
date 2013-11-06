@@ -5,7 +5,7 @@
     <script src="/wise/js/class.js"></script>
     <script src="/wise/js/wise.js"></script>
 
-    <h3>03: Server to Browser, invocation without response</h3>
+    <h3>23: Server to Browser, invocation without response</h3>
 
     In this example, the server will send invocations to browser, without response from<br>
     browser part. The content of invocations will be shown below.</br>
@@ -30,7 +30,7 @@
 	ws.createObjectAdapter({
 	    name: "WebAdapter",
 	    endpoint: "-w browser",
-	    on_response: on_adapter_ready,
+	    callback: { response: on_adapter_ready },
 	});
 
 	// args: adapter

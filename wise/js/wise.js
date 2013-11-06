@@ -689,7 +689,7 @@ Communicator: Class.extend({
 	this._transceiverFactory = new wise.TransceiverFactory();
     },
 
-    // args: name, endpoint, on_response
+    // args: name, endpoint, callback
     createObjectAdapter: function(args) {
 	if (args.name in this._adapters)
 	    throw "AlreadyRegisteredException"
@@ -708,7 +708,7 @@ Communicator: Class.extend({
 	    });
 
 	    this._adapters[args.name] = adapter;
-	    args.on_response({ adapter: adapter });
+	    args.callback.response({ adapter: adapter });
 	}
     },
 
@@ -775,7 +775,7 @@ Communicator: Class.extend({
     },
 }),
 
-// args: host, post, on_response
+// args: host, post, on_ready
 initialize: function(args) {
     if (args.port == undefined)
 	args.port = location.port;

@@ -5,13 +5,13 @@
     <script src="/wise/js/class.js"></script>
     <script src="/wise/js/wise.js"></script>
 
-    <h3>02: Browser to Server, invocation with response</h3>
+    <h3>22: Browser to Server, invocation with response</h3>
 
     This example will send an invocation from browser to server, and server will<br>
     send back some response. It will use the content of the text input below.</br>
     <br/>
 
-    <input id="content" type="text" value="Hello, World!"/>
+    <input id="content" type="text" value="12.5"/>
     <button onClick="submit_message()">Submit</button>
 
     <br><br>
@@ -26,7 +26,7 @@
 	// create a proxy to object in server
 	ws.stringToProxy({
 	    proxy: "Server -h 127.0.0.1 -p 8080 -w ws",
-	    on_response: on_stringToProxy_response
+	    callback: { response: on_stringToProxy_response },
 	});
 
 	// response: proxy
@@ -40,20 +40,14 @@
     function submit_message() {
 	var message = $('#content').val();
 
-	// send message using the obtained proxy
-//	remote.upper({
-//	    params: { message: message },
-//	    on_response: function(args) {
-//		$('#responses').prepend("response: '{0}'<br/>".format(args.result));
-//	    }
-//	});
-
         var value = parseInt(message);
         remote.absa({
             params: {value: value},
-            on_response: function(args) {
-		$('#responses').prepend("response: '{0}'<br/>".format(args.result));
-            }
+            callback: {
+		response: function(args) {
+		    $('#responses').prepend("response: '{0}'<br/>".format(args.result));
+		}
+	    },
         });
     }
     </script>

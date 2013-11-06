@@ -19,11 +19,8 @@
 
     <script type="text/javascript">
     AsyncCallback = Class.extend({
-	response: function() {
-	},
-
 	exception: function(e) {
-	    $('#responses').prepend("response: '{0}'<br>".format(e));
+	    $('#responses').prepend("response: '{0}'<br>".format(e.message));
 	},
     });
 
@@ -34,7 +31,7 @@
 	// create a proxy to object in server
 	ws.stringToProxy({
 	    proxy: "Server -w ws -h 127.0.0.1 -p 8080",
-	    on_response: on_stringToProxy_response
+	    callback: { response: on_stringToProxy_response },
 	});
 
 	// response: proxy

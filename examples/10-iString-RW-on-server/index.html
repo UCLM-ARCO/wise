@@ -22,7 +22,7 @@
 	function on_communicator_ready(response) {
 	    response.communicator.stringToProxy({
 		proxy: "Server -w ws -h 127.0.0.1 -p 7000",
-		on_response: on_stringToProxy_response
+		callback: { response: on_stringToProxy_response },
 	    });
 	};
 
@@ -43,9 +43,9 @@
 
     function on_get_clicked() {
 	banner.get_message({
-	    on_response: function(args) {
+	    callback: { response: function(args) {
 		$('#banner').val(args.result);
-	    }
+	    }}
 	});
     }
     </script>

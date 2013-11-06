@@ -31,7 +31,7 @@
 	ws.createObjectAdapter({
 	    name: "WebAdapter",
 	    endpoint: "-w browser",
-	    on_response: on_adapter_ready,
+	    callback: { response: on_adapter_ready },
 	});
 
 	// args: adapter
@@ -43,12 +43,12 @@
 	    // create a proxy to observable in server
 	    ws.stringToProxy({
 		proxy: "Observable -w ws",
-		on_response: function(args) {
+		callback: { response: function(args) {
 		    args.proxy.attach({
 			params: { observer: observer.toString() },
-			on_response: ws.ready,
+			callback: { response: ws.ready },
 		    });
-		}
+		}}
 	    });
 	}
     }

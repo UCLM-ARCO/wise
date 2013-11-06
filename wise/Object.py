@@ -43,7 +43,7 @@ class Observable:
             fields = observer.endpoint.split()
             wsid = fields[fields.index("-w") + 1]
 
-            worker = self.group.get_worker(int(wsid, 16))
+            worker = self.group.get_worker(hash(wsid))
             worker.add(self._notify_observer, (observer, method_name,), kwargs)
 
     def _notify_observer(self, observer, method_name, **kwargs):
