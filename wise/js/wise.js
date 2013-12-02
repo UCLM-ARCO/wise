@@ -296,11 +296,15 @@ Transceiver: Class.extend({
 	this._waiting_callbacks.push(args.on_ready);
     },
 
-    // FIXME: if there is a proxy in params, change it for the
-    // stringfied version of the proxy
     _prepare_params: function(params) {
 	if (params == undefined)
 	    return;
+
+	for (var i in params) {
+	    var p = params[i];
+	    if (p instanceof wise.ObjectPrx)
+		params[i] = p.toString();
+	}
     },
 
     _on_ws_message: function(event) {
