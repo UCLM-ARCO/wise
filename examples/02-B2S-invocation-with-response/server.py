@@ -2,9 +2,6 @@
 # -*- mode: python; coding: utf-8 -*-
 
 import string
-import os
-pwd = os.path.abspath(os.path.dirname(__file__))
-
 import wise
 
 
@@ -14,26 +11,25 @@ class Servant:
         print "Message received: '{}', return: '{}'".format(message, chars)
         return chars
 
-    def _used_chars(self, msg):
+    def _used_chars(self, text):
         """ Return the sorted list of used characters in given string """
-        chars = [x for x in msg if x in string.letters or x in string.digits]
-        chars = "".join(sorted(list(set(chars))))
+        chars = [x for x in text if x in string.letters + string.digits]
+        chars = str.join("", sorted(list(set(chars))))
         return chars
 
 
 class Server:
     def __init__(self):
-        ic = wise.initialize()
+        broker = wise.initialize()
 
-        adapter = ic.createObjectAdapter("ServerAdapter", "ws")
+        adapter = broker.createObjectAdapter("ServerAdapter", "ws1")
         adapter.add(Servant(), "Server")
 
-        # register static files handler to serve 'index.html'
-        frontend = wise.StaticFSApplication(ic, '/static/', pwd, "index.html")
-        ic.registerApplication(frontend)
+        broker.register_StaticFS('/static', wise.dirname(__file__))
 
-        print "Visit: http://{}:{}/static/index.html".format(ic.host, ic.port)
-        ic.waitForShutdown()
+        print("Open: {}".format(broker.get_url('static/index.html')))
+
+        broker.waitForShutdown()
 
 
 if __name__ == "__main__":

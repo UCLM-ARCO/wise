@@ -1,17 +1,28 @@
 <html>
-  <body style="font-family: helvetica">
+  <body style="font-family: helvetica; width: 600px">
 
     <script src="/wise/js/jquery-1.9.1.min.js"></script>
     <script src="/wise/js/wise.js"></script>
 
     <h3>01: Browser to Server, invocation without response</h3>
 
-    This example will send an invocation from browser to server.<br>
-    It will send the content of the text input below.</br>
-    <br>
+    <p>
+      In this example we have a wise client in the browser that is going
+      to invoke the write() method over a object running at server.
+    </p>
 
-    <input id="content" type="text" value="Hello, World!"/>
-    <button onClick="submit_message()">Submit</button>
+    <p>
+      The content of the text input below will be taken as invocation
+      parameter. Push the "invoke!" button and see the server console
+      output.
+    </p>
+
+    printer.write(<input id="content" type="text" value="Hello, World!"/>) <br/>
+    <button onClick="submit_message()">invoke!</button>
+
+    <p>
+       (Control-F5 forces page refresh)
+    </p>
 
     <script type="text/javascript">
     // wise_application() is a special function that is automatically
@@ -19,16 +30,16 @@
     function wise_application(args) {
 	ws = args.communicator;
 
-	// create a proxy to the object in server
+	// create a proxy to the remote object
 	ws.stringToProxy({
-	    proxy: "printer1 -h 127.0.0.1 -p 8080 -w ws",
+	    proxy: "printer1 -h 127.0.0.1 -p 8080 -w ws1",
             callback: { response: on_stringToProxy_response },
 	});
 
 	// response: proxy
 	function on_stringToProxy_response(response) {
 	    // store it globally, as it would be used on UI callbacks
-	    remote = response.proxy;
+	    printer = response.proxy;
 	}
     }
 
@@ -37,7 +48,7 @@
 	var message = $('#content').val();
 
 	// send message using the obtained proxy
-	remote.write({
+	printer.write({
 	    params: { message: message }
 	});
     }

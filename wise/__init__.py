@@ -1,4 +1,5 @@
 # -*- mode: python; coding: utf-8 -*-
+import os
 
 from .Communicator import Communicator
 from .WiseAdmin import WiseAdmin
@@ -19,3 +20,14 @@ def initialize(host="127.0.0.1", port=8080, properties={}):
 
     return ic
 
+
+def dirname(path):
+    return os.path.abspath(os.path.dirname(path))
+
+
+class Application(object):
+    def __init__(self):
+        self.broker = initialize()
+
+    def main(self, argv=None):
+        self.run(argv or [])

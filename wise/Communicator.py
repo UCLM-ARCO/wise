@@ -162,3 +162,8 @@ class Communicator(Thread):
     def get_url(self, location):
         "returns a uri within the server"
         return "http://{}:{}/{}".format(self.host, self.port, location)
+
+    def register_StaticFS(self, locator, path, index=''):
+        frontend = StaticFSApplication(self, locator, path, index)
+        self.registerApplication(frontend)
+        return frontend

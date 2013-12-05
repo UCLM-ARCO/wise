@@ -1,0 +1,55 @@
+<html>
+  <body style="font-family:helvetica; width:600px">
+
+    <script src="/wise/js/jquery-1.9.1.min.js"></script>
+    <script src="/wise/js/class.js"></script>
+    <script src="/wise/js/wise.js"></script>
+
+    <h3>02: Browser to Server, invocation with response</h3>
+
+    <p>
+    This example will send an invocation from browser to server, and server will
+    send back some response. It will use the content of the input below.
+    </p>
+
+    math.factorial(<input id="content" type="text" value="6"/>)<br/>
+    <button onClick="invoke_proxy()">invoke!</button>
+
+    <h4>Server replies</h4>
+
+    <div id="responses" style="border: 1px solid #CCC; padding: 5px"></div>
+
+    <script type="text/javascript">
+    // create the entry point which will be called automatically
+    function wise_application(args) {
+	ws = args.communicator;
+
+	// create a proxy to object in server
+	ws.stringToProxy({
+	    proxy: "math1 -w ws1 -h 127.0.0.1 -p 8080",
+	    callback: { response: on_stringToProxy_response },
+	});
+
+	// response: proxy
+	function on_stringToProxy_response(response) {
+	    // store it globally, as it would be used on UI callbacks
+	    proxy = response.proxy;
+	}
+    }
+
+    // UI callbacks
+    function invoke_proxy() {
+	var value = parseInt($('#content').val());
+
+	// send value using the obtained proxy
+	proxy.factorial({
+	    params: { value: value },
+	    callback: { response: function(args) {
+		$('#responses').prepend("response: '{0}'<br/>".format(args.result));
+	    }}
+	});
+    }
+    </script>
+
+  </body>
+</html>
