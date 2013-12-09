@@ -10,42 +10,24 @@
     <script src="/wise/js/wise.js"></script>
 
     <script type="text/javascript">
-    // create communicator and proxy to server
-    $(window).ready(function() {
-	wise.initialize({
-	    host: "127.0.0.1",
-	    port: 7000,
-	    on_ready: on_communicator_ready,
-	});
+    function wise_application(ws) {
+	ws.stringToProxy("Server -w ws").on_response(on_stringToProxy_response);
 
-	// response: communicator
-	function on_communicator_ready(response) {
-	    response.communicator.stringToProxy({
-		proxy: "Server -w ws -h 127.0.0.1 -p 7000",
-		callback: { response: on_stringToProxy_response },
-	    });
+	function on_stringToProxy_response(proxy) {
+	    log.info("Server '" + proxy + "'");
+	    banner = proxy;
 	};
-
-	// response: proxy
-	function on_stringToProxy_response(response) {
-	    log.info("Server '" + response.proxy + "'");
-	    banner = response.proxy;
-	};
-    });
+    };
 
     // UI callbacks
     function on_set_clicked() {
 	var message = $('#banner').val();
-	banner.set_message({
-	    params: { message: message }
-	});
+	banner.set_message(message);
     }
 
     function on_get_clicked() {
-	banner.get_message({
-	    callback: { response: function(args) {
-		$('#banner').val(args.result);
-	    }}
+	banner.get_message().on_response(function(message) {
+	    $('#banner').val(message);
 	});
     }
     </script>

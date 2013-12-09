@@ -23,7 +23,7 @@ class Server:
             time.sleep(1)
 
             msg = "Hello, World! ({})".format(i)
-            self._observable.notify("set_message", message=msg)
+            self._observable.notify("set_message", msg)
             print("Message sent: {}".format(msg))
 
 

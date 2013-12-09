@@ -11,33 +11,21 @@
     <br>
 
     <input id="content" type="text" value="Hello, World!"/>
-    <button onClick="submit_message()">Submit</button>
+    <button onClick="send_message()">Send</button>
 
     <script type="text/javascript">
-    // wise_application() is a function that is automatically
-    // called when the page load is completed
-    function wise_application(args) {
-	ws = args.communicator;
+    function wise_application(ws) {
+	ws.stringToProxy("printer1 -h 127.0.0.1 -p 8080 -w ws1")
+	    .on_response(on_stringToProxy_response);
 
-	// create a proxy to the object in server
-	ws.stringToProxy({
-	    proxy: "printer1 -h 127.0.0.1 -p 8080 -w ws",
-            callback: { response: on_stringToProxy_response },
-	});
-
-	// response: proxy
-	function on_stringToProxy_response(response) {
-	    // store it globally, as it would be used on UI callbacks
-	    remote = response.proxy;
+	function on_stringToProxy_response(proxy) {
+	    remote = proxy;
 	}
     }
 
     // UI callbacks
-    function submit_message() {
-	var message = $('#content').val();
-
-	// send message using the obtained proxy
-	remote.write({ message: message });
+    function send_message() {
+	remote.write($('#content').val());
     }
     </script>
 

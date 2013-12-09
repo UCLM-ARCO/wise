@@ -14,7 +14,7 @@ class Server:
         self.send_messages(broker)
 
     def send_messages(self, broker):
-        for i in range(10):
+        for i in range(1000):
             time.sleep(1)
             remote = broker.stringToProxy("Message -w browser")
 
@@ -22,7 +22,7 @@ class Server:
                 print("Browser is not ready yet...")
                 continue
 
-            remote.set_message(message="Hello, World! ({})".format(i))
+            remote.set_message("Hello, World! ({})".format(i))
 
 
 if __name__ == "__main__":

@@ -7,10 +7,10 @@ class MethodHandler:
         self._transceiver = transceiver
         self._method_name = method_name
 
-    def __call__(self, *args, **kwargs):
-        params = {}
-        for name, value in kwargs.items():
-            params[name] = self._convert_to_json_compatible(value)
+    def __call__(self, *args):
+        params = [
+            self._convert_to_json_compatible(value)
+            for value in args]
 
         return self._transceiver.send_request(
             {'identity': self._identity,

@@ -16,12 +16,13 @@ class TransceiverApp(WebApplication):
     def __init__(self, communicator, url, adapter):
         WebApplication.__init__(self, communicator, url)
         self._adapter = adapter
+        self._thread_pool = SimpleThreadPool(1)
 
     def get_handler_class(self):
         return MessageHandler
 
     def get_handler_params(self):
-        return {'adapter': self._adapter}
+        return {'adapter': self._adapter, 'thread_pool': self._thread_pool}
 
 
 class Transceiver:
@@ -126,29 +127,25 @@ class RequestMessage:
             return {}
 
         params = data['params']
-        if not isinstance(params, dict):
+        if not isinstance(params, list):
             raise ValueError("Invalid params: '{}'".format(params))
 
         return params
 
     def __str__(self):
-        retval = (
+        return (
             "request_id: {}\n"
             "identity: {}\n"
             "method: {}\n"
-            "params: {{\n"
-            .format(self.request_id, self.identity, self.method))
-        for name, value in self.params.items():
-            retval += "  {}: {}\n".format(name, value)
-        retval += "}\n"
-        return retval
+            "params: {}\n"
+            .format(self.request_id, self.identity, self.method, self.params))
 
 
 class MessageHandler(websocket.WebSocketHandler):
-    def initialize(self, adapter):
+    def initialize(self, adapter, thread_pool):
         self._adapter = adapter
         self._is_closed = False
-        self._thread_pool = SimpleThreadPool(1)
+        self._thread_pool = thread_pool
 
     def open(self):
         endpoint = self._adapter.getEndpoint()
@@ -164,9 +161,9 @@ class MessageHandler(websocket.WebSocketHandler):
         return self._is_closed
 
     def on_message(self, message):
-        self._thread_pool.add(self.async_on_message, (message,))
+        self._thread_pool.add(self.on_message_async, (message,))
 
-    def async_on_message(self, message):
+    def on_message_async(self, message):
         try:
             request = RequestMessage(message)
             method = self._get_object_method(request)
@@ -175,13 +172,10 @@ class MessageHandler(websocket.WebSocketHandler):
 
             current = Current(self, self._adapter)
             try:
-                retval = method(current=current, **request.params)
+                retval = method(*request.params + [current])
             except TypeError as e:
                 logging.error("Invalid Params: '{}'".format(request.params))
                 raise
-
-            if not isinstance(retval, dict):
-                retval = {'result': retval}
 
             self._response(request.request_id, retval)
 
@@ -230,4 +224,5 @@ class MessageHandler(websocket.WebSocketHandler):
             'request_id': request_id,
             'result': result
         }
+
         self.write_message(jsonpickle.encode(response))

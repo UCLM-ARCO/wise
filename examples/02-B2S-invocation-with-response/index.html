@@ -20,20 +20,12 @@
     <div id="responses" style="border: 1px solid #CCC; padding: 5px"></div>
 
     <script type="text/javascript">
-    // create the entry point which will be called automatically
-    function wise_application(args) {
-	ws = args.communicator;
+    function wise_application(ws) {
+	ws.stringToProxy("Server -w ws1 -h 127.0.0.1 -p 8080")
+	    .on_response(on_stringToProxy_response);
 
-	// create a proxy to object in server
-	ws.stringToProxy({
-	    proxy: "Server -w ws1 -h 127.0.0.1 -p 8080",
-	    callback: { response: on_stringToProxy_response },
-	});
-
-	// response: proxy
-	function on_stringToProxy_response(response) {
-	    // store it globally, as it would be used on UI callbacks
-	    remote = response.proxy;
+	function on_stringToProxy_response(proxy) {
+	    remote = proxy;
 	}
     }
 
@@ -41,8 +33,7 @@
     function submit_message() {
 	var message = $('#content').val();
 
-	// send message using the obtained proxy
-	remote.get_chars({ message: message })
+	remote.get_chars(message)
 	    .on_response(function(result) {
 		$('#responses').prepend("response: '{0}'<br>".format(result));
 	    });

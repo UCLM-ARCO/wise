@@ -1,5 +1,5 @@
 <html>
-  <body style="font-family: helvetica; width: 600px"">
+  <body style="font-family: helvetica; width: 600px">
 
     <script src="/wise/js/jquery-1.9.1.min.js"></script>
     <script src="/wise/js/class.js"></script>
@@ -23,39 +23,24 @@
 
     <script type="text/javascript">
     Servant = Class.extend({
-	// args: message
-	set_message: function(args) {
-	    $('#messages').prepend("'{0}'<br/>".format(args.message));
+	set_message: function(message) {
+	    $('#messages').prepend("'{0}'<br/>".format(message));
 	},
     });
 
-    // create the entry point which will be called automatically
-    function wise_application(args) {
-	ws = args.communicator;
+    function wise_application(ws) {
+	ws.createObjectAdapter("WebAdapter","-w browser")
+	    .on_response(on_adapter_ready);
 
-	// create an object adapter to register our servant
-	ws.createObjectAdapter({
-	    name: "WebAdapter",
-	    endpoint: "-w browser",
-	    callback: { response: on_adapter_ready },
-	});
+	function on_adapter_ready(adapter) {
+	    var observer = adapter.addWithUUID(new Servant());
 
-	// args: adapter
-	function on_adapter_ready(args) {
+	    ws.stringToProxy("Observable -w ws")
+		.on_response(on_stringToProxy_response);
 
-	    // register servant on adapter
-	    var observer = args.adapter.addWithUUID({ servant: new Servant() });
-
-	    // create a proxy to observable in server
-	    ws.stringToProxy({
-		proxy: "Observable -w ws",
-		callback: { response: function(args) {
-		    args.proxy.attach({
-			params: { observer: observer.toString() },
-			callback: { response: ws.ready },
-		    });
-		}}
-	    });
+	    function on_stringToProxy_response(proxy) {
+		proxy.attach(observer).on_response(ws.ready);
+	    }
 	}
     }
     </script>

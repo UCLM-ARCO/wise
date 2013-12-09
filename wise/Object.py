@@ -38,18 +38,21 @@ class Observable:
         logging.info("{}: detach view, '{}'".format(self.__class__.__name__, observer))
         return True
 
-    def notify(self, method_name="notify", **kwargs):
+    def notify(self, method_name, *args):
+        if not method_name:
+            method_name = "notify"
+
         for observer in self.observers[:]:
             fields = observer.endpoint.split()
             wsid = fields[fields.index("-w") + 1]
 
             worker = self.group.get_worker(hash(wsid))
-            worker.add(self._notify_observer, (observer, method_name,), kwargs)
+            worker.add(self._notify_observer, (observer, method_name,) + args)
 
-    def _notify_observer(self, observer, method_name, **kwargs):
+    def _notify_observer(self, observer, method_name, *args):
         try:
             method = getattr(observer, method_name)
-            method(**kwargs)
+            method(*args)
         except Exception as e:
             if self._do_detach(observer):
                 logging.warning(

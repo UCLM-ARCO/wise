@@ -53,9 +53,9 @@ class WiseAdmin:
         self._endpoints = []
         self._already_registered = []
 
-        self._db_filename = self._ic.getProperty("WiseSaver.dbfile")
+        self._db_filename = self._ic.getProperty("Wise.DBFile")
         if self._db_filename is None:
-            self._db_filename = "WiseSaver.db"
+            self._db_filename = "wise.db"
 
         self._restore_from_db()
 

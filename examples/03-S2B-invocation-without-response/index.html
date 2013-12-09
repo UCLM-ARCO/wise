@@ -22,33 +22,17 @@
 
     <script type="text/javascript">
     Servant = Class.extend({
-	// args: message
-	set_message: function(args) {
-	    $('#messages').prepend("'{0}'<br/>".format(args.message));
+	set_message: function(message) {
+	    $('#messages').prepend("'{0}'<br/>".format(message));
 	},
     });
 
-    // create the entry point which will be called automatically
-    function wise_application(args) {
-	ws = args.communicator;
+    function wise_application(ws) {
+	ws.createObjectAdapter("WebAdapter", "-w browser")
+	    .on_response(on_adapter_ready);
 
-	// create an object adapter to register the servant
-	ws.createObjectAdapter({
-	    name: "WebAdapter",
-	    endpoint: "-w browser",
-	    callback: { response: on_adapter_ready },
-	});
-
-	// args: adapter
-	function on_adapter_ready(args) {
-
-	    // register servant on adapter
-	    args.adapter.add({
-		servant: new Servant(),
-		identity: "Message",
-	    });
-
-	    // notify that this part is ready
+	function on_adapter_ready(adapter) {
+	    adapter.add(new Servant(), "Message");
 	    ws.ready();
 	}
     }

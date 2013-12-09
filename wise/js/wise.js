@@ -178,17 +178,16 @@ no_reconnect: false,
 Transceiver: Class.extend({
     _reconnect_retries: 15,
 
-    // args: endpoint, on_ready
-    init: function(args) {
+    init: function(endpoint, promise) {
     	this._response_callbacks = {};
     	this._request_id = 0;
-	this._endpoint_info = args.endpoint;
-	this._waiting_callbacks = [args.on_ready];
+	this._endpoint_info = endpoint;
+	this._waiting_callbacks = [bind(promise, promise.response)];
 	this._is_ready = false;
 
-	this._socket_url = "ws://" + args.endpoint.host +
-	    ":" +  args.endpoint.port + "/" +
-	    args.endpoint.ws_name;
+	this._socket_url = "ws://" + endpoint.host +
+	    ":" +  endpoint.port + "/" +
+	    endpoint.ws_name;
 
 	log.debug("new WebSocket: " + this._socket_url);
 	this._create_socket(bind(this, this._notify_waiting_callbacks));
@@ -278,9 +277,7 @@ Transceiver: Class.extend({
 
     _notify_waiting_callbacks: function() {
 	for (var i=0; i<this._waiting_callbacks.length; i++) {
-	    this._waiting_callbacks[i]({
-		transceiver: this,
-	    });
+	    this._waiting_callbacks[i](this);
 	}
 	this._is_ready = true;
 	this._waiting_callbacks = [];
@@ -400,25 +397,26 @@ TransceiverFactory: Class.extend({
     },
 
     // used by stringToProxy
-    // args: endpoint, callback
-    get_transceiver: function(args) {
-	var transceiver = this._transceivers[args.endpoint.ws_name];
+    get_transceiver: function(endpoint) {
+	log.debug("TransceiverFactory: get_transceiver,", endpoint.ws_name);
+
+	var transceiver = this._transceivers[endpoint.ws_name];
+	var promise = new wise.Promise();
+
 	if (transceiver) {
-	    transceiver.notify_when_ready({
-		on_ready: args.callback.response
-	    });
+	    transceiver.notify_when_ready(promise.response);
 	    return;
 	}
 
-	this._new_transceiver(args);
+	this._new_transceiver(endpoint, promise);
+	return promise;
     },
 
     // used by createObjectAdapter
-    // args: endpoint, callback
-    create_transceiver: function(args) {
-	log.debug("TransceiverFactory: create_transceiver,", args.endpoint.ws_name);
+    create_transceiver: function(endpoint) {
+	log.debug("TransceiverFactory: create_transceiver,", endpoint.ws_name);
 
-	var transceiver = this._transceivers[args.endpoint.ws_name];
+	var transceiver = this._transceivers[endpoint.ws_name];
 	if (transceiver) {
 	    throw "AlreadyUsedEndpoint";
 	}
@@ -429,24 +427,21 @@ TransceiverFactory: Class.extend({
 		   "Communicator not fully initialized");
 	}
 
-	this._server_admin.create_socket({ endpoint: args.endpoint })
+	this._server_admin.create_socket(endpoint)
 	    .on_response(bind(this, on_create_socket_response));
 
+	var promise = new wise.Promise();
 	function on_create_socket_response() {
-	    this._new_transceiver(args);
+	    this._new_transceiver(endpoint, promise);
 	}
+
+	return promise;
     },
 
-    // args: endpoint, callback
-    _new_transceiver: function(args) {
-
-	log.debug("TransceiverFactory._new_transceiver,", args.endpoint.ws_name);
-	var transceiver = new wise.Transceiver({
-	    endpoint: args.endpoint,
-	    on_ready: args.callback.response,
-	});
-
-	this._transceivers[args.endpoint.ws_name] = transceiver;
+    _new_transceiver: function(endpoint, promise) {
+	log.debug("TransceiverFactory._new_transceiver,", endpoint.ws_name);
+	var transceiver = new wise.Transceiver(endpoint, promise);
+	this._transceivers[endpoint.ws_name] = transceiver;
     },
 }),
 
@@ -508,97 +503,76 @@ EndpointInfo: Class.extend({
 }),
 
 ObjectAdapter: Class.extend({
-    // args: transceiver
-    init: function(args) {
+    init: function(transceiver) {
     	this._asm = {};
 
-	this._transceiver = args.transceiver;
+	this._transceiver = transceiver;
 	this._transceiver.link_to_adapter(this);
     },
 
-    // args: servant, identity
-    add: function(args) {
-    	this._asm[args.identity] = args.servant;
+    add: function(servant, identity) {
+    	this._asm[identity] = servant;
 
-	log.debug("Adding object: " + args.identity);
-	return this.createProxy({
-	    identity: args.identity
-	});
+	log.debug("Adding object: " + identity);
+	return this.createProxy(identity);
     },
 
-    // args: servant
-    addWithUUID: function(args) {
-	args.identity = wise.Util.generate_UUID();
-	return this.add(args);
+    addWithUUID: function(servant) {
+	var identity = wise.Util.generate_UUID();
+	return this.add(servant, identity);
     },
 
-    // args: identity
-    remove: function(args) {
-	log.debug("Removing object: " + args.identity);
-	delete this._asm[args.identity];
+    remove: function(identity) {
+	log.debug("Removing object: " + identity);
+	delete this._asm[identity];
     },
 
-    // args: identity
-    createProxy: function(args) {
+    createProxy: function(identity) {
 	return new wise.ObjectPrx({
-	    identity: args.identity,
-	    transceiver: this._transceiver,
+	    identity: identity,
+	    transceiver: this._transceiver
 	});
     },
 
-    // args: request
     process_request: function(request) {
     	log.debug("request received: " + request.identity + "."
     		  + request.method + "(" +
 		  JSON.stringify(request.params) + ")");
 
-   	method = this._get_object_method(request);
-    	if (! method) {
-    	    return;
-    	}
+	var obj = this._find_object(request.identity);
 
-    	return method(request.params);
-    },
-
-    // args: identity, method
-    _get_object_method: function(args) {
-    	var object = this._find_object(args);
-    	if (! object) {
-    	    return;
-    	}
-
-    	var method = object[args.method];
-    	if (! method) {
-    	    log.error("Unknown method: '" + args.method + "'");
+	if (! request.method in obj) {
+	    // FIXME: raise an exception and serialize it to client
+	    log.error("Unknown method: '" + request.method + "'");
 	    return;
-    	}
+	}
 
-    	return bind(object, method);
+	obj[request.method].apply(obj, request.params);
     },
 
-    // args: identity
-    _find_object: function(args) {
-    	var object = this._asm[args.identity];
+    _find_object: function(identity) {
+    	var object = this._asm[identity];
     	if (! object) {
-    	    log.error("Unknown object: '" + args.identity + "'");
+	    // FIXME: raise an exception and serialize it to client
+    	    log.error("Unknown object: '" + identity + "'");
     	}
     	return object;
     },
 }),
 
 ObjectPrx: Class.extend({
-    // args: identity, transceiver
+    // args: (identity, transceiver) || base
     init: function(args) {
 	if (args.base) {
-	    args.identity = args.base.wise_getIdentity();
-	    args.transceiver = args.base.wise_getTransceiver();
+	    this._identity = args.base.wise_getIdentity();
+	    this._transceiver = args.base.wise_getTransceiver();
+	    return;
 	}
 
     	this._identity = args.identity;
     	this._transceiver = args.transceiver;
     },
 
-    // args: request, callback
     wise_invoke: function(args) {
     	args.request.identity = this._identity;
     	this._transceiver.send_request(args);
@@ -692,47 +666,44 @@ Communicator: Class.extend({
     },
 
     // args: name, endpoint, callback
-    createObjectAdapter: function(args) {
-	if (args.name in this._adapters)
+    createObjectAdapter: function(name, endpoint) {
+	if (name in this._adapters)
 	    throw "AlreadyRegisteredException"
 
-	var transceiver = this._transceiverFactory.create_transceiver({
-	    endpoint: new wise.EndpointInfo(
-		args.endpoint,
-		{host: this._host, port: this._port}),
-	    callback: { response: bind(this, on_create_transceiver_response) },
-	});
+	var transceiver = this._transceiverFactory.create_transceiver(
+	    new wise.EndpointInfo(endpoint, {host: this._host, port: this._port}))
+	    .on_response(bind(this, on_create_transceiver_response));
 
-	// response: transceiver
-	function on_create_transceiver_response(response) {
-	    var adapter = new wise.ObjectAdapter({
-		transceiver: response.transceiver
-	    });
-
-	    this._adapters[args.name] = adapter;
-	    args.callback.response({ adapter: adapter });
+	var promise = new wise.Promise();
+	function on_create_transceiver_response(transceiver) {
+	    var adapter = new wise.ObjectAdapter(transceiver);
+	    this._adapters[name] = adapter;
+	    promise.response(adapter);
 	}
+
+	return promise;
     },
 
-    // args: proxy, callback
-    stringToProxy: function(args) {
-	var fields = this._get_proxy_fields(args.proxy);
+    stringToProxy: function(str_proxy) {
+	var fields = this._get_proxy_fields(str_proxy);
 
-	this._transceiverFactory.get_transceiver({
-	    endpoint: fields.endpoint,
-	    callback: {response: bind(this, on_get_transceiver_response)},
-	});
+	this._transceiverFactory.get_transceiver(fields.endpoint)
+	    .on_response(bind(this, on_get_transceiver_response));
 
-	// response: transceiver
-	function on_get_transceiver_response(response) {
+	var promise = new wise.Promise();
+	function on_get_transceiver_response(transceiver) {
 	    var WisePrx = wise.newDerivedProxy({
 	    	methods: ['wise_getMethodNames']
 	    });
 
 	    var base = new WisePrx({
 	    	identity: fields.identity,
-	    	transceiver: response.transceiver,
+	    	transceiver: transceiver,
 	    });
+
+	    // build dynamic methods for remote object
+	    base.wise_getMethodNames()
+		.on_response(on_getMethodNames_response);
 
 	    function on_getMethodNames_response(result) {
 		var DerivedPrx = wise.newDerivedProxy({
@@ -743,13 +714,11 @@ Communicator: Class.extend({
 		    transceiver: transceiver
 		});
 
-		args.callback.response({ proxy: proxy });
+		promise.response(proxy);
 	    }
-
-	    // build dynamic methods for remote object
-	    var transceiver = response.transceiver;
-	    base.wise_getMethodNames().on_response(on_getMethodNames_response);
 	}
+
+	return promise;
     },
 
     _get_proxy_fields: function(proxy) {
@@ -776,13 +745,13 @@ Communicator: Class.extend({
     },
 }),
 
-// args: host, post, on_ready
-initialize: function(args) {
-    if (args.port == undefined)
-	args.port = location.port;
+// args: host, port, on_ready
+initialize: function(host, port) {
+    if (port == undefined)
+	port = location.port;
 
-    if (args.host == undefined)
-	args.host = location.hostname;
+    if (host == undefined)
+	host = location.hostname;
 
     // create root logger for Wise
     log = new wise.Logger();
@@ -791,23 +760,22 @@ initialize: function(args) {
     }
 
     // create communicator
-    var ic = new wise.Communicator({ host: args.host, port: args.port });
+    var ic = new wise.Communicator({ host: host, port: port });
 
     // create server admin proxy
-    var proxy = ic.stringToProxy({
-	proxy: "WiseAdmin -w wise -h "+ args.host +" -p "+ args.port,
-	callback: {response: bind(this, on_stringToProxy_response)},
-    });
+    var proxy = ic.stringToProxy("WiseAdmin -w wise -h "+ host +" -p "+ port)
+	.on_response(bind(this, on_stringToProxy_response));
 
     // response: proxy
-    function on_stringToProxy_response(response) {
-        var AdminPrx = wise.newDerivedProxy({ methods: ['create_socket'] });
-	wise.TransceiverFactory.prototype._server_admin =
-	    new AdminPrx({ base: response.proxy });
+    var promise = new wise.Promise();
+    function on_stringToProxy_response(proxy) {
+	wise.TransceiverFactory.prototype._server_admin = proxy;
 
 	// finish intialization
-	args.on_ready({ communicator: ic });
+	promise.response(ic);
     }
+
+    return promise;
 },
 
 Promise: Class.extend({
@@ -815,11 +783,11 @@ Promise: Class.extend({
 	this._on_response_callback = callback;
     },
 
-    response: function(args) {
+    response: function(result) {
 	if (this._on_response_callback == undefined)
 	    return;
 
-	this._on_response_callback(args.result);
+	this._on_response_callback(result);
     },
 
     on_error: function(callback) {
@@ -843,14 +811,11 @@ newDerivedProxy: function(args) {
     function new_method(name) {
 
 	var promise = new wise.Promise();
-	return function(params) {
-	    if (! params)
-		params = {};
-
+	return function() {
 	    this.wise_invoke({
 		request: {
 		    method: name,
-		    params: params,
+		    params: Array.prototype.slice.call(arguments),
 		},
 		callback: promise
 	    });
@@ -880,7 +845,7 @@ $(window).ready(function() {
 	return;
     }
 
-    wise.initialize({ on_ready: function(args) {
-	wise_application(args);
-    }});
+    wise.initialize().on_response(function(ws) {
+	wise_application(ws);
+    });
 });
