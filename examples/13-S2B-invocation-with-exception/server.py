@@ -8,11 +8,6 @@ import wise
 from wise.Exceptions import UnknownLocalException
 
 
-class SomeException(Exception):
-    def __init__(self, message):
-        self.message = message
-
-
 class Server:
     def __init__(self):
         ws = wise.initialize()
