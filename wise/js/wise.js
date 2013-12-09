@@ -378,11 +378,11 @@ Transceiver: Class.extend({
     	    return;
     	}
 
-	if (callback.exception == undefined) {
+	if (callback.error == undefined) {
 	    log.error("Error received, no callback to handle it:", message.error);
 	}
 	else {
-    	    callback.exception(message.error);
+    	    callback.error(message.error);
 	}
 
     	delete this._response_callbacks[message.request_id];
@@ -736,22 +736,21 @@ Communicator: Class.extend({
 	    	transceiver: response.transceiver,
 	    });
 
+	    function on_getMethodNames_response(result) {
+		var DerivedPrx = wise.newDerivedProxy({
+		    methods: result
+		});
+		var proxy = new DerivedPrx({
+		    identity: fields.identity,
+		    transceiver: transceiver
+		});
+
+		args.callback.response({ proxy: proxy });
+	    }
+
 	    // build dynamic methods for remote object
 	    var transceiver = response.transceiver;
-	    base.wise_getMethodNames({ callback: {
-		response: function(response) {
-
-		    var DerivedPrx = wise.newDerivedProxy({
-			methods: response.result
-		    });
-		    var proxy = new DerivedPrx({
-			identity: fields.identity,
-			transceiver: transceiver
-		    });
-
-		    args.callback.response({ proxy: proxy });
-		}
-	    }});
+	    base.wise_getMethodNames().on_response(on_getMethodNames_response);
 	}
     },
 
@@ -813,24 +812,51 @@ initialize: function(args) {
     }
 },
 
+Promise: Class.extend({
+    on_response: function(callback) {
+	this._on_response_callback = callback;
+    },
+
+    response: function(args) {
+	if (this._on_response_callback == undefined)
+	    return;
+
+	this._on_response_callback(args.result);
+    },
+
+    on_error: function(callback) {
+	this._on_error_callback = callback;
+    },
+
+    error: function(error) {
+	if (this._on_error_callback == undefined) {
+	    log.error("Error received, no callback to handle it:", error);
+	    return;
+	}
+
+	this._on_error_callback(error);
+    },
+}),
+
 // args: methods
 newDerivedProxy: function(args) {
     var methods = {};
 
     function new_method(name) {
 
-	// args: params, callback
-	return function(args) {
-	    if (! args)
-		args = {};
+	var promise = new wise.Promise();
+	return function(params) {
+	    if (! params)
+		params = {};
 
 	    this.wise_invoke({
 		request: {
 		    method: name,
-		    params: args.params
+		    params: params,
 		},
-		callback: args.callback
+		callback: promise
 	    });
+	    return promise;
 	};
     }
 

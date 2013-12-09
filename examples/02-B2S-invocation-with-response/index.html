@@ -42,12 +42,10 @@
 	var message = $('#content').val();
 
 	// send message using the obtained proxy
-	remote.get_chars({
-	    params: { message: message },
-	    callback: { response: function(args) {
-		$('#responses').prepend("response: '{0}'<br/>".format(args.result));
-	    }}
-	});
+	remote.get_chars({ message: message })
+	    .on_response(function(result) {
+		$('#responses').prepend("response: '{0}'<br>".format(result));
+	    });
     }
     </script>
 

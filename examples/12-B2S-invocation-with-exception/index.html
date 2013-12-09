@@ -18,12 +18,6 @@
     <div id="responses" style="border: 1px solid #CCC; padding: 5px"></div>
 
     <script type="text/javascript">
-    AsyncCallback = Class.extend({
-	exception: function(e) {
-	    $('#responses').prepend("response: '{0}'<br>".format(e.message));
-	},
-    });
-
     // create the entry point which will be called automatically
     function wise_application(args) {
 	ws = args.communicator;
@@ -43,7 +37,10 @@
 
     // UI callbacks
     function send() {
-	remote.send({ callback: new AsyncCallback() });
+	remote.send()
+	    .on_error(function(error) {
+	    	$('#responses').prepend("response: '{0}'<br>".format(error.message));
+	    });
     }
     </script>
 
