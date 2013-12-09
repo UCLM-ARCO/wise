@@ -1,5 +1,5 @@
 <html>
-  <body style="font-family: helvetica; width: 600px"">
+  <body style="font-family: helvetica; width: 600px">
 
     <script src="/wise/js/jquery-1.9.1.min.js"></script>
     <script src="/wise/js/class.js"></script>
@@ -59,20 +59,21 @@
 
 	// args: adapter
 	function on_adapter_ready(args) {
-
-	    // register servant on adapter
 	    var observer = args.adapter.addWithUUID({ servant: new Servant() });
 
 	    // create a proxy to observable in server
 	    ws.stringToProxy({
 		proxy: "chat1 -w ws1",
-		callback: { response: function(args) {
-		    args.proxy.subscribe({
-			params: { observer: observer.toString() },
-			callback: { response: ws.ready },
-		    });
-		}}
+		callback: { response: on_stringToProxy_response }
 	    });
+
+	    // ws.stringToProxy("chat1 -w ws1")
+	    // 	.on_response(on_stringToProxy_response);
+
+	    function on_stringToProxy_response(args) {
+		args.proxy.subscribe({ observer: observer.toString() })
+		    .on_response(ws.ready);
+	    }
 	}
     }
 
@@ -81,9 +82,7 @@
 	var message = $('#content').val();
 
 	// send message using the obtained proxy
-	chat.send_to_all({
-	    params: { nick: "client", message: message }
-	});
+	chat.send_to_all({ nick: "client", message: message });
     }
     </script>
 

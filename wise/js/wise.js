@@ -429,10 +429,8 @@ TransceiverFactory: Class.extend({
 		   "Communicator not fully initialized");
 	}
 
-	this._server_admin.create_socket({
-	    params: { endpoint: args.endpoint },
-	    callback: {response: bind(this, on_create_socket_response) },
-	});
+	this._server_admin.create_socket({ endpoint: args.endpoint })
+	    .on_response(bind(this, on_create_socket_response));
 
 	function on_create_socket_response() {
 	    this._new_transceiver(args);

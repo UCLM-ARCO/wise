@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- mode:python; coding:utf-8; tab-width:4 -*-
 
-import time
 import wise
 
 
@@ -14,7 +13,10 @@ class Observable(object):
 
     def notify(self, **args):
         for ob in self.observers:
-            ob(**args)
+            try:
+                ob(**args)
+            except Exception:
+                self.observers.remove(ob)
 
 
 class Chat(Observable):
@@ -32,27 +34,12 @@ class Chat(Observable):
 class Server:
     def __init__(self):
         self.chat = Chat()
-
         broker = wise.initialize()
-
         adapter = broker.createObjectAdapter("ServerAdapter", "ws1")
         adapter.add(self.chat, "chat1")
-
         broker.register_StaticFS('/static', wise.dirname(__file__))
-
         print("Open: {}".format(broker.get_url('static/index.html')))
-
         broker.waitForShutdown()
-
-#         time.sleep(5)
-#         self.send_messages(broker)
-#
-#     def send_messages(self, broker):
-#         for i in range(10):
-#             time.sleep(1)
-#
-#             msg = "Hello, World! ({})".format(i)
-#             self.chat.send_to_all("server", msg)
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ import traceback
 import jsonpickle
 from threading import Event, Lock
 from tornado import websocket
+from commodity.thread_ import SimpleThreadPool
 
 from .WebApplication import WebApplication
 from .Exceptions import ProtocolException, UnknownLocalException
@@ -42,14 +43,14 @@ class Transceiver:
         barrier = Event()
         self._pending_responses[request_id] = [barrier, None]
         self.send(request)
-        ok = barrier.wait(60)
+        ok = barrier.wait(5)
         response = self._pending_responses.pop(request_id)[1]
-
-        if response.exception:
-            raise UnknownLocalException(**response.exception)
 
         if not ok:
             raise RuntimeError("Remote object did not response in time!")
+
+        if response.exception:
+            raise UnknownLocalException(**response.exception)
 
         return response.result
 
@@ -94,8 +95,8 @@ class TransceiverFactory:
 
         handler = cls._handlers.get(wslocator, None)
         if not handler:
-            logging.error("TransceiverFactory: ERROR: no handler for websocket '{}'".format(
-                          wslocator))
+            logging.error("TransceiverFactory: ERROR: no handler for websocket '{}'"
+                          .format(wslocator))
 
             return None
 
@@ -147,6 +148,7 @@ class MessageHandler(websocket.WebSocketHandler):
     def initialize(self, adapter):
         self._adapter = adapter
         self._is_closed = False
+        self._thread_pool = SimpleThreadPool(1)
 
     def open(self):
         endpoint = self._adapter.getEndpoint()
@@ -162,6 +164,9 @@ class MessageHandler(websocket.WebSocketHandler):
         return self._is_closed
 
     def on_message(self, message):
+        self._thread_pool.add(self.async_on_message, (message,))
+
+    def async_on_message(self, message):
         try:
             request = RequestMessage(message)
             method = self._get_object_method(request)
