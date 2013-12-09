@@ -1,25 +1,31 @@
 <html>
-  <body style="font-family: helvetica">
+  <body style="font-family: helvetica; width: 600px"">
 
     <script src="/wise/js/jquery-1.9.1.min.js"></script>
     <script src="/wise/js/class.js"></script>
     <script src="/wise/js/wise.js"></script>
 
-    <h3>05: B2S and S2B, registering an observer</h3>
+    <h3>05: browser <-> server, browser object as a server model observer</h3>
 
-    In this example, the browser holds a servant which is registered in the server.</br>
-    Once this is done, the server will make an invocation on the registered servant.</br>
-    None of the invocations will have a response.<br>
-    <br>
+    <p>
+      In this example, the browser holds a servant which is registered
+      in the server.  Once this is done, the server will make an
+      invocation on the registered servant.  None of the invocations
+      will have a response.
+    </p>
 
-    <b>Server Messages:</b><br>
+    <h4>Server Messages</h4>
     <div id="messages" style="border: 1px solid #CCC; padding: 5px"></div>
+
+    <p>
+       (Control-F5 forces page refresh)
+    </p>
 
     <script type="text/javascript">
     Servant = Class.extend({
 	// args: message
 	set_message: function(args) {
-	    $('#messages').prepend("'{0}'<br>".format(args.message));
+	    $('#messages').prepend("'{0}'<br/>".format(args.message));
 	},
     });
 

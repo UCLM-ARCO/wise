@@ -7,18 +7,24 @@
 
     <h3>03: Server to Browser, invocation without response</h3>
 
-    In this example, the server will send invocations to browser, without response from<br>
-    browser part. The content of invocations will be shown below.</br>
-    <br>
+    <p>
+    In this example, the server will send invocations to browser,
+    without response from browser part. The content of invocations
+    will be shown below.
+    </p>
 
-    <b>Server Messages:</b><br>
+    <h4>Server Messages:</h4>
     <div id="messages" style="border: 1px solid #CCC; padding: 5px"></div>
+
+    <p>
+       (Control-F5 forces page refresh)
+    </p>
 
     <script type="text/javascript">
     Servant = Class.extend({
 	// args: message
 	set_message: function(args) {
-	    $('#messages').prepend("'{0}'<br>".format(args.message));
+	    $('#messages').prepend("'{0}'<br/>".format(args.message));
 	},
     });
 
@@ -26,7 +32,7 @@
     function wise_application(args) {
 	ws = args.communicator;
 
-	// create an object adapter to register our servant
+	// create an object adapter to register the servant
 	ws.createObjectAdapter({
 	    name: "WebAdapter",
 	    endpoint: "-w browser",

@@ -7,37 +7,27 @@
 
     <h3>04: Server to Browser, invocation with response</h3>
 
-    In this example, the server will send invocations to browser, and browser will<br>
-    response something. The content of invocations will be shown below.</br>
-    <br>
+    <p>
+    In this example, the server will send invocations to browser, and browser will
+    response something. The content of invocations will be shown below.
+    </p>
 
-    <b>Server Messages:</b><br>
+    <h4>Server Messages</h4>
     <div id="messages" style="border: 1px solid #CCC; padding: 5px"></div>
+
+    <p>
+       (Control-F5 forces page refresh)
+    </p>
 
     <script type="text/javascript">
     Servant = Class.extend({
 	// args: message
-	set_message: function(args) {
-	    var retval = this._get_used_chars(args.message);
-	    $('#messages').prepend("'{0}', returned: '{1}'<br>".format(
+	message_len: function(args) {
+	    var retval = args.message.length;
+	    $('#messages').prepend("message_len('{0}'), retval: '{1}'<br/>".format(
 		args.message, retval));
 
 	    return retval;
-	},
-
-	_get_used_chars: function(msg) {
-	    var regexp = /^[a-zA-Z]$/;
-	    var chars = [];
-	    var i = msg.length;
-
-	    while (i--) {
-		var c = msg[i];
-		if (regexp.test(c) && chars.indexOf(c) == -1)
-		    chars.push(c);
-	    }
-
-	    chars.sort();
-	    return chars.join("");
 	},
     });
 

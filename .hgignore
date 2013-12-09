@@ -4,4 +4,3 @@ syntax: glob
 *.log
 *~
 *.db
-
