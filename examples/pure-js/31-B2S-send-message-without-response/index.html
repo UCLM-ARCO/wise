@@ -1,0 +1,30 @@
+    <!-- ref: http://www.tutorialspoint.com/html5/html5_websocket.htm -->
+<html>
+  <body style="font-family: helvetica">
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <h3>Websocket Example: Browser to Server, send a message without response</h3>
+
+    In this example, the client will send a message to server, without response from<br>
+      server part. The content of invocations will be shown below.</br>
+    <br>
+
+      <input id="content" type="text" value="Hello, World!"/>
+	<button onClick="submit_message()">Submit</button>
+	<br>
+            <script type="text/javascript">
+            if ("WebSocket" in window){
+		var ws = new WebSocket("ws://localhost:8080/send-hello");
+	    }
+            else {
+		// The browser doesn't support WebSocket
+		alert("WebSocket NOT supported by your Browser!");
+	    }
+
+            function submit_message(){
+		var message = $('#content').val();
+		ws.send(message);
+                $('#messages').prepend(message + "<br \>");
+	    }
+      </script>
+  </body>
+</html>
