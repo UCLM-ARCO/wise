@@ -16,9 +16,9 @@ class Server:
         broker.register_StaticFS('/static', wise.dirname(__file__))
         print("Open: {}".format(broker.get_url('static/index.html')))
         time.sleep(5)
-        self.send_messages(broker)
+        self.send_messages()
 
-    def send_messages(self, broker):
+    def send_messages(self):
         for i in range(10):
             time.sleep(1)
 

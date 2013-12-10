@@ -11,23 +11,26 @@ class Observable(object):
     def attach(self, func):
         self.observers.append(func)
 
-    def notify(self, **args):
+    def detach(self, func):
+        self.observers.remove(func)
+
+    def notify(self, *args):
         for ob in self.observers:
             try:
-                ob(**args)
+                ob(*args)
             except Exception:
-                self.observers.remove(ob)
+                self.detach(ob)
 
 
 class Chat(Observable):
     def send_to_all(self, nick, message, current=None):
-        self.notify(nick=nick, message=message)
+        self.notify(nick, message)
 
     def subscribe(self, observer, current=None):
         broker = current.adapter.getCommunicator()
         observer = broker.stringToProxy(observer)
         self.attach(observer.send)
-        observer.send(nick="server", message="Welcome to the wise chat")
+        observer.send("server", "Welcome to the wise chat")
         self.send_to_all("server", "New chat member: FIXME")
 
 
@@ -38,6 +41,7 @@ class Server:
         adapter = broker.createObjectAdapter("ServerAdapter", "ws1")
         adapter.add(self.chat, "chat1")
         broker.register_StaticFS('/static', wise.dirname(__file__))
+
         print("Open: {}".format(broker.get_url('static/index.html')))
         broker.waitForShutdown()
 

@@ -29,7 +29,7 @@
     });
 
     function wise_application(ws) {
-	ws.createObjectAdapter("WebAdapter","-w browser")
+	ws.createObjectAdapter("WebAdapter")
 	    .on_response(on_adapter_ready);
 
 	function on_adapter_ready(adapter) {

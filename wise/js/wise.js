@@ -284,13 +284,13 @@ Transceiver: Class.extend({
     },
 
     // args: on_ready
-    notify_when_ready: function(args) {
+    notify_when_ready: function(response) {
 	if (this._is_ready) {
-	    args.on_ready({ transceiver: this });
+	    response(this);
 	    return;
 	}
 
-	this._waiting_callbacks.push(args.on_ready);
+	this._waiting_callbacks.push(response);
     },
 
     _prepare_params: function(params) {
@@ -405,7 +405,7 @@ TransceiverFactory: Class.extend({
 
 	if (transceiver) {
 	    transceiver.notify_when_ready(promise.response);
-	    return;
+	    return promise;
 	}
 
 	this._new_transceiver(endpoint, promise);
