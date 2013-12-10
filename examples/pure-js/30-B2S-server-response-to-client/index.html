@@ -1,0 +1,44 @@
+    <!-- ref: http://www.tutorialspoint.com/html5/html5_websocket.htm -->
+<html>
+  <body style="font-family: helvetica">
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <h3>Websocket Example: Server to Browser, two-way communication</h3>
+
+    In this example, the server will send messages to browser, and browser<br>
+      will send messages to server. The content of invocations will be shown below.</br>
+    <br>
+
+      <input id="content" type="text" value="Hello, World!"/>
+	<button onClick="submit_message()">Submit</button>
+	<br>
+	  <b>Responses fom Server:</b><br>
+            <div id="responses" style="border: 1px solid #CCC; padding: 5px"></div>
+	    <br>
+            <script type="text/javascript">
+            if ("WebSocket" in window){
+		var ws = new WebSocket("ws://localhost:8080/send-hello");
+
+		ws.onopen = function() {
+		    ws.send("Socket Opened");
+		};
+		ws.onmessage = function (evt) {
+		    var message = evt.data;
+		    $('#responses').prepend(message + "<br \>");
+		};
+		ws.onclose = function()
+		{
+		    ws.send("Socket Closed");
+		};
+	    }
+            else {
+		// The browser doesn't support WebSocket
+		alert("WebSocket NOT supported by your Browser!");
+	    }
+
+            function submit_message(){
+		var message = $('#content').val();
+		ws.send(message);
+	    }
+      </script>
+  </body>
+</html>

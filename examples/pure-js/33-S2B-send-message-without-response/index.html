@@ -1,0 +1,28 @@
+    <!-- ref: http://www.tutorialspoint.com/html5/html5_websocket.htm -->
+<html>
+  <body style="font-family: helvetica">
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <h3>Websocket Example: Server to Browser, invocation without response</h3>
+
+    In this example, the server will send invocations to browser, without response from<br>
+      browser part. The content of invocations will be shown below.</br>
+    <br>
+      <b>Responses fom Server:</b><br>
+	<div id="responses" style="border: 1px solid #CCC; padding: 5px"></div>
+	<br>
+	  <script type="text/javascript">
+            if ("WebSocket" in window){
+		var ws = new WebSocket("ws://localhost:8080/send-hello");
+
+                ws.onmessage = function (evt) {
+		    var message = evt.data;
+		    $('#responses').prepend(message + "<br \>");
+		};
+	    }
+            else {
+		// The browser doesn't support WebSocket
+		alert("WebSocket NOT supported by your Browser!");
+	    }
+	  </script>
+  </body>
+</html>
