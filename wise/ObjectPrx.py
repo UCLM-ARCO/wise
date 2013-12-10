@@ -57,6 +57,9 @@ class ObjectPrx:
         self.endpoint = endpoint
         self._transceiver = transceiver
 
+    def wise_getIdentity(self):
+        return self.identity
+
     def __getattr__(self, name):
         if name.startswith("__"):
             raise AttributeError(name)

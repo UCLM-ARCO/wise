@@ -276,14 +276,14 @@ Transceiver: Class.extend({
     },
 
     _notify_waiting_callbacks: function() {
+	this._is_ready = true;
 	for (var i=0; i<this._waiting_callbacks.length; i++) {
 	    this._waiting_callbacks[i](this);
 	}
-	this._is_ready = true;
+
 	this._waiting_callbacks = [];
     },
 
-    // args: on_ready
     notify_when_ready: function(response) {
 	if (this._is_ready) {
 	    response(this);
@@ -404,7 +404,7 @@ TransceiverFactory: Class.extend({
 	var promise = new wise.Promise();
 
 	if (transceiver) {
-	    transceiver.notify_when_ready(promise.response);
+	    transceiver.notify_when_ready(bind(promise, promise.response));
 	    return promise;
 	}
 
@@ -637,8 +637,15 @@ Logger: Class.extend({
 	this._notify(arguments, 'info');
     },
 
-    error: function() {
+    warning: function() {
 	if (this._level > 2)
+	    return;
+
+	this._notify(arguments, 'error');
+    },
+
+    error: function() {
+	if (this._level > 3)
 	    return;
 
 	this._notify(arguments, 'error');
@@ -780,23 +787,36 @@ initialize: function(host, port) {
 
 Promise: Class.extend({
     on_response: function(callback) {
+	if (this._cached_result != undefined) {
+	    callback(this._cached_result);
+	    return;
+	}
+
 	this._on_response_callback = callback;
     },
 
     response: function(result) {
-	if (this._on_response_callback == undefined)
+	if (this._on_response_callback == undefined) {
+	    this._cached_result = result;
 	    return;
+	}
 
 	this._on_response_callback(result);
     },
 
     on_error: function(callback) {
+	if (this._cached_error != undefined) {
+	    callback(this._cached_error);
+	    return;
+	}
+
 	this._on_error_callback = callback;
     },
 
     error: function(error) {
 	if (this._on_error_callback == undefined) {
-	    log.error("Error received, no callback to handle it:", error);
+	    log.warning("Error received, no callback to handle it:", error);
+	    this._cached_error = error;
 	    return;
 	}
 

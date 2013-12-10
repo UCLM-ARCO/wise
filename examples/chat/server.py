@@ -8,36 +8,64 @@ class Observable(object):
     def __init__(self):
         self.observers = []
 
-    def attach(self, func):
-        self.observers.append(func)
+    def attach(self, observer):
+        self.observers.append(observer)
 
-    def detach(self, func):
-        self.observers.remove(func)
+    def detach(self, observer):
+        self.observers.remove(observer)
 
-    def notify(self, *args):
-        for ob in self.observers:
+    def notify(self, method, *args):
+        for ob in self.observers[:]:
             try:
-                ob(*args)
+                getattr(ob, method)(*args)
             except Exception:
                 self.detach(ob)
 
 
-class Chat(Observable):
-    def send_to_all(self, nick, message, current=None):
-        self.notify(nick, message)
+class AlreadySubscribed(Exception):
+    pass
 
-    def subscribe(self, observer, current=None):
+
+class RemoveCurrent:
+    def __init__(self, remote):
+        self._remote = remote
+
+    def __getattr__(self, key):
+        fn = getattr(self._remote, key)
+
+        def deco(*args):
+            return fn(*args[:-1])
+        return deco
+
+
+class Chat(Observable):
+    def send(self, nick, message, current=None):
+        self.notify("send", nick, message)
+
+    def subscribe(self, nick, observer, current):
         broker = current.adapter.getCommunicator()
-        observer = broker.stringToProxy(observer)
-        self.attach(observer.send)
-        observer.send("server", "Welcome to the wise chat")
-        self.send_to_all("server", "New chat member: FIXME")
+        member = broker.stringToProxy(observer)
+        member.nick = nick
+
+        member.send("Channel", "Welcome to the wise chat")
+        for m in self.observers:
+            member.new_member(m.nick)
+
+        if nick in [m.nick for m in self.observers]:
+            raise AlreadySubscribed(nick)
+
+        self.attach(member)
+        self.notify("new_member", nick)
+
+        oid = member.wise_getIdentity()
+        print "OID:", oid
+        # current.adapter.add(RemoveCurrent(member), oid)
 
 
 class Server:
     def __init__(self):
         self.chat = Chat()
-        broker = wise.initialize()
+        broker = wise.initialize(host="szpilman", properties = {"TornadoApp.debug": True})
         adapter = broker.createObjectAdapter("ServerAdapter", "ws1")
         adapter.add(self.chat, "chat1")
         broker.register_StaticFS('/static', wise.dirname(__file__))
