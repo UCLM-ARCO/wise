@@ -10,7 +10,7 @@ class ListenerDict(dict):
             try:
                 getattr(ob, method)(*args)
             except Exception:
-                del self[ob]
+                del ob
 
 
 class AlreadySubscribed(Exception):
@@ -44,7 +44,7 @@ class ChatManager(object):
 
         broker = current.adapter.getCommunicator()
         self.register_public(nick, broker.stringToProxy(public_listener))
-#        self.register_private(nick, broker.stringToProxy(private_listener), current.adapter)
+        self.register_private(nick, broker.stringToProxy(private_listener), current.adapter)
 
     def register_public(self, nick, listener):
         listener.send("Channel", "Welcome to the wise chat")
@@ -59,7 +59,7 @@ class ChatManager(object):
         proxy = adapter.add(servant_alike(listener), listener.wise_getIdentity())
         self.private_listeners[nick] = proxy
 
-    def get_member(self, nick):
+    def get_member(self, nick, current=None):
         return self.private_listeners[nick]
 
 

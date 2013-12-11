@@ -30,6 +30,8 @@ function add_message(tab, nick, message) {
 
 // create the entry point which will be called automatically
 function wise_application(ws) {
+    broker = ws;
+
     // create an object adapter to register our servant
     ws.createObjectAdapter("WebAdapter")
 	.on_response(on_adapter_ready);
@@ -44,6 +46,7 @@ function wise_application(ws) {
 
 	function on_stringToProxy_response(proxy) {
 	    chatroom = proxy;
+	    target = chatroom;
 	    ws.ready();
 	    return;
 	    autologin();
@@ -63,7 +66,7 @@ function send_message() {
     if (! message)
         return;
 
-    chatroom.send(nickname, message);
+    target.send(nickname, message);
 }
 
 function login() {
@@ -88,13 +91,41 @@ function wrong_login() {
 
 function select_member(item) {
     item = $(item);
+    var nickname = item.text();
 
+    if (nickname ==  $('#nickname').val())
+	return;
+
+    change_member(item);
+    change_tab(nickname);
+
+    if (nickname == "Channel") {
+	target = chatroom;
+	return
+    }
+
+    chatroom.get_member(nickname)
+	.on_response(on_get_member_response)
+
+    function on_get_member_response(strproxy) {
+	broker.stringToProxy(strproxy)
+	    .on_response(on_stringToProxy_response);
+    }
+
+    function on_stringToProxy_response(proxy) {
+	target = proxy;
+	_(target);
+    }
+}
+
+function change_member(item) {
     $('#members a').removeClass('active');
     item.addClass("active");
+}
 
+function change_tab(nickname) {
     $('#notepad div').hide();
 
-    var nickname = item.text();
     var tabid = 'messages-{0}'.format(nickname);
 
     if ($('#' + tabid).length == 0) {
