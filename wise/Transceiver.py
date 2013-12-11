@@ -161,6 +161,7 @@ class MessageHandler(websocket.WebSocketHandler):
         return self._is_closed
 
     def on_message(self, message):
+        logging.info("MessageHandler: async dispatching for {}".format(message))
         self._thread_pool.add(self.on_message_async, (message,))
 
     def on_message_async(self, message):

@@ -14,27 +14,23 @@
         body {
            font-family: helvetica;
         }
-
-	.container {
+	#login, #chat {
+	   margin-top: 50px;
 	   width: 800px;
 	}
-
+	#wrong-login-proto {
+           display: none;
+	}
+	#chat {
+	   display: none;
+	}
  	.messages {
  	   height: 200px;
 	   overflow: auto;
  	}
-
  	#members {
  	   height: 212px;
  	}
-
-	#login, #chat {
-	   margin-top: 50px;
-	}
-
-	#wrong-login-proto {
-           display: none;
-	}
     </style>
 
   </head>
@@ -58,12 +54,11 @@
 	      <input id="nickname" type="text" class="form-control" placeholder="nickname">
 	      <span class="input-group-btn">
 		<button id="login-button" class="btn btn-default" type="button"
-			onClick="enter_to_chat()">Go!</button>
+			onClick="login()">Go!</button>
 	      </span>
 	    </div>
 	  </div>
 	</div>
-
 
       </div>
 
@@ -75,7 +70,7 @@
 
     </div>
 
-    <div id="chat" class="container" style="display: none">
+    <div id="chat" class="container">
 
       <div>
 	<div class="row">
@@ -93,7 +88,7 @@
 		  <input id="content" type="text" class="form-control">
 		  <span class="input-group-btn">
 		    <button class="btn btn-default" type="button"
-			    onClick="send_to_chat()">send!</button>
+			    onClick="send_message()">send!</button>
 		  </span>
 		</div>
 
@@ -102,17 +97,16 @@
 	  </div>
 
 	  <div class="col-lg-4">
+
 	    <div id="members" class="list-group">
-	      <a class="list-group-item active" onClick="select_member(this)">Channel</a>
+	      <a href="#" class="list-group-item active" onClick="select_member(this)">Channel</a>
 	    </div>
 
 	  </div>
 	</div>
       </div>
 
-      <p>
-	(Control-F5 forces page refresh)
-      </p>
+      <p>(Control-F5 forces page refresh)</p>
 
     </div>
   </body>
