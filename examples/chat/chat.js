@@ -1,17 +1,22 @@
 // -*- mode: js; coding: utf-8 -*-
 
+function template(name) {
+    return $('#TEMPLATES > .' + name).parent().html();
+}
+
 RoomServant = Class.extend({
     send: function(nick, message) {
 	add_message("Channel", nick, message);
     },
 
     notify_added_member: function(nick) {
-	var item = $('<a href="#" class="list-group-item" '
-		     + 'onClick="select_member(this)">{0}</a>'.format(nick));
+	var item = template('member').format(nick);
+	_(item);
 	$('#members').append(item);
     },
 
     notify_removed_member: function(nick) {
+	$('#member-' + nick).remove();
     },
 });
 
@@ -21,14 +26,28 @@ PrivateServant = Class.extend({
     },
 });
 
-function add_message(tab, nick, message) {
-    var widget = $('#messages-{0}'.format(tab));
-    widget.append("<b>{0}</b>: {1}<br/>".format(nick, message));
-    widget.stop().animate({ scrollTop: widget[0].scrollHeight }, 800);
+function add_message(tab_name, nick, message) {
+    badge_inc(tab_name);
+    var tab = $('#messages-' + tab_name);
+    tab.append("<b>{0}:</b> {1}<br/>".format(nick, message));
+//    tab.stop().animate({ scrollTop: tab[0].scrollHeight }, 800);
 }
 
+function badge_inc(nick) {
+    var member_id = '#member-' + nick;
+    if ($(member_id).hasClass('active'))
+	return;
 
-// create the entry point which will be called automatically
+    var badge = $(member_id +' > .badge');
+    var badge_num = parseInt(badge.text()) || 0;
+    badge.text(badge_num + 1);
+}
+
+function badge_clean(nick) {
+    var member_id = '#member-{0} > .badge'.format(nick);
+    $(member_id).text('');
+}
+
 function wise_application(ws) {
     broker = ws;
 
@@ -37,7 +56,8 @@ function wise_application(ws) {
 	.on_response(on_adapter_ready);
 
     function on_adapter_ready(adapter) {
-	room_listener = adapter.addWithUUID(new RoomServant());
+	room_servant = new RoomServant();
+	room_listener = adapter.addWithUUID(room_servant);
 	private_listener = adapter.addWithUUID(new PrivateServant());
 
 	// create a proxy to the observable in server
@@ -48,27 +68,18 @@ function wise_application(ws) {
 	    chatroom = proxy;
 	    target = chatroom;
 	    ws.ready();
-	    return;
+//	    return;
 	    autologin();
 	}
     }
 }
 
 function autologin() {
-    $('#nickname').val('user1');
+    $('#nickname').val(wise.Util.generate_UUID());
     $('#login-button').click();
 }
 
 // UI callbacks
-function send_message() {
-    var message = $('#content').val();
-
-    if (! message)
-        return;
-
-    target.send(nickname, message);
-}
-
 function login() {
     nickname = $('#nickname').val();
     if (! nickname)
@@ -78,6 +89,9 @@ function login() {
     $('#chat').show();
 
     chatroom.subscribe(nickname, room_listener, private_listener);
+
+    room_servant.notify_added_member("Channel");
+    $('#member-Channel').addClass('active');
 }
 
 function wrong_login() {
@@ -91,12 +105,13 @@ function wrong_login() {
 
 function select_member(item) {
     item = $(item);
-    var nickname = item.text();
+    var nickname = item.attr('id').replace('member-', '');
 
-    if (nickname ==  $('#nickname').val())
+    if (nickname == $('#nickname').val())
 	return;
 
     change_member(item);
+    badge_clean(nickname);
     change_tab(nickname);
 
     if (nickname == "Channel") {
@@ -125,13 +140,25 @@ function change_member(item) {
 
 function change_tab(nickname) {
     $('#notepad div').hide();
+    var tab_id = 'messages-' + nickname;
 
-    var tabid = 'messages-{0}'.format(nickname);
+    return;
 
-    if ($('#' + tabid).length == 0) {
-	var item = $('<div id="{0}" class="messages panel-body"></div>'.format(tabid));
+    if ($('#' + tab_id).length == 0) {
+	var item = template('messages').format(nickname);
 	$('#notepad').append(item);
     }
 
-    $('#' + tabid).show();
+    $('#' + tab_id).show();
+}
+
+function send_message() {
+    var message = $('#content').val();
+
+    if (! message)
+        return;
+
+    target.send(nickname, message);
+
+    $('#content').val('');
 }

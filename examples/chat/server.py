@@ -13,20 +13,16 @@ class ListenerDict(dict):
                 del ob
 
 
+class ServantAdapter:
+    def __init__(self, proxy):
+        self.proxy = proxy
+
+    def send(self, *args):
+        self.proxy.send(*args[:-1])
+
+
 class AlreadySubscribed(Exception):
     pass
-
-
-class servant_alike(object):
-    def __init__(self, remote):
-        self._remote = remote
-
-    def __getattr__(self, key):
-        fn = getattr(self._remote, key)
-
-        def deco(*args):
-            return fn(*args[:-1])
-        return deco
 
 
 class ChatManager(object):
@@ -39,8 +35,8 @@ class ChatManager(object):
 
     def subscribe(self, nick, public_listener, private_listener, current=None):
         print self.public_listeners
-        if nick in self.public_listeners.keys():
-            raise AlreadySubscribed(nick)
+# i     f nick in self.public_listeners.keys():
+#            raise AlreadySubscribed(nick)
 
         broker = current.adapter.getCommunicator()
         self.register_public(nick, broker.stringToProxy(public_listener))
@@ -56,16 +52,16 @@ class ChatManager(object):
         self.public_listeners.notify("notify_added_member", nick)
 
     def register_private(self, nick, listener, adapter):
-        proxy = adapter.add(servant_alike(listener), listener.wise_getIdentity())
+        proxy = adapter.add(ServantAdapter(listener), listener.wise_getIdentity())
         self.private_listeners[nick] = proxy
 
     def get_member(self, nick, current=None):
-        return self.private_listeners[nick]
+        return self.private_listeners.get(nick)
 
 
 class Server(object):
     def __init__(self):
-        broker = wise.initialize(host="0.0.0.0", properties = {"TornadoApp.debug": True})
+        broker = wise.initialize(properties = {"TornadoApp.debug": True})
         adapter = broker.createObjectAdapter("ServerAdapter", "ws1")
         adapter.add(ChatManager(), "chat1")
         broker.register_StaticFS('/static', wise.dirname(__file__))

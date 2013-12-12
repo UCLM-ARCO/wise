@@ -51,7 +51,7 @@ class MethodHandler:
         return attrs
 
 
-class ObjectPrx:
+class ObjectPrx(object):
     def __init__(self, identity, endpoint, transceiver):
         self.identity = identity
         self.endpoint = endpoint

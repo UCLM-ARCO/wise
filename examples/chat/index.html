@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script src="/wise/js/jquery-1.9.1.min.js"></script>
-    <script src="/wise/js/class.js"></script>
-    <script src="/wise/js/wise.js"></script>
-    <script src="chat.js"></script>
+    <title>Wise Chat example</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
 
-    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
-    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css"
-	  rel="stylesheet" />
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
 
     <style>
         body {
@@ -16,7 +19,6 @@
         }
 	#login, #chat {
 	   margin-top: 50px;
-	   width: 800px;
 	}
 	#wrong-login-proto {
            display: none;
@@ -35,6 +37,14 @@
 
   </head>
   <body>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://code.jquery.com/jquery.js"></script>
+    <script src="/wise/js/class.js"></script>
+    <script src="/wise/js/wise.js"></script>
+    <script src="/static/chat.js"></script>
+
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
 
     <div id="login" class="container">
       <div class="jumbotron">
@@ -49,7 +59,7 @@
 	</p>
 
 	<div class="row">
-	  <div class="col-lg-6 col-lg-offset-3">
+	  <div class="col-xs-6 col-xs-offset-3">
 	    <div class="input-group">
 	      <input id="nickname" type="text" class="form-control" placeholder="nickname">
 	      <span class="input-group-btn">
@@ -74,21 +84,22 @@
 
       <div>
 	<div class="row">
-	  <div class="col-lg-8">
+	  <div class="col-xs-8">
 
 	    <div class="panel panel-default">
 
 	      <div id="notepad">
-		<div id="messages-Channel" class="messages panel-body"></div>
+		<div id="messages-Channel" class="panel-body messages"></div>
 	      </div>
 
 	      <div class="panel-footer">
 
 		<div class="input-group">
-		  <input id="content" type="text" class="form-control">
+		  <input id="content" type="text" class="form-control"
+			onkeypress="if(event.keyCode==13) {send_message();}">
 		  <span class="input-group-btn">
 		    <button class="btn btn-default" type="button"
-			    onClick="send_message()">send!</button>
+			onClick="send_message()">send!</button>
 		  </span>
 		</div>
 
@@ -96,10 +107,9 @@
 	    </div>
 	  </div>
 
-	  <div class="col-lg-4">
+	  <div class="col-xs-4">
 
 	    <div id="members" class="list-group">
-	      <a href="#" class="list-group-item active" onClick="select_member(this)">Channel</a>
 	    </div>
 
 	  </div>
@@ -109,5 +119,14 @@
       <p>(Control-F5 forces page refresh)</p>
 
     </div>
+
+    <div id="TEMPLATES" style="display:none">
+      <a href="#" id="member-{0}" class="list-group-item member"
+	onClick="select_member(this)">{0}<span class="badge pull-right"></span>
+      </a>
+
+      <div id="messages-{0}" class="panel-body messages"></div>
+    </div>
+
   </body>
 </html>
