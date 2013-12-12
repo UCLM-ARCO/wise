@@ -1,18 +1,20 @@
 // -*- mode: js; coding: utf-8 -*-
 
 function template(name) {
-    return $('#TEMPLATES > .' + name).parent().html();
+    return $('#TEMPLATES > .' + name).clone().wrap('<p>').parent().html()
 }
 
 RoomServant = Class.extend({
     send: function(nick, message) {
-	add_message("Channel", nick, message);
+	append_message("Channel", nick, message);
     },
 
     notify_added_member: function(nick) {
 	var item = template('member').format(nick);
-	_(item);
 	$('#members').append(item);
+
+	var item = template('messages').format(nickname);
+	$('#notepad').append(item.hide());
     },
 
     notify_removed_member: function(nick) {
@@ -22,11 +24,11 @@ RoomServant = Class.extend({
 
 PrivateServant = Class.extend({
     send: function(nick, message) {
-	add_message(nick, nick, message);
+	append_message(nick, nick, message);
     },
 });
 
-function add_message(tab_name, nick, message) {
+function append_message(tab_name, nick, message) {
     badge_inc(tab_name);
     var tab = $('#messages-' + tab_name);
     tab.append("<b>{0}:</b> {1}<br/>".format(nick, message));
@@ -140,16 +142,7 @@ function change_member(item) {
 
 function change_tab(nickname) {
     $('#notepad div').hide();
-    var tab_id = 'messages-' + nickname;
-
-    return;
-
-    if ($('#' + tab_id).length == 0) {
-	var item = template('messages').format(nickname);
-	$('#notepad').append(item);
-    }
-
-    $('#' + tab_id).show();
+    $('#messages-' + nickname).show();
 }
 
 function send_message() {
