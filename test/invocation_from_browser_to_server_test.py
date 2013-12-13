@@ -31,7 +31,8 @@ class TestBrowserToServer(TestCase):
             servant.get_message(ANY_ARG).returns(
                 {'message': cls.expected_message})
             servant.get_error(ANY_ARG).raises(cls.exception)
-            cls.servant = servant
+
+        cls.servant = servant
 
         cls.server = Server(cls.servant)
         cls.browser = Chrome(left_open=False)
