@@ -11,10 +11,13 @@ RoomServant = Class.extend({
 
     notify_added_member: function(nick) {
 	var item = template('member').format(nick);
+	_(item);
 	$('#members').append(item);
 
-	var item = template('messages').format(nickname);
-	$('#notepad').append(item.hide());
+	_(item);
+	var item = template('messages').format(nick);
+	$('#notepad').append(item);
+	$('#messages-' + nick).hide();
     },
 
     notify_removed_member: function(nick) {
@@ -93,7 +96,8 @@ function login() {
     chatroom.subscribe(nickname, room_listener, private_listener);
 
     room_servant.notify_added_member("Channel");
-    $('#member-Channel').addClass('active');
+    change_member($('#member-Channel'));
+    change_tab('Channel');
 }
 
 function wrong_login() {
@@ -108,6 +112,8 @@ function wrong_login() {
 function select_member(item) {
     item = $(item);
     var nickname = item.attr('id').replace('member-', '');
+
+    _(nickname);
 
     if (nickname == $('#nickname').val())
 	return;
