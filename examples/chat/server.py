@@ -61,7 +61,8 @@ class ChatManager(object):
 
 class Server(object):
     def __init__(self):
-        broker = wise.initialize(properties = {"TornadoApp.debug": True})
+        broker = wise.initialize(# host="161.67.27.109",
+                                 properties = {"TornadoApp.debug": True})
         adapter = broker.createObjectAdapter("ServerAdapter", "ws1")
         adapter.add(ChatManager(), "chat1")
         broker.register_StaticFS('/static', wise.dirname(__file__))

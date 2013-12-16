@@ -61,7 +61,7 @@
 	<div class="row">
 	  <div class="col-xs-6 col-xs-offset-3">
 	    <div class="input-group">
-	      <input id="nickname" type="text" class="form-control" placeholder="nickname">
+	      <input id="mynickname" type="text" class="form-control" placeholder="nickname">
 	      <span class="input-group-btn">
 		<button id="login-button" class="btn btn-default" type="button"
 			onClick="login()">Go!</button>
@@ -71,13 +71,6 @@
 	</div>
 
       </div>
-
-      <div id="wrong-login-proto" class="alert alert-danger alert-dismissable">
-	<button type="button" class="close" data-dismiss="alert"
-		aria-hidden="true">&times;</button>
-	<strong>Error:</strong> Wrong nick name!
-      </div>
-
     </div>
 
     <div id="chat" class="container">
@@ -94,7 +87,7 @@
 	      <div class="panel-footer">
 
 		<div class="input-group">
-		  <input id="content" type="text" class="form-control"
+		  <input id="outgoing" type="text" class="form-control"
 			onkeypress="if(event.keyCode==13) {send_message();}">
 		  <span class="input-group-btn">
 		    <button class="btn btn-default" type="button"
@@ -120,7 +113,13 @@
     </div>
 
     <div id="TEMPLATES" style="display:none">
-      <a href="#" id="member-{0}" class="list-group-item member"
+      <div id="{0}" class="alert alert-danger alert-dismissable">
+	<button type="button" class="close" data-dismiss="alert"
+		aria-hidden="true">&times;</button>
+	<strong>Error:</strong> Wrong nick name!
+      </div>
+
+      <a id="member-{0}" href="#" class="list-group-item member"
 	onClick="select_member(this)">{0}<span class="badge pull-right"></span>
       </a>
 

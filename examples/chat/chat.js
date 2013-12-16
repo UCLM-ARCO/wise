@@ -6,15 +6,13 @@ function template(name) {
 
 RoomServant = Class.extend({
     send: function(nick, message) {
-	append_message("Channel", nick, message);
+	append_remote_message("Channel", nick, message);
     },
 
     notify_added_member: function(nick) {
 	var item = template('member').format(nick);
-	_(item);
 	$('#members').append(item);
 
-	_(item);
 	var item = template('messages').format(nick);
 	$('#notepad').append(item);
 	$('#messages-' + nick).hide();
@@ -27,15 +25,25 @@ RoomServant = Class.extend({
 
 PrivateServant = Class.extend({
     send: function(nick, message) {
-	append_message(nick, nick, message);
+	append_remote_message(nick, nick, message);
     },
 });
 
-function append_message(tab_name, nick, message) {
+function append_remote_message(tab_name, nick, message) {
     badge_inc(tab_name);
+    append_message(tab_name, nick, message);
+}
+
+function append_message(tab_name, nick, message) {
+    _(tab_name, nick);
+
     var tab = $('#messages-' + tab_name);
     tab.append("<b>{0}:</b> {1}<br/>".format(nick, message));
-//    tab.stop().animate({ scrollTop: tab[0].scrollHeight }, 800);
+    tab_animate(tab);
+}
+
+function tab_animate(tab) {
+    tab.stop().animate({ scrollTop: tab[0].scrollHeight }, 800);
 }
 
 function badge_inc(nick) {
@@ -70,60 +78,56 @@ function wise_application(ws) {
 	    .on_response(on_stringToProxy_response);
 
 	function on_stringToProxy_response(proxy) {
+	    proxies = {};
+	    proxies["Channel"] = proxy;
+	    destination = "Channel";
 	    chatroom = proxy;
-	    target = chatroom;
 	    ws.ready();
-//	    return;
+	    return;
 	    autologin();
 	}
     }
 }
 
 function autologin() {
-    $('#nickname').val(wise.Util.generate_UUID());
+    $('#mynickname').val(wise.Util.generate_UUID());
     $('#login-button').click();
 }
 
 // UI callbacks
 function login() {
-    nickname = $('#nickname').val();
-    if (! nickname)
+    mynickname = $('#mynickname').val();
+    if (! mynickname)
 	return wrong_login();
 
     $('#login').hide();
     $('#chat').show();
 
-    chatroom.subscribe(nickname, room_listener, private_listener);
+    chatroom.subscribe(mynickname, room_listener, private_listener);
 
     room_servant.notify_added_member("Channel");
-    change_member($('#member-Channel'));
     change_tab('Channel');
 }
 
 function wrong_login() {
     $('#wrong-login').remove();
 
-    var message = $('#wrong-login-proto').clone();
-    message.attr('id', 'wrong-login');
-    message.appendTo('#login');
-    message.show();
+    var item = template('alert').format('#wrong-login');
+    $('#login').append(item);
 }
 
 function select_member(item) {
     item = $(item);
     var nickname = item.attr('id').replace('member-', '');
 
-    _(nickname);
-
-    if (nickname == $('#nickname').val())
+    if (nickname == mynickname)
 	return;
 
-    change_member(item);
-    badge_clean(nickname);
     change_tab(nickname);
+    badge_clean(nickname);
+    destination = nickname;
 
     if (nickname == "Channel") {
-	target = chatroom;
 	return
     }
 
@@ -136,28 +140,26 @@ function select_member(item) {
     }
 
     function on_stringToProxy_response(proxy) {
-	target = proxy;
-	_(target);
+	proxies[nickname] = proxy;
     }
 }
 
-function change_member(item) {
-    $('#members a').removeClass('active');
-    item.addClass("active");
-}
-
-function change_tab(nickname) {
+function change_tab(nick) {
     $('#notepad div').hide();
-    $('#messages-' + nickname).show();
+    $('#messages-' + nick).show();
+
+    $('#members a').removeClass('active');
+    $('#member-' + nick).addClass("active");
 }
 
 function send_message() {
-    var message = $('#content').val();
+    var message = $('#outgoing').val();
+    $('#outgoing').focus().val('');
 
     if (! message)
         return;
 
-    target.send(nickname, message);
-
-    $('#content').val('');
+    proxies[destination].send(mynickname, message);
+    if (destination != "Channel")
+	append_message(destination, mynickname, message);
 }
