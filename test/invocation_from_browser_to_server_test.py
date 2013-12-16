@@ -56,7 +56,7 @@ class TestBrowserToServer(TestCase):
 
         # verify spy is called
         wait_that(self.servant.set_message,
-                  called().with_args(message=message, current=anything()))
+                  called().with_args(message, anything()))
 
     def test_browser_to_server_with_response(self):
         # open server url

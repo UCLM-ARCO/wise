@@ -16,21 +16,13 @@
 
     <script type="text/javascript">
     // create the entry point which will be called automatically
-    function wise_application(args) {
-	ws = args.communicator;
-
+    function wise_application(ws) {
 	// create a proxy to object in server
-	ws.stringToProxy({
-	    proxy: "Server -w ws -h 127.0.0.1 -p 8080",
-	    callback: {
-		response: on_stringToProxy_response
-	    }
-	});
+	ws.stringToProxy("Server -w ws -h 127.0.0.1 -p 8080")
+	    .on_response(on_stringToProxy_response);
 
-	// response: proxy
-	function on_stringToProxy_response(response) {
-	    // store it globally, as it would be used on UI callbacks
-	    remote = response.proxy;
+	function on_stringToProxy_response(proxy) {
+	    remote = proxy;
 	    ws.ready();
 	}
     }
@@ -38,25 +30,22 @@
     // UI callbacks
     function set_message() {
 	var message = $('#message').val();
-	remote.set_message({ params: {
-	    message: message
-	}});
+	remote.set_message(message);
     }
 
     function get_message() {
-	remote.get_message({ callback: {
-	    response: function(args) {
-		$('#message').val(args.message);
-	    },
-	}});
+	remote.get_message().on_response(
+	    function(message) {
+		$('#message').val(message);
+	    });
     }
 
     function get_error() {
-	remote.get_error({ callback: {
-	    exception: function(except) {
-		$('#error').val(except.message);
-	    },
-	}});
+	remote.get_error().on_error(
+	    function(error) {
+		$('#error').val(error.message);
+	    }
+	);
     }
     </script>
 

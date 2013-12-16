@@ -1,7 +1,6 @@
 #!/usr/bin/python -u
 # -*- mode: python; coding: utf-8 -*-
 
-import os
 import wise
 
 
@@ -26,19 +25,13 @@ class Servant:
 
 class Server:
     def __init__(self, servant=None):
-        self.ws = wise.initialize()
-
-        if servant is None:
-            servant = Servant()
+        self.ws = wise.initialize(host="127.0.0.1")
+        servant = servant or Servant()
 
         adapter = self.ws.createObjectAdapter("ServerAdapter", "ws")
         adapter.add(servant, "Server")
 
-        # register static files handler to serve 'index.html'
-        pwd = os.path.abspath(os.path.dirname(__file__))
-        pwd = os.path.join(pwd, 'static')
-        frontend = wise.StaticFSApplication(self.ws, '/static/', pwd)
-        self.ws.registerApplication(frontend)
+        self.ws.register_StaticFS('/static', wise.dirname(__file__) + '/static')
 
     def loop(self):
         self.ws.waitForShutdown()
