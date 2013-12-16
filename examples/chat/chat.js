@@ -6,7 +6,7 @@ function template(name) {
 
 RoomServant = Class.extend({
     send: function(nick, message) {
-	append_remote_message("Channel", nick, message);
+	UI.append_remote_message("Channel", nick, message);
     },
 
     notify_added_member: function(nick) {
@@ -25,41 +25,9 @@ RoomServant = Class.extend({
 
 PrivateServant = Class.extend({
     send: function(nick, message) {
-	append_remote_message(nick, nick, message);
+	UI.append_remote_message(nick, nick, message);
     },
 });
-
-function append_remote_message(tab_name, nick, message) {
-    badge_inc(tab_name);
-    append_message(tab_name, nick, message);
-}
-
-function append_message(tab_name, nick, message) {
-    _(tab_name, nick);
-
-    var tab = $('#messages-' + tab_name);
-    tab.append("<b>{0}:</b> {1}<br/>".format(nick, message));
-    tab_animate(tab);
-}
-
-function tab_animate(tab) {
-    tab.stop().animate({ scrollTop: tab[0].scrollHeight }, 800);
-}
-
-function badge_inc(nick) {
-    var member_id = '#member-' + nick;
-    if ($(member_id).hasClass('active'))
-	return;
-
-    var badge = $(member_id +' > .badge');
-    var badge_num = parseInt(badge.text()) || 0;
-    badge.text(badge_num + 1);
-}
-
-function badge_clean(nick) {
-    var member_id = '#member-{0} > .badge'.format(nick);
-    $(member_id).text('');
-}
 
 function wise_application(ws) {
     broker = ws;
@@ -83,7 +51,7 @@ function wise_application(ws) {
 	    destination = "Channel";
 	    chatroom = proxy;
 	    ws.ready();
-	    return;
+//	    return;
 	    autologin();
 	}
     }
@@ -106,7 +74,7 @@ function login() {
     chatroom.subscribe(mynickname, room_listener, private_listener);
 
     room_servant.notify_added_member("Channel");
-    change_tab('Channel');
+    UI.change_tab('Channel');
 }
 
 function wrong_login() {
@@ -116,22 +84,8 @@ function wrong_login() {
     $('#login').append(item);
 }
 
-function select_member(item) {
-    item = $(item);
-    var nickname = item.attr('id').replace('member-', '');
-
-    if (nickname == mynickname)
-	return;
-
-    change_tab(nickname);
-    badge_clean(nickname);
-    destination = nickname;
-
-    if (nickname == "Channel") {
-	return
-    }
-
-    chatroom.get_member(nickname)
+function resolve_member_proxy(nick) {
+    chatroom.get_member(nick)
 	.on_response(on_get_member_response)
 
     function on_get_member_response(strproxy) {
@@ -140,26 +94,76 @@ function select_member(item) {
     }
 
     function on_stringToProxy_response(proxy) {
-	proxies[nickname] = proxy;
+	proxies[nick] = proxy;
     }
 }
 
-function change_tab(nick) {
-    $('#notepad div').hide();
-    $('#messages-' + nick).show();
+UI = {
+    select_member: function(item) {
+	item = $(item);
+	var nickname = item.attr('id').replace('member-', '');
 
-    $('#members a').removeClass('active');
-    $('#member-' + nick).addClass("active");
-}
+	if (nickname == mynickname)
+	    return;
 
-function send_message() {
-    var message = $('#outgoing').val();
-    $('#outgoing').focus().val('');
+	UI.change_tab(nickname);
+	UI.badge_clean(nickname);
+	destination = nickname;
 
-    if (! message)
-        return;
+	if (nickname == "Channel") {
+	    return
+	}
 
-    proxies[destination].send(mynickname, message);
-    if (destination != "Channel")
-	append_message(destination, mynickname, message);
+	resolve_member_proxy(nickname);
+    },
+
+    change_tab: function(nick) {
+	$('#notepad div').hide();
+	$('#messages-' + nick).show();
+
+	$('#members a').removeClass('active');
+	$('#member-' + nick).addClass("active");
+    },
+
+    append_remote_message: function(tab_name, nick, message) {
+	UI.badge_inc(tab_name);
+	UI.append_message(tab_name, nick, message);
+    },
+
+    append_message: function(tab_name, nick, message) {
+	var tab = $('#messages-' + tab_name);
+	tab.append("<b>{0}:</b> {1}<br/>".format(nick, message));
+	UI.tab_animate(tab);
+    },
+
+    tab_animate: function(tab) {
+	tab.stop().animate({ scrollTop: tab[0].scrollHeight }, 800);
+    },
+
+    badge_inc: function(nick) {
+	var member_id = '#member-' + nick;
+	if ($(member_id).hasClass('active'))
+	    return;
+
+	var badge = $(member_id +' > .badge');
+	var badge_num = parseInt(badge.text()) || 0;
+	badge.text(badge_num + 1);
+    },
+
+     badge_clean: function(nick) {
+	var member_id = '#member-{0} > .badge'.format(nick);
+	$(member_id).text('');
+    },
+
+    send_message: function() {
+	var message = $('#outgoing').val();
+	$('#outgoing').focus().val('');
+
+	if (! message)
+            return;
+
+	proxies[destination].send(mynickname, message);
+	if (destination != "Channel")
+	    UI.append_message(destination, mynickname, message);
+    }
 }

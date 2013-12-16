@@ -88,10 +88,10 @@
 
 		<div class="input-group">
 		  <input id="outgoing" type="text" class="form-control"
-			onkeypress="if(event.keyCode==13) {send_message();}">
+			onkeypress="if(event.keyCode==13) {UI.send_message();}">
 		  <span class="input-group-btn">
 		    <button class="btn btn-default" type="button"
-			onClick="send_message()">send!</button>
+			onClick="UI.send_message()">send!</button>
 		  </span>
 		</div>
 
@@ -120,7 +120,7 @@
       </div>
 
       <a id="member-{0}" href="#" class="list-group-item member"
-	onClick="select_member(this)">{0}<span class="badge pull-right"></span>
+	onClick="UI.select_member(this)">{0}<span class="badge pull-right"></span>
       </a>
 
       <div id="messages-{0}" class="panel-body messages"></div>
