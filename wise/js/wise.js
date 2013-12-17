@@ -547,7 +547,7 @@ ObjectAdapter: Class.extend({
 	    return;
 	}
 
-	obj[request.method].apply(obj, request.params);
+	return obj[request.method].apply(obj, request.params);
     },
 
     _find_object: function(identity) {
@@ -762,6 +762,7 @@ initialize: function(host, port) {
 
     // create root logger for Wise
     log = new wise.Logger();
+    log.set_level(0);
     if (typeof console != "undefined") {
 	log.attach(console);
     }
