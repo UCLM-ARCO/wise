@@ -715,6 +715,7 @@ Communicator: Class.extend({
 		.on_response(on_getMethodNames_response);
 
 	    function on_getMethodNames_response(result) {
+		result = result.concat(['wise_getMethodNames'])
 		var DerivedPrx = wise.newDerivedProxy({
 		    methods: result
 		});

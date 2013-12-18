@@ -1,0 +1,32 @@
+<html>
+  <body style="font-family: helvetica">
+
+    <script src="/wise/js/jquery-1.9.1.min.js"></script>
+    <script src="/wise/js/wise.js"></script>
+
+    <button id="invoke" onClick="invoke()">inovke</button>
+    <input id="result" type="text" value="placeholder"/>
+
+    <script type="text/javascript">
+    function wise_application(ws) {
+	// create a proxy to object in server
+	ws.stringToProxy("Server -w ws -h 127.0.0.1 -p 8080")
+	    .on_response(on_stringToProxy_response);
+
+	function on_stringToProxy_response(proxy) {
+	    remote = proxy;
+	    _(remote);
+	    ws.ready();
+	}
+    }
+
+    function invoke() {
+	remote.wise_getMethodNames()
+	    .on_response(function(names) {
+		$('#result').val(names.sort().join(', '));
+	    });
+    }
+    </script>
+
+  </body>
+</html>
