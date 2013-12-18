@@ -16,12 +16,10 @@ class Instance(Thread):
         Thread.__init__(self)
         self.ws = wise.initialize(host="127.0.0.1", port=8888)
 
-        pwd = os.path.abspath(os.path.dirname(__file__) + "/static")
-        frontend = wise.StaticFSApplication(self.ws, '/static/', pwd)
-        self.ws.registerApplication(frontend)
-
-        adapter = self.ws.createObjectAdapter("ServerAdapter", "testws")
+        adapter = self.ws.createObjectAdapter("ServerAdapter", "ws")
         adapter.add(servant, "Server")
+
+        self.ws.register_StaticFS('/static', wise.dirname(__file__) + '/static')
 
     def run(self):
         self.ws.waitForShutdown()
@@ -68,13 +66,12 @@ class TestReconnection(TestCase):
         self.browser = Chrome(left_open=False)
         self.browser.open("http://127.0.0.1:8888/static/reconnection_test.html")
 
-        self.check_data_is_received(times=1)
+        self.check_data_is_received(1)
         self.server.restart()
-        self.check_data_is_received(times=2)
+        self.check_data_is_received(2)
 
     def check_data_is_received(self, times):
-        self.browser.js("remote.set_message({ params: { message: 'hello' } });")
+        self.browser.js("remote.set_message('hello');")
         wait_that(self.servant.set_message, called()
-                  .with_args(message="hello", current=anything())
+                  .with_args("hello", anything())
                   .times(times))
-

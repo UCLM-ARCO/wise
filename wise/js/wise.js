@@ -3,7 +3,6 @@
 // FIXME: remove this, used only for DEBUG
 _ = bind(console, console.info);
 
-
 (function() {
     /*
      * Simple JavaScript Inheritance

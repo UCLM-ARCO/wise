@@ -14,7 +14,7 @@ from .StaticFSApplication import StaticFSApplication
 from .Object import Observable
 
 
-def initialize(host=None, port=8080, properties=None):
+def initialize(host="127.0.0.1", port=8080, properties=None):
     properties = properties or {}
 
     if properties.get("TornadoApp.debug", False):

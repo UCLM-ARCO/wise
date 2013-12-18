@@ -2,18 +2,16 @@
   <body>
     <script src="/wise/js/jquery-2.0.3.min.js"></script>
     <script src="/wise/js/wise.js"></script>
+    <h3>Reconection Test</h3>
 
     <script type="text/javascript">
-    function wise_application(args) {
-	ws = args.communicator;
-
-	ws.stringToProxy({
-	    proxy: "Server -w testws -h 127.0.0.1 -p 8888",
-	    callback: { response: on_stringToProxy_response },
-	});
+    function wise_application(ws) {
+	// create a proxy to object in server
+	ws.stringToProxy("Server -w ws -h 127.0.0.1 -p 8888")
+	    .on_response(on_stringToProxy_response);
 
 	function on_stringToProxy_response(response) {
-	    remote = response.proxy;
+	    remote = response;
 	    ws.ready();
 	}
     }

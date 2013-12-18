@@ -2,48 +2,35 @@
   <body>
     <script src="/wise/js/jquery-2.0.3.min.js"></script>
     <script src="/wise/js/wise.js"></script>
+    <h3>Marshalling test</h3>
 
     <script type="text/javascript">
     Servant = Class.extend({
-	set_number: function(args) { _number = args.number; },
-	set_string: function(args) { _string = args.string; },
-	set_boolean: function(args) { _boolean = args.state; },
-	set_none: function(args) { _none = args.none; },
-	set_array: function(args) { _array = args.array; },
-	set_dictionary: function(args) { _dictionary = args.dictionary; },
-	set_object: function(args) { _object = args.obj; },
+	set_number: function(number) { _number = number; },
+	set_string: function(string) { _string = string; },
+	set_boolean: function(state) { _boolean = state; },
+	set_none: function(none) { _none = none; },
+	set_array: function(array) { _array = array; },
+	set_dictionary: function(dictionary) { _dictionary = dictionary; },
+	set_object: function(obj) { _object = obj; },
     });
 
-    function wise_application(args) {
-	ws = args.communicator;
-
+    function wise_application(ws) {
 	// create an object adapter to register our servant
-	ws.createObjectAdapter({
-	    name: "WebAdapter",
-	    endpoint: "-w browser",
-	    on_response: on_adapter_ready,
-	});
+	ws.createObjectAdapter("WebAdapter", "-w browser")
+	    .on_response(on_adapter_ready);
 
-	// args: adapter
-	function on_adapter_ready(args) {
-	    args.adapter.add({
-		servant: new Servant(),
-		identity: "Marshall",
-	    });
-
+	function on_adapter_ready(adapter) {
+	    adapter.add(new Servant(), "Marshall");
 	    create_proxy();
 	}
 
 	function create_proxy() {
-	    ws.stringToProxy({
-		proxy: "Server -w ws",
-		callback: {
-		    response: on_stringToProxy_response
-		}
-	    });
+	    ws.stringToProxy("Server -w ws -h 127.0.0.1 -p 8080")
+		.on_response(on_stringToProxy_response);
 
-	    function on_stringToProxy_response(response) {
-		server = response.proxy;
+            function on_stringToProxy_response(proxy) {
+		server = proxy;
 		ws.ready();
 	    }
 	}

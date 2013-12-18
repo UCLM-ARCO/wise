@@ -1,3 +1,4 @@
+#!/usr/bin/python -u
 # -*- mode: python; coding: utf-8 -*-
 
 import sys
@@ -35,12 +36,12 @@ class TestServerToBrowser(TestCase):
 
         # set message on remote object
         banner = self.ws.stringToProxy("Message -w browser")
-        banner.set_message(message = self.expected_message)
+        banner.set_message(self.expected_message)
 
         # assure that invocation is dispatched correctly
         element = self.browser.find_element('#message')
         wait_that(element.get_attribute,
-                  call_with("value").returns(self.expected_message))
+                  call_with("value").returns(self.expected_message))  # self.expected_message
 
     def test_server_to_browser_with_response(self):
         self.browser.open(self.url)
@@ -48,13 +49,14 @@ class TestServerToBrowser(TestCase):
         # set message on element
         element = self.browser.find_element('#message')
         element.clear()
+
         element.send_keys(self.expected_message)
 
         # get message from remote object
         message = self.ws.stringToProxy("Message -w browser")
 
-        wait_that(
-            message.get_message, call_with().returns(self.expected_message))
+        wait_that(message.get_message,
+                  call_with().returns(self.expected_message))
 
     def test_server_to_browser_with_exception(self):
         self.browser.open(self.url)

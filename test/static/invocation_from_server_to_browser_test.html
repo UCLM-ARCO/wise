@@ -2,18 +2,21 @@
   <body style="font-family: helvetica">
 
     <script src="/wise/js/jquery-1.9.1.min.js"></script>
+    <script src="/wise/js/class.js"></script>
     <script src="/wise/js/wise.js"></script>
 
+    <h3>Invocation from server to browser test</h3>
     <input id="message" type="text" value="initial value"></input>
 
     <script type="text/javascript">
     Servant = Class.extend({
-	set_message: function(args) {
-	    $('#message').val(args.message)
+	set_message: function(message) {
+	    $('#message').val(message)
 	},
 
 	get_message: function() {
-	    return $('#message').val();
+	    var message = $('#message').val();
+	    return message;
 	},
 
 	get_error: function() {
@@ -22,23 +25,14 @@
 	},
     });
 
-    function wise_application(args) {
-	ws = args.communicator;
-
-	// create an object adapter to register our servant
-	ws.createObjectAdapter({
-	    name: "WebAdapter",
-	    endpoint: "-w browser",
-	    on_response: on_adapter_ready,
-	});
+    function wise_application(ws) {
+	//create an object adapter to register our servant
+	ws.createObjectAdapter( "WebAdapter", "-w browser")
+	    .on_response(on_adapter_ready);
 
 	// args: adapter
-	function on_adapter_ready(args) {
-	    args.adapter.add({
-		servant: new Servant(),
-		identity: "Message",
-	    });
-
+	function on_adapter_ready(adapter) {
+	    adapter.add(new Servant(), "Message");
 	    ws.ready();
 	}
     }

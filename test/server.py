@@ -15,6 +15,7 @@ class Servant:
 
     def set_message(self, message, current=None):
         self.message = message
+        print self.message
 
     def get_message(self, current=None):
         return self.message

@@ -23,7 +23,7 @@ class WSHandler(websocket.WebSocketHandler):
 if __name__ == "__main__":
     """This example want to show how to make an invocation from
     Browser to server """
-    print "Visit: 127.0.0.1:8080/static/index.html"
+    print "Visit: http://127.0.0.1:8080/static/index.html"
     pwd = os.path.abspath(os.path.dirname(__file__))
 
     application = web.Application([

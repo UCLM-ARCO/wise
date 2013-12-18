@@ -12,7 +12,6 @@ import wise
 sys.path.insert(0, os.path.dirname(__file__))
 from server import Server
 
-
 _browser = Chrome(left_open=False)
 
 
@@ -29,6 +28,7 @@ class TestMarshalling_FromServerToBrowser(TestCase):
     def tearDownClass(cls):
         cls.server.stop()
         cls.ws.shutdown()
+        os.system("killall chromedriver")
 
     def setUp(self):
         self.browser.open(self.url)
@@ -49,21 +49,22 @@ class TestMarshalling_FromServerToBrowser(TestCase):
 
     def test_send_string(self):
         string = r"A string with \0 some strange \n chars \t \0x00"
-        self.remote.set_string(string=string.decode("string-escape"))
+        self.remote.set_string(string.decode("string-escape"))
+
         self.assertTrue(self.browser.js("return _string == '{}'".format(string)))
 
     def test_send_boolean(self):
         state = True
-        self.remote.set_boolean(state=state)
+        self.remote.set_boolean(state)
         self.assertTrue(self.browser.js("return _boolean == {}".format(str(state).lower())))
 
     def test_send_None(self):
-        self.remote.set_none(none=None)
+        self.remote.set_none(None)
         self.assertTrue(self.browser.js("return _none == null"))
 
     def test_send_array(self):
         array = [1, 2.3, "hi", ['a'], {'key': 'value'}, True, None]
-        self.remote.set_array(array=array)
+        self.remote.set_array(array)
 
         self.browser.js("other = {}".format(str(array).lower().replace("none", "null")))
         equal = self.browser.js(
@@ -80,7 +81,7 @@ class TestMarshalling_FromServerToBrowser(TestCase):
 
     def test_send_dictionary(self):
         dictionary = {'key1': 124, 'key2': 'value', 'key3': None, 4: 4}
-        self.remote.set_dictionary(dictionary=dictionary)
+        self.remote.set_dictionary(dictionary)
 
         self.browser.js("other = {}".format(str(dictionary).replace("None", "null")))
         equal = self.browser.js(
@@ -98,7 +99,7 @@ class TestMarshalling_FromServerToBrowser(TestCase):
                 self._param2 = 2
 
         obj = Object()
-        self.remote.set_object(obj=obj)
+        self.remote.set_object(obj)
 
         equal = self.browser.js(
             "return "
@@ -107,7 +108,7 @@ class TestMarshalling_FromServerToBrowser(TestCase):
         self.assertTrue(equal)
 
     def check_number(self, number):
-        self.remote.set_number(number=number)
+        self.remote.set_number(number)
         self.assertTrue(self.browser.js("return _number == {}".format(number)))
 
 
@@ -117,12 +118,12 @@ class TestMarshalling_FromBrowserToServer(TestCase):
     @classmethod
     def setUpClass(cls):
         with Spy() as servant:
-            servant.send_number()
-            servant.send_string()
-            servant.send_boolean()
-            servant.send_none()
-            servant.send_array()
-            servant.send_object()
+            servant.set_number()
+            servant.set_string()
+            servant.set_boolean()
+            servant.set_none()
+            servant.set_array()
+            servant.set_object()
 
         cls.server = Server(servant)
         cls.browser = _browser
@@ -131,6 +132,7 @@ class TestMarshalling_FromBrowserToServer(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.server.stop()
+        os.system("killall chromedriver")
 
     def setUp(self):
         self.browser.open(self.url)
@@ -150,50 +152,46 @@ class TestMarshalling_FromBrowserToServer(TestCase):
 
     def test_send_string(self):
         string = r"A string with \0 some strange \n chars \t \0x00"
-        params = "{params: { string: '" + string + "' }}"
-        self.browser.js("server.send_string({});".format(params))
+        self.browser.js("server.set_string(" + string + ");")
+        # self.browser.js("server.set_string({});".format("hola"))
 
-        string = string.decode("string-escape")
-        wait_that(self.servant.send_string,
-                  called().with_args(string=string, current=anything()))
+        # string = string.decode("string-escape")
+        # wait_that(self.servant.set_string,
+        #           called().with_args(string, anything()))
 
     def test_send_boolean(self):
         value = True
-        params = "{params: { value: " + str(value).lower() + " }}"
-        self.browser.js("server.send_boolean({});".format(params))
+        self.browser.js("server.set_boolean({});".format(str(value).lower()))
 
-        wait_that(self.servant.send_boolean,
-                  called().with_args(value=value, current=anything()))
+        wait_that(self.servant.set_boolean,
+                  called().with_args(value, anything()))
 
     def test_send_None(self):
-        params = "{params: { value: null }}"
-        self.browser.js("server.send_none({});".format(params))
+        self.browser.js("server.set_none({});".format("null"))
 
-        wait_that(self.servant.send_none,
-                  called().with_args(value=None, current=anything()))
+        wait_that(self.servant.set_none,
+                  called().with_args(None, anything()))
 
     def test_send_array(self):
         array = [1, 2.3, "hello", True, [1, 2], {'key': 'value'}, None]
         js_array = str(array).lower().replace("none", "null")
-        params = "{params: { array: " + js_array + " }}"
-        self.browser.js("server.send_array({});".format(params))
+        self.browser.js("server.set_array({});".format(js_array))
 
-        wait_that(self.servant.send_array,
-                  called().with_args(array=array, current=anything()))
+        wait_that(self.servant.set_array,
+                  called().with_args(array, anything()))
 
     def test_send_object(self):
         obj = {'key1': 1, 'key2': "value2", 'key3': None,
                'key4': True, 'key5': [1, 2], 'key6': {'key': 'value'}}
         js_obj = str(obj).lower().replace("none", "null")
-        params = "{params: { obj: " + js_obj + " }}"
-        self.browser.js("server.send_object({});".format(params))
 
-        wait_that(self.servant.send_object,
-                  called().with_args(obj=obj, current=anything()))
+        self.browser.js("server.set_object({});".format(js_obj))
+
+        wait_that(self.servant.set_object,
+                  called().with_args(obj, anything()))
 
     def check_number(self, number):
-        params = "{params: { number: " + str(number) + " }}"
-        self.browser.js("server.send_number({});".format(params))
+        self.browser.js("server.set_number({});".format(str(number)))
 
-        wait_that(self.servant.send_number,
-                  called().with_args(number=number, current=anything()))
+        wait_that(self.servant.set_number,
+                  called().with_args(number, anything()))

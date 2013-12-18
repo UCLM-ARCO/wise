@@ -4,6 +4,7 @@
     <script src="/wise/js/jquery-1.9.1.min.js"></script>
     <script src="/wise/js/wise.js"></script>
 
+    <h3>Invocation from server to browser test</h3>
     Message:
     <input id="message" type="text" value="Hello, World!"/>
     <button id="set-button" onClick="set_message()">Set</button>
@@ -35,8 +36,8 @@
 
     function get_message() {
 	remote.get_message().on_response(
-	    function(message) {
-		$('#message').val(message);
+	    function(arg) {
+		$('#message').val(arg.message);
 	    });
     }
 
