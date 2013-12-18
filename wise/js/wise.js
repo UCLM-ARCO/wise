@@ -547,7 +547,7 @@ ObjectAdapter: Class.extend({
 	    return;
 	}
 
-	return =obj[request.method].apply(obj, request.params);
+	return obj[request.method].apply(obj, request.params);
     },
 
     _find_object: function(identity) {
