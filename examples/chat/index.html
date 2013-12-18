@@ -20,13 +20,13 @@
 	#login, #chat {
 	   margin-top: 50px;
 	}
-	#wrong-login-proto {
+	#wrong-login {
            display: none;
 	}
 	#chat {
 	   display: none;
 	}
- 	.messages {
+ 	.incoming {
  	   height: 200px;
 	   overflow: auto;
  	}
@@ -41,7 +41,7 @@
     <script src="https://code.jquery.com/jquery.js"></script>
     <script src="/wise/js/class.js"></script>
     <script src="/wise/js/wise.js"></script>
-    <script src="/static/chat.js"></script>
+    <script src="/static/chat-obj.js"></script>
 
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
@@ -61,16 +61,24 @@
 	<div class="row">
 	  <div class="col-xs-6 col-xs-offset-3">
 	    <div class="input-group">
-	      <input id="mynickname" type="text" class="form-control" placeholder="nickname">
-	      <span class="input-group-btn">
-		<button id="login-button" class="btn btn-default" type="button"
-			onClick="login()">Go!</button>
-	      </span>
+
+	      <input id="mynickname" type="text" class="form-control"
+		placeholder="nickname" autofocus/>
+              <span class="input-group-btn">
+		  <button id="login-button" class="btn btn-default" type="button">Go!</button>
+	       </span>
 	    </div>
 	  </div>
 	</div>
 
       </div>
+
+      <div id="wrong-login" class="alert alert-danger alert-dismissable">
+	<button type="button" class="close" data-dismiss="alert"
+		aria-hidden="true">&times;</button>
+	<strong>Error:</strong> Wrong nick name!
+      </div>
+
     </div>
 
     <div id="chat" class="container">
@@ -88,10 +96,9 @@
 
 		<div class="input-group">
 		  <input id="outgoing" type="text" class="form-control"
-			onkeypress="if(event.keyCode==13) {UI.send_message();}">
+			onkeypress="if(event.keyCode==13) {send_message();}" autofocus>
 		  <span class="input-group-btn">
-		    <button class="btn btn-default" type="button"
-			onClick="UI.send_message()">send!</button>
+		    <button id="send-button" class="btn btn-default" type="button">send!</button>
 		  </span>
 		</div>
 
@@ -113,17 +120,11 @@
     </div>
 
     <div id="TEMPLATES" style="display:none">
-      <div id="{0}" class="alert alert-danger alert-dismissable">
-	<button type="button" class="close" data-dismiss="alert"
-		aria-hidden="true">&times;</button>
-	<strong>Error:</strong> Wrong nick name!
-      </div>
-
       <a id="member-{0}" href="#" class="list-group-item member"
-	onClick="UI.select_member(this)">{0}<span class="badge pull-right"></span>
+	onClick="select_member(this)">{0}{1}<span class="badge pull-right"></span>
       </a>
 
-      <div id="messages-{0}" class="panel-body messages"></div>
+      <div id="incoming-{0}" class="panel-body incoming"></div>
     </div>
 
   </body>

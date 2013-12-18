@@ -1,56 +1,50 @@
 // -*- mode: js; coding: utf-8 -*-
 
 function template(name) {
-    return $('#TEMPLATES > .' + name).clone().wrap('<p>').parent().html()
+    return $('#TEMPLATES > .' + name).clone().wrap('<p>').parent().html();
 }
 
-RoomServant = Class.extend({
-    send: function(nick, message) {
-	UI.append_remote_message("Channel", nick, message);
+function widget_animate(widget) {
+    widget.stop().animate({ scrollTop: widget[0].scrollHeight }, 800);
+};
+
+
+Servant = Class.extend({
+    send: function(nick, message, private) {
+	var member = (private) ? nick : "Channel";
+	members[member].append_remote_message(nick, message);
     },
 
     notify_added_member: function(nick) {
-	var item = template('member').format(nick);
-	$('#members').append(item);
-
-	var item = template('messages').format(nick);
-	$('#notepad').append(item);
-	$('#messages-' + nick).hide();
+	members[nick] = new Member(nick);
     },
 
     notify_removed_member: function(nick) {
-	$('#member-' + nick).remove();
-    },
-});
-
-PrivateServant = Class.extend({
-    send: function(nick, message) {
-	UI.append_remote_message(nick, nick, message);
+	// FIXME: never called
+	// destroy_member(nick);
     },
 });
 
 function wise_application(ws) {
     broker = ws;
+    members = {};
 
     // create an object adapter to register our servant
     ws.createObjectAdapter("WebAdapter")
 	.on_response(on_adapter_ready);
 
     function on_adapter_ready(adapter) {
-	room_servant = new RoomServant();
-	room_listener = adapter.addWithUUID(room_servant);
-	private_listener = adapter.addWithUUID(new PrivateServant());
+	room_listener = adapter.addWithUUID(new Servant());
 
 	// create a proxy to the observable in server
 	ws.stringToProxy("chat1 -w ws1")
 	    .on_response(on_stringToProxy_response);
 
 	function on_stringToProxy_response(proxy) {
-	    proxies = {};
-	    proxies["Channel"] = proxy;
-	    destination = "Channel";
 	    chatroom = proxy;
+	    set_UI_callbacks();
 	    ws.ready();
+
 //	    return;
 	    autologin();
 	}
@@ -62,31 +56,53 @@ function autologin() {
     $('#login-button').click();
 }
 
-// UI callbacks
+function set_UI_callbacks() {
+    $('#login-button').click(login);
+    $('#send-button').click(send_message);
+    $('#send-button').keypress(function() {
+	if (event.keyCode == 13)
+	    send_message();
+    });
+}
+
 function login() {
     mynickname = $('#mynickname').val();
-    if (! mynickname)
-	return wrong_login();
+    if (mynickname === "") {
+	$('#wrong-login').show().delay(2000).fadeOut(300);
+	return;
+    }
 
     $('#login').hide();
     $('#chat').show();
 
-    chatroom.subscribe(mynickname, room_listener, private_listener);
+    chatroom.subscribe(mynickname, room_listener);
 
-    room_servant.notify_added_member("Channel");
-    UI.change_tab('Channel');
+    channel = new Member("Channel", chatroom);
+    channel.select();
+    members['Channel'] = channel;
 }
 
-function wrong_login() {
-    $('#wrong-login').remove();
+function send_message() {
+    var message = $('#outgoing').val();
+    $('#outgoing').focus().val('');
 
-    var item = template('alert').format('#wrong-login');
-    $('#login').append(item);
+    if (message === "")
+        return;
+
+    private = (destination !== "Channel")
+    members[destination].proxy.send(mynickname, message, private)
+	.on_error(function(error) {
+	    destroy_member(destination);
+	})
+
+    if (private)
+	members[destination].append_message(mynickname, message);
 }
 
 function resolve_member_proxy(nick) {
     chatroom.get_member(nick)
 	.on_response(on_get_member_response)
+	.on_error(on_get_member_error)
 
     function on_get_member_response(strproxy) {
 	broker.stringToProxy(strproxy)
@@ -94,76 +110,102 @@ function resolve_member_proxy(nick) {
     }
 
     function on_stringToProxy_response(proxy) {
-	proxies[nick] = proxy;
+	members[nick].proxy = proxy;
+    }
+    function on_get_member_error(error) {
+	// FIXME: error.message???
+	_("ERROR: " + nick + error);
+	destroy_member(nick);
     }
 }
 
-UI = {
-    select_member: function(item) {
-	item = $(item);
-	var nickname = item.attr('id').replace('member-', '');
+function destroy_member(nick) {
+    members[nick].destroy();
+    delete members[nick];
+    members["Channel"].select();
+}
 
-	if (nickname == mynickname)
-	    return;
+function select_member(item) {
+    item = $(item);
+    var nick = item.attr('id').replace('member-', '');
+    members[nick].select();
+}
 
-	UI.change_tab(nickname);
-	UI.badge_clean(nickname);
-	destination = nickname;
+Member = Class.extend({
+    init: function(nick, proxy) {
+	this.nick = nick;
+	this.proxy = proxy;
 
-	if (nickname == "Channel") {
-	    return
-	}
+	var are_you = (nick == mynickname) ? " <b>(you)</b>" : "";
 
-	resolve_member_proxy(nickname);
+	template('member').render(nick, are_you).appendTo('#members');
+
+	if (are_you) return;
+
+	template('incoming').render(nick).appendTo('#notepad');
+	$('#incoming-' + nick).hide();
     },
 
-    change_tab: function(nick) {
+    destroy: function() {
+	this.tab().remove();
+	$('#member-' + this.nick).remove();
+    },
+
+    tab: function() {
+	return $("#incoming-" + this.nick);
+    },
+
+    button: function() {
+	return $("#member-" +  this.nick);
+    },
+
+    badge: function() {
+	return $('#member-{0} > .badge'.format(this.nick));
+    },
+
+    tab_switch: function() {
 	$('#notepad div').hide();
-	$('#messages-' + nick).show();
+	this.tab().show();
 
 	$('#members a').removeClass('active');
-	$('#member-' + nick).addClass("active");
+	this.button().addClass("active");
     },
 
-    append_remote_message: function(tab_name, nick, message) {
-	UI.badge_inc(tab_name);
-	UI.append_message(tab_name, nick, message);
-    },
+    select: function() {
+	if (this.nick == mynickname) {
+	    alert("internal dialog?");
+	    return;
+	}
 
-    append_message: function(tab_name, nick, message) {
-	var tab = $('#messages-' + tab_name);
-	tab.append("<b>{0}:</b> {1}<br/>".format(nick, message));
-	UI.tab_animate(tab);
-    },
+	this.tab_switch();
+	this.badge_clean();
+	destination = this.nick;
 
-    tab_animate: function(tab) {
-	tab.stop().animate({ scrollTop: tab[0].scrollHeight }, 800);
-    },
-
-    badge_inc: function(nick) {
-	var member_id = '#member-' + nick;
-	if ($(member_id).hasClass('active'))
+	if (this.nick == "Channel")
 	    return;
 
-	var badge = $(member_id +' > .badge');
-	var badge_num = parseInt(badge.text()) || 0;
-	badge.text(badge_num + 1);
+	resolve_member_proxy(this.nick);
     },
 
-     badge_clean: function(nick) {
-	var member_id = '#member-{0} > .badge'.format(nick);
-	$(member_id).text('');
+    badge_inc: function() {
+	if (this.button().hasClass('active'))
+	    return;
+
+	var badge_num = parseInt(this.badge().text()) || 0;
+	this.badge().text(badge_num + 1);
     },
 
-    send_message: function() {
-	var message = $('#outgoing').val();
-	$('#outgoing').focus().val('');
+    badge_clean: function() {
+	this.badge().text('');
+    },
 
-	if (! message)
-            return;
+    append_remote_message: function(sender, message) {
+	this.badge_inc();
+	this.append_message(sender, message);
+    },
 
-	proxies[destination].send(mynickname, message);
-	if (destination != "Channel")
-	    UI.append_message(destination, mynickname, message);
-    }
-}
+    append_message: function(sender, message) {
+	this.tab().append("<b>{0}:</b> {1}<br/>".format(sender, message));
+	widget_animate(this.tab());
+    },
+});

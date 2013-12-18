@@ -2,15 +2,7 @@
 # -*- mode:python; coding:utf-8; tab-width:4 -*-
 
 import wise
-
-
-class ListenerDict(dict):
-    def notify(self, method, *args):
-        for ob in self.values()[:]:
-            try:
-                getattr(ob, method)(*args)
-            except Exception:
-                del ob
+from commodity.pattern import memoized
 
 
 class ServantAdapter:
@@ -25,44 +17,56 @@ class AlreadySubscribed(Exception):
     pass
 
 
+class NoSuchMember(Exception):
+    pass
+
+
 class ChatManager(object):
     def __init__(self):
-        self.public_listeners = ListenerDict()
-        self.private_listeners = ListenerDict()
+        self.members = {}
+        self.redirections = {}
 
-    def send(self, nick, message, current=None):
-        self.public_listeners.notify("send", nick, message)
+    def send(self, nick, message, private, current=None):
+        self.for_each_member(lambda x: x.send(nick, message))
 
-    def subscribe(self, nick, public_listener, private_listener, current=None):
-        print self.public_listeners
-# i     f nick in self.public_listeners.keys():
+    def subscribe(self, nick, member_proxy, current=None):
+        print self.members, nick, member_proxy
+# if nick in self.members.keys():
 #            raise AlreadySubscribed(nick)
 
-        broker = current.adapter.getCommunicator()
-        self.register_public(nick, broker.stringToProxy(public_listener))
-        self.register_private(nick, broker.stringToProxy(private_listener), current.adapter)
+        member = current.adapter.getCommunicator().stringToProxy(member_proxy)
+        member.send("Channel", "Welcome to the wise chat")
+        map(member.notify_added_member, self.members.keys())
 
-    def register_public(self, nick, listener):
-        listener.send("Channel", "Welcome to the wise chat")
+        self.members[nick] = member
+        self.for_each_member(lambda x: x.notify_added_member(nick))
 
-        for n in self.public_listeners.keys():
-            listener.notify_added_member(n)
+    def for_each_member(self, func):
+        for key, member in self.members.copy().items():
+            try:
+                func(member)
+            except Exception as e:
+                print "server:", key, e
+                del self.members[key]
 
-        self.public_listeners[nick] = listener
-        self.public_listeners.notify("notify_added_member", nick)
-
-    def register_private(self, nick, listener, adapter):
-        proxy = adapter.add(ServantAdapter(listener), listener.wise_getIdentity())
-        self.private_listeners[nick] = proxy
-
+    @memoized(ignore=['current'])
     def get_member(self, nick, current=None):
-        return self.private_listeners.get(nick)
+        print self.get_member.cache
+        print "### getting member", self, nick
+
+        member = self.members.get(nick)
+        if not member:
+            raise NoSuchMember(nick)
+
+        proxy = current.adapter.add(ServantAdapter(member),
+                                    member.wise_getIdentity())
+        return proxy
 
 
 class Server(object):
     def __init__(self):
-        broker = wise.initialize(# host="161.67.27.109",
-                                 properties = {"TornadoApp.debug": True})
+        broker = wise.initialize(  # host="161.67.27.109",
+            properties = {"TornadoApp.debug": True})
         adapter = broker.createObjectAdapter("ServerAdapter", "ws1")
         adapter.add(ChatManager(), "chat1")
         broker.register_StaticFS('/static', wise.dirname(__file__))
