@@ -790,10 +790,11 @@ Promise: Class.extend({
     on_response: function(callback) {
 	if (this._cached_result != undefined) {
 	    callback(this._cached_result);
-	    return;
+	    return this;
 	}
 
 	this._on_response_callback = callback;
+	return this;
     },
 
     response: function(result) {
@@ -808,10 +809,11 @@ Promise: Class.extend({
     on_error: function(callback) {
 	if (this._cached_error != undefined) {
 	    callback(this._cached_error);
-	    return;
+	    return this;
 	}
 
 	this._on_error_callback = callback;
+	return this;
     },
 
     error: function(error) {
