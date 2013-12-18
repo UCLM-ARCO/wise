@@ -797,7 +797,7 @@ Promise: Class.extend({
 	}
 
 	this._on_response_callback = callback;
-	return this
+	return this;
     },
 
     response: function(result) {
@@ -816,7 +816,7 @@ Promise: Class.extend({
 	}
 
 	this._on_error_callback = callback;
-	return this
+	return this;
     },
 
     error: function(error) {
