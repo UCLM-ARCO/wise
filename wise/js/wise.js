@@ -104,14 +104,17 @@ if (typeof String.prototype.format != 'function') {
     String.prototype.format = function() {
 	var args = arguments;
 	return this.replace(/{(\d+)}/g, function(match, number) {
-	    return typeof args[number] != 'undefined'
-		? args[number]
-		: match
-	    ;
+	    return (typeof args[number] != 'undefined') ? args[number] : match;
 	});
     };
 }
 
+if (typeof String.prototype.render != 'function') {
+    String.prototype.render = function() {
+	var text = this.format.apply(this, arguments);
+	return $('<div></div>').append(text).children().unwrap();
+    };
+}
 
 /*
   from: http://stackoverflow.com/questions/646628/javascript-startswith
@@ -547,7 +550,7 @@ ObjectAdapter: Class.extend({
 	    return;
 	}
 
-	return =obj[request.method].apply(obj, request.params);
+	return obj[request.method].apply(obj, request.params);
     },
 
     _find_object: function(identity) {
@@ -790,10 +793,11 @@ Promise: Class.extend({
     on_response: function(callback) {
 	if (this._cached_result != undefined) {
 	    callback(this._cached_result);
-	    return;
+	    return this;
 	}
 
 	this._on_response_callback = callback;
+	return this
     },
 
     response: function(result) {
@@ -808,10 +812,11 @@ Promise: Class.extend({
     on_error: function(callback) {
 	if (this._cached_error != undefined) {
 	    callback(this._cached_error);
-	    return;
+	    return this;
 	}
 
 	this._on_error_callback = callback;
+	return this
     },
 
     error: function(error) {
