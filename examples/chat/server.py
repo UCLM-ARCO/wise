@@ -5,14 +5,6 @@ import wise
 from commodity.pattern import memoized
 
 
-class ServantAdapter:
-    def __init__(self, proxy):
-        self.proxy = proxy
-
-    def send(self, *args):
-        self.proxy.send(*args[:-1])
-
-
 class AlreadySubscribed(Exception):
     pass
 
@@ -30,9 +22,8 @@ class ChatManager(object):
         self.for_each_member(lambda x: x.send(nick, message))
 
     def subscribe(self, nick, member_proxy, current=None):
-        print self.members, nick, member_proxy
-# if nick in self.members.keys():
-#            raise AlreadySubscribed(nick)
+        if nick in self.members.keys():
+            raise AlreadySubscribed(nick)
 
         member = current.adapter.getCommunicator().stringToProxy(member_proxy)
         member.send("Channel", "Welcome to the wise chat")
@@ -51,16 +42,12 @@ class ChatManager(object):
 
     @memoized(ignore=['current'])
     def get_member(self, nick, current=None):
-        print self.get_member.cache
-        print "### getting member", self, nick
-
         member = self.members.get(nick)
         if not member:
             raise NoSuchMember(nick)
 
-        proxy = current.adapter.add(ServantAdapter(member),
-                                    member.wise_getIdentity())
-        return proxy
+        return current.adapter.add(wise.proxy_as_servant(member),
+                                   member.wise_getIdentity())
 
 
 class Server(object):

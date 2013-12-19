@@ -92,6 +92,7 @@ function send_message() {
     private = (destination !== "Channel")
     members[destination].proxy.send(mynickname, message, private)
 	.on_error(function(error) {
+	    _(error);
 	    destroy_member(destination);
 	})
 
@@ -113,8 +114,7 @@ function resolve_member_proxy(nick) {
 	members[nick].proxy = proxy;
     }
     function on_get_member_error(error) {
-	// FIXME: error.message???
-	_("ERROR: " + nick + error);
+	_(error);
 	destroy_member(nick);
     }
 }
