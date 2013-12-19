@@ -49,15 +49,7 @@ def add_placeholder(method):
     return deco
 
 
-class decorate_methods(object):
-    def __init__(self, instance, deco):
-        def getmethods(obj):
-            return [x for x in inspect.getmembers(obj, predicate=callable)
-                    if not x[0].startswith('_')]
-
-        for name, method in getmethods(instance):
-            setattr(self, name, deco(method))
-
-
-def servant_alike(instance):
-    return decorate_methods(instance, add_placeholder)
+class proxy_as_servant(object):
+    def __init__(self, instance):
+        for name in instance.wise_getMethodNames():
+            setattr(self, name, add_placeholder(getattr(instance, name)))

@@ -214,6 +214,9 @@ class MessageHandler(websocket.WebSocketHandler):
         return obj
 
     def _notify_error(self, request_id, error):
+        if isinstance(error, Exception):
+            error = [error.__class__.__name__, error.message]
+
         response = {
             'request_id': request_id,
             'error': error
