@@ -69,6 +69,16 @@ _ = bind(console, console.info);
         // And make this class extendable
         Class.extend = arguments.callee;
 
+	Class.prototype.getMethods = function () {
+	    var res = [];
+	    for(var m in this) {
+		if ((typeof this[m] == "function") && (m != "constructor") && (m != "getMethods")) {
+		    res.push(m)
+		}
+	    }
+	    return res;
+	}
+
         return Class;
     };
 
@@ -515,6 +525,10 @@ ObjectAdapter: Class.extend({
     add: function(servant, identity) {
     	this._asm[identity] = servant;
 
+	servant.wise_getMethodNames = function() {
+	    return servant.getMethods();
+	};
+
 	log.debug("Adding object: " + identity);
 	return this.createProxy(identity);
     },
@@ -563,6 +577,7 @@ ObjectAdapter: Class.extend({
 }),
 
 ObjectPrx: Class.extend({
+    // FIXME: this is actually two different
     // args: (identity, transceiver) || base
     init: function(args) {
 	if (args.base) {

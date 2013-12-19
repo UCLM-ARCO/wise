@@ -30,7 +30,6 @@
 	ws.createObjectAdapter( "WebAdapter", "-w browser")
 	    .on_response(on_adapter_ready);
 
-	// args: adapter
 	function on_adapter_ready(adapter) {
 	    adapter.add(new Servant(), "Message");
 	    ws.ready();
