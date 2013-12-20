@@ -42,6 +42,4 @@ class IntrospectionTests(TestCase):
 
         web_obj = self.ws.stringToProxy("obj1 -w browser")
         assert web_obj
-
-        print web_obj.wise_getMethodNames()
         assert_that(web_obj.wise_getMethodNames(), has_item("echo"))

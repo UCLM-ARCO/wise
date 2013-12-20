@@ -5,6 +5,8 @@ import sys
 import os
 from unittest import TestCase
 from commodity.testing import wait_that, call_with
+from commodity.net import localhost, listen_port
+
 from sulfurium import Chrome
 
 import wise
@@ -23,9 +25,12 @@ class TestServerToBrowser(TestCase):
         cls.browser = Chrome(left_open=False)
         cls.ws = wise.initialize(port = 8081)
 
+        wait_that(localhost, listen_port(8080))
+
     @classmethod
     def tearDownClass(cls):
         del cls.server
+        cls.browser.exit()
         del cls.browser
 
     def test_server_to_browser_no_response(self):
@@ -41,7 +46,7 @@ class TestServerToBrowser(TestCase):
         # assure that invocation is dispatched correctly
         element = self.browser.find_element('#message')
         wait_that(element.get_attribute,
-                  call_with("value").returns(self.expected_message))  # self.expected_message
+                  call_with("value").returns(self.expected_message))
 
     def test_server_to_browser_with_response(self):
         self.browser.open(self.url)

@@ -26,7 +26,8 @@ class Servant:
 
 class Server:
     def __init__(self, servant=None):
-        self.ws = wise.initialize(host="127.0.0.1")
+        self.ws = wise.initialize(host="127.0.0.1",
+                                  properties = {"TornadoApp.debug": True})
         servant = servant or Servant()
 
         adapter = self.ws.createObjectAdapter("ServerAdapter", "ws")

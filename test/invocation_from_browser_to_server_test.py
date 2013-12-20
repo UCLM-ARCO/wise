@@ -4,8 +4,9 @@ import sys
 import os
 from unittest import TestCase
 from doublex import Spy, called, ANY_ARG
-from hamcrest import assert_that, anything
-from commodity.testing import wait_that, call_with
+from hamcrest import anything
+from commodity.testing import wait_that, call_with, assert_that
+from commodity.net import localhost, listen_port
 
 from sulfurium import Chrome
 
@@ -36,6 +37,8 @@ class TestBrowserToServer(TestCase):
 
         cls.server = Server(cls.servant)
         cls.browser = Chrome(left_open=False)
+
+        wait_that(localhost, listen_port(8080))
 
     @classmethod
     def tearDownClass(cls):
@@ -87,4 +90,5 @@ class TestBrowserToServer(TestCase):
         wait_that(self.servant.get_error, called())
 
         message = self.browser.find_element('#error')
-        assert_that(message.get_value, call_with().returns(self.exception.message))
+        assert_that(message.get_value,
+                    call_with().returns("CustomException,An error message"))

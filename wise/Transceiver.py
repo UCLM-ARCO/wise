@@ -5,6 +5,7 @@ import jsonpickle
 from threading import Event, Lock
 from tornado import websocket
 from commodity.thread_ import SimpleThreadPool
+from commodity.os_ import FuncAsFile
 
 from .WebApplication import WebApplication
 from .Exceptions import ProtocolException, UnknownLocalException
@@ -22,7 +23,7 @@ class TransceiverApp(WebApplication):
         return MessageHandler
 
     def get_handler_params(self):
-        return {'adapter': self._adapter, 'thread_pool': self._thread_pool}
+        return dict(adapter=self._adapter, thread_pool=self._thread_pool)
 
 
 class Transceiver:
@@ -185,8 +186,8 @@ class MessageHandler(websocket.WebSocketHandler):
             self._notify_error(-1, e)
 
         except Exception as e:
-            traceback.print_exc()
-            print "-" * 50
+            fd = FuncAsFile(logging.info, "exc:| ")
+            traceback.print_exc(None, fd)
 
             message = ("Error while calling method '{}.{}': '{}'".
                        format(request.identity, request.method, e))

@@ -4,7 +4,7 @@ all:
 
 marsha:
 	for i in $(shell seq 1 5); do \
-    		nosetests test/marshalling_test.py:TestMarshalling_FromServerToBrowser; \
+		nosetests test/marshalling_test.py:TestMarshalling_FromServerToBrowser; \
 	done
 
 
@@ -12,7 +12,7 @@ marsha:
 test:
 	@for t in test/*.py; do \
 	    echo "running test: $$t"; \
-	    xvfb-run -s "-screen 0 1600x1200x24" nosetests -s $$t; \
+	    xvfb-run -s "-screen 0 1600x1200x24" nosetests -vs $$t; \
 	done
 
 
@@ -27,4 +27,3 @@ clean:
 	find . -name "*~" -delete
 	find . -name "*.log" -delete
 	$(RM) -rfv dist MANIFEST WiseSaver.db
-
