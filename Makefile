@@ -2,6 +2,12 @@
 
 all:
 
+marsha:
+	for i in $(shell seq 1 5); do \
+    		nosetests test/marshalling_test.py:TestMarshalling_FromServerToBrowser; \
+	done
+
+
 .PHONY: test
 test:
 	@for t in test/*.py; do \
