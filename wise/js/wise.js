@@ -88,6 +88,9 @@ _ = bind(console, console.info);
 // bind a method to an specific object
 // taken from: http://fitzgeraldnick.com/weblog/26/
 function bind(scope, fn) {
+    if (!fn)
+	throw "Invalid function to bind:", fn
+
     return function () {
 	var args = Array.prototype.slice.call(arguments);
         return fn.apply(scope, args);
