@@ -1,7 +1,5 @@
 <html>
   <body style="font-family: helvetica">
-
-    <script src="/wise/js/jquery-1.9.1.min.js"></script>
     <script src="/wise/js/wise.js"></script>
 
     <h3>01: Browser to Server, invocation without response</h3>
@@ -25,7 +23,7 @@
 
     // UI callbacks
     function send_message() {
-	remote.write($('#content').val());
+	remote.write(document.getElementById('content').value);
     }
     </script>
 

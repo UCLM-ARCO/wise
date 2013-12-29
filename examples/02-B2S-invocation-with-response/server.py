@@ -6,16 +6,10 @@ import wise
 
 
 class Servant:
-    def get_chars(self, message, current=None):
-        chars = self._used_chars(message)
-        print "Message received: '{}', return: '{}'".format(message, chars)
-        return chars
-
-    def _used_chars(self, text):
-        """ Return the sorted list of used characters in given string """
-        chars = [x for x in text if x in string.letters + string.digits]
-        chars = str.join("", sorted(list(set(chars))))
-        return chars
+    def upper(self, message, current=None):
+        retval = message.upper()
+        print "Message received: '{}', return: '{}'".format(message, retval)
+        return retval
 
 
 class Server:

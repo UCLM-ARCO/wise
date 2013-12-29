@@ -22,7 +22,7 @@ class Server:
                 print "Browser is not ready..."
                 continue
 
-            response = remote.message_len("Hello, World! ({})".format(i))
+            response = remote.upper("Hello, World! ({})".format(i))
             print("browser said: {}".format(response))
 
 

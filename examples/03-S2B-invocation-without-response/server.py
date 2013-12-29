@@ -14,7 +14,7 @@ class Server:
         self.send_messages(broker)
 
     def send_messages(self, broker):
-        for i in range(1000):
+        for i in range(12):
             time.sleep(1)
             remote = broker.stringToProxy("Message -w browser")
 

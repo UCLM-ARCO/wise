@@ -878,7 +878,8 @@ newDerivedProxy: function(args) {
 };
 
 
-$(window).ready(function() {
+// $(window).ready(function() {
+window.onload = function() {
     if (typeof wise_application == "undefined") {
 
 	// no log created yet, so try to say something
@@ -892,4 +893,5 @@ $(window).ready(function() {
     wise.initialize().on_response(function(ws) {
 	wise_application(ws);
     });
-});
+}
+// );
