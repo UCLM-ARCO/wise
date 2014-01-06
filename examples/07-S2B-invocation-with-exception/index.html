@@ -1,0 +1,38 @@
+<html>
+  <body style="font-family: helvetica; width:600px">
+
+    <script src="/wise/js/jquery-1.9.1.min.js"></script>
+    <script src="/wise/js/wise.js"></script>
+
+    <h3>13: Server to Browser, invocation with exception</h3>
+
+    <p>
+    This example will send an invocation from server to browser, and browser will
+    raise an exception, which will be sent back to server.
+    </p>
+
+    <script type="text/javascript">
+    Servant = Class.extend({
+	init: function() {
+	    this.counter = 0;
+	},
+
+	throw_exception: function() {
+	    this.counter++;
+	    throw { message: "this is a JS exception ({0})".format(this.counter) };
+	},
+    });
+
+    function wise_application(broker) {
+        broker.createObjectAdapter("WebAdapter", "-w ws1")
+	    .on_response(on_adapter_ready);
+
+	function on_adapter_ready(adapter) {
+	    adapter.add(new Servant(), "Excepter");
+	    broker.ready();
+	}
+    }
+    </script>
+
+  </body>
+</html>

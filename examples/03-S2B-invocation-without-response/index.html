@@ -1,5 +1,5 @@
 <html>
-  <body style="font-family: helvetica">
+  <body style="font-family: helvetica; width:600px">
     <script src="/wise/js/wise.js"></script>
 
     <h3>03: Server to Browser, invocation without response</h3>
@@ -29,13 +29,13 @@
 	},
     });
 
-    function wise_application(ws) {
-	ws.createObjectAdapter("WebAdapter", "-w browser")
+    function wise_application(broker) {
+	broker.createObjectAdapter("WebAdapter", "-w browser")
 	    .on_response(on_adapter_ready);
 
 	function on_adapter_ready(adapter) {
 	    adapter.add(new Servant(), "Message");
-	    ws.ready();
+	    broker.ready();
 	}
     }
     </script>

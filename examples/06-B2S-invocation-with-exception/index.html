@@ -1,20 +1,19 @@
 <html>
-  <body style="font-family: helvetica">
+  <body style="font-family: helvetica; width: 600px">
 
     <script src="/wise/js/jquery-1.9.1.min.js"></script>
-    <script src="/wise/js/class.js"></script>
     <script src="/wise/js/wise.js"></script>
 
     <h3>12: Browser to Server, invocation with an exception</h3>
 
-    This example will send an invocation from browser to server, and server will<br>
-    raise an exception, which will be sent back to browser. <br>
-    <br>
+    <p>
+      This example will send an invocation from browser to server, and server will raise
+      an exception, which will be sent back to browser.
+    </p>
 
-    <button onClick="send()">Make Invocation!</button>
+    <button onClick="send()">invoke!</button>
 
-    <br><br>
-    <b>Responses from Server:</b><br>
+    <h4>Responses from Server:</h4>
     <div id="responses" style="border: 1px solid #CCC; padding: 5px"></div>
 
     <script type="text/javascript">
@@ -27,12 +26,12 @@
 	}
     }
 
-    // UI callbacks
     function send() {
-	remote.send()
-	    .on_error(function(error) {
-	    	$('#responses').prepend("response: '{0}'<br>".format(error.message));
-	    });
+	remote.send().on_error(print_error);
+
+	function print_error(error) {
+	    $('#responses').prepend("response: '{0}'<br>".format(error));
+	}
     }
     </script>
 

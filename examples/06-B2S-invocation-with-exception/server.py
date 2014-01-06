@@ -20,18 +20,15 @@ class Servant:
 
 class Server:
     def __init__(self):
-        ic = wise.initialize()
+        broker = wise.initialize()
 
-        adapter = ic.createObjectAdapter("ServerAdapter", "ws")
+        adapter = broker.createObjectAdapter("ServerAdapter", "ws")
         adapter.add(Servant(), "Server")
 
-        # register static files handler to serve 'index.html'
-        pwd = os.path.abspath(os.path.dirname(__file__))
-        frontend = wise.StaticFSApplication(ic, '/static/', pwd, "index.html")
-        ic.registerApplication(frontend)
+        broker.register_StaticFS('/static', wise.dirname(__file__))
+        print("Open: " + broker.get_url('static/index.html'))
 
-        print "Visit: http://{}:{}/static/index.html".format(ic.host, ic.port)
-        ic.waitForShutdown()
+        broker.waitForShutdown()
 
 
 if __name__ == "__main__":

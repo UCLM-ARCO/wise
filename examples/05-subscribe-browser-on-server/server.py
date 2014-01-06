@@ -10,11 +10,11 @@ class Server:
         broker = wise.initialize()
         self._observable = wise.Observable()
 
-        adapter = broker.createObjectAdapter("Adapter", "ws")
+        adapter = broker.createObjectAdapter("Adapter", "ws1")
         adapter.add(self._observable, "Observable")
 
         broker.register_StaticFS('/static', wise.dirname(__file__))
-        print("Open: {}".format(broker.get_url('static/index.html')))
+        print("Open: " + broker.get_url('static/index.html'))
         time.sleep(5)
         self.send_messages()
 
@@ -24,7 +24,7 @@ class Server:
 
             msg = "Hello, World! ({})".format(i)
             self._observable.notify("set_message", msg)
-            print("Message sent: {}".format(msg))
+            print("Message sent: " + msg)
 
 
 if __name__ == "__main__":

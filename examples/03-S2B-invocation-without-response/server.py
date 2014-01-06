@@ -14,12 +14,13 @@ class Server:
         self.send_messages(broker)
 
     def send_messages(self, broker):
+        remote = None
         for i in range(12):
             time.sleep(1)
-            remote = broker.stringToProxy("Message -w browser")
 
             if remote is None:
                 print("Browser is not ready yet...")
+                remote = broker.stringToProxy("Message -w browser")
                 continue
 
             remote.set_message("Hello, World! ({})".format(i))
