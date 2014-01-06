@@ -1,7 +1,6 @@
 #!/usr/bin/python -u
 # -*- mode: python; coding: utf-8 -*-
 
-import string
 import wise
 
 
