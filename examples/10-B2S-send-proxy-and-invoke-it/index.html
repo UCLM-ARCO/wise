@@ -1,0 +1,59 @@
+<html>
+  <body style="font-family: helvetica">
+    <script src="/wise/js/wise.js"></script>
+
+    <h3>10: Server to Browser, invocation with response</h3>
+
+    <p>
+    In this example, the server will send a invocation to browser, and then server will
+    invoke that proxy.
+    </p>
+
+    <h4>Server Messages</h4>
+    <div id="messages" style="border: 1px solid #CCC; padding: 5px"></div>
+
+    <p>
+       (Control-F5 forces page refresh)
+    </p>
+
+    <button onClick="receive_proxy()">invoke!</button>
+
+    <script type="text/javascript">
+    function prepend(id, text) {
+        div = document.getElementById(id);
+        div.innerHTML = text + div.innerHTML;
+    }
+
+    Servant = Class.extend({
+	set_message: function(message) {
+            prepend('messages', message + '<br/>');
+	},
+    });
+
+    function wise_application(ws) {
+	wise = ws;
+
+	ws.stringToProxy("Server -w ws1 -h 127.0.0.1 -p 8080")
+	    .on_response(on_stringToProxy_response);
+
+	function on_stringToProxy_response(proxy) {
+	    remote = proxy;
+	}
+
+	ws.createObjectAdapter("WebAdapter", "-w browser")
+	    .on_response(on_adapter_ready);
+
+	function on_adapter_ready(adapter) {
+	    adapter.add(new Servant(), "obj1");
+	    ws.ready();
+	}
+    }
+
+    function receive_proxy() {
+        var proxy = wise.stringToProxy("obj1 -w browser");
+	remote.receive_proxy(proxy)
+    }
+    </script>
+
+  </body>
+</html>

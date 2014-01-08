@@ -1,0 +1,58 @@
+<html>
+  <body style="font-family:helvetica; width:600px">
+    <script src="/wise/js/wise.js"></script>
+
+    <h3>02: Browser to Server, invocation with response</h3>
+
+    <p>
+    This example will send an invocation from browser to server, and server will
+    send back a proxy. Then the browser will send an invocation back.
+    </p>
+
+    <input id="content" type="text" value="Hello, World!"/>
+    <button onClick="submit_message()">Invoke server</button>
+
+    <h4>Server replies</h4>
+
+    <div id="responses" style="border: 1px solid #CCC; padding: 5px"></div>
+
+    <script type="text/javascript">
+    function prepend(id, text) {
+        div = document.getElementById(id);
+        div.innerHTML = text + div.innerHTML;
+    }
+
+    Servant = Class.extend({
+	set_message: function(message) {
+            prepend('messages', message + '<br/>');
+	},
+	send_proxy: function() {
+	  proxy = wise.stringToProxy()
+
+	  return proxy
+	}
+    });
+
+    function wise_application(broker) {
+	broker.createObjectAdapter("WebAdapter", "-w browser")
+	    .on_response(on_adapter_ready);
+
+	function on_adapter_ready(adapter) {
+	    adapter.add(new Servant(), "Message");
+	    broker.ready();
+	}
+    }
+
+    // UI callbacks
+    function submit_message() {
+	proxy = remote.send_proxy(message)
+        proxy.upper("example message")
+            .on_response(function(reply) {
+		prepend('responses', 'response: ' + reply + '<br/>');
+	    });
+
+    }
+    </script>
+
+  </body>
+</html>
