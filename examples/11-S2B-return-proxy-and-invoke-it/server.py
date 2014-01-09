@@ -1,29 +1,30 @@
 #!/usr/bin/python -u
 # -*- mode: python; coding: utf-8 -*-
 
+import time
 import wise
-
-
-class Servant:
-    def upper(self, message, current=None):
-        retval = message.upper()
-        print "Message received: '{}', return: '{}'".format(message, retval)
-        return retval
 
 
 class Server:
     def __init__(self):
         broker = wise.initialize()
 
-        adapter = broker.createObjectAdapter("ServerAdapter", "ws1")
-        adapter.add(Servant(broker), "Server")
-
         broker.register_StaticFS('/static', wise.dirname(__file__))
 
-        remote = broker.stringToProxy("Message -w browser")
         print("Open: {}".format(broker.get_url('static/index.html')))
 
-        proxy = remote.send_proxy()
+        for i in range(10):
+            time.sleep(1)
+            remote = broker.stringToProxy("obj1 -w browser")
+
+            if remote is not None:
+                break
+            print ("Browser is not ready...{}".format(i))
+
+        string_proxy = remote.get_proxy()
+        print("proxy: {}".format(string_proxy))
+
+        proxy = broker.stringToProxy(string_proxy)
 
         proxy.set_message("example message")
 

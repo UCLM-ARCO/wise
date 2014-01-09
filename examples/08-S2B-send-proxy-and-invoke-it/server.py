@@ -14,29 +14,30 @@ class Servant:
 
 class Server:
     def __init__(self):
-        self.broker = wise.initialize()
+        broker = wise.initialize()
 
-        adapter = self.broker.createObjectAdapter("ServerAdapter", "ws1")
-        adapter.add(Servant(), "Server")
+        adapter = broker.createObjectAdapter("ServerAdapter", "ws1")
+        proxy = adapter.add(Servant(), "Server")
 
-        self.broker.register_StaticFS('/static', wise.dirname(__file__))
+        broker.register_StaticFS('/static', wise.dirname(__file__))
 
-        proxy = self.broker.stringToProxy("Server -w ws1 -h 127.0.0.1 -p 8080")
-        self.send_proxy()
+        print("Open: {}".format(broker.get_url('static/index.html')))
 
+        self.send_proxy(broker, proxy)
 
-    def send_proxy(proxy):
-        time.sleep(3)
+    def send_proxy(self, broker, proxy):
+        for i in range(10):
+            time.sleep(1)
+            remote = broker.stringToProxy("obj1 -w browser")
 
-        remote = broker.stringToProxy("obj1 -w browser")
-
-        if remote is None:
-                print "Browser is not ready..."
+            if remote is not None:
+                break
+            print ("Browser is not ready...{}".format(i))
+            print proxy
 
         remote.receive_object(proxy)
 
-        return remote
-
+        broker.waitForShutdown()
 
 
 if __name__ == "__main__":

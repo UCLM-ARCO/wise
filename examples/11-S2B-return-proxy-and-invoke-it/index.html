@@ -2,19 +2,15 @@
   <body style="font-family:helvetica; width:600px">
     <script src="/wise/js/wise.js"></script>
 
-    <h3>02: Browser to Server, invocation with response</h3>
+    <h3>02: Browser to Server, return proxy and invoke it</h3>
 
     <p>
-    This example will send an invocation from browser to server, and server will
-    send back a proxy. Then the browser will send an invocation back.
+    This example will send an invocation from server to browser. Browser will return a proxy to server  and then server will send back a invocation.
     </p>
-
-    <input id="content" type="text" value="Hello, World!"/>
-    <button onClick="submit_message()">Invoke server</button>
 
     <h4>Server replies</h4>
 
-    <div id="responses" style="border: 1px solid #CCC; padding: 5px"></div>
+    <div id="messages" style="border: 1px solid #CCC; padding: 5px"></div>
 
     <script type="text/javascript">
     function prepend(id, text) {
@@ -26,31 +22,23 @@
 	set_message: function(message) {
             prepend('messages', message + '<br/>');
 	},
-	send_proxy: function() {
-	  proxy = wise.stringToProxy()
+	get_proxy: function() {
 
-	  return proxy
+	    browser_proxy = browser_adapter.add(new Servant(), "obj2");
+	    return browser_proxy;
 	}
     });
 
-    function wise_application(broker) {
-	broker.createObjectAdapter("WebAdapter", "-w browser")
+    function wise_application(ws) {
+	broker = ws;
+	ws.createObjectAdapter("WebAdapter", "-w browser")
 	    .on_response(on_adapter_ready);
 
 	function on_adapter_ready(adapter) {
-	    adapter.add(new Servant(), "Message");
-	    broker.ready();
+	    browser_adapter = adapter;
+	    browser_proxy = adapter.add(new Servant(), "obj1");
+	    ws.ready();
 	}
-    }
-
-    // UI callbacks
-    function submit_message() {
-	proxy = remote.send_proxy(message)
-        proxy.upper("example message")
-            .on_response(function(reply) {
-		prepend('responses', 'response: ' + reply + '<br/>');
-	    });
-
     }
     </script>
 

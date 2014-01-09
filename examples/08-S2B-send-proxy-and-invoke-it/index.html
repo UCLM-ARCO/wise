@@ -2,15 +2,15 @@
   <body style="font-family: helvetica">
     <script src="/wise/js/wise.js"></script>
 
-    <h3>04: Server to Browser, invocation with response</h3>
+    <h3>08: Server to Browser, send proxy and invoke it</h3>
 
     <p>
-    In this example, the server will send a invocation to browser, and then server will
+    In this example, the server will send a proxy to browser, and then browser will
     invoke that proxy.
     </p>
 
     <h4>Server Messages</h4>
-    <div id="messages" style="border: 1px solid #CCC; padding: 5px"></div>
+    <div id="responses" style="border: 1px solid #CCC; padding: 5px"></div>
 
     <p>
        (Control-F5 forces page refresh)
@@ -22,22 +22,27 @@
         div.innerHTML = text + div.innerHTML;
     }
 
-    Servant = Class.extend({
-	upper: function(message) {
-	    var retval = message.toUpperCase();
-            prepend('messages', "upper('{0}'), retval: '{1}'<br/>".format(
-		message, retval));
-
-	    return retval;
-	},
-    });
+    function on_stringToProxy_response(proxy) {
+	proxy.upper("example message")
+	    .on_response(function(reply) {
+		prepend('responses', 'response: ' + reply + '<br/>');
+	    });
+    }
 
     function wise_application(ws) {
-	ws.createObjectAdapter("WebAdapter", "-w browser")
+	Servant = Class.extend({
+	    receive_object: function(string_proxy) {
+		console.log("Remote proxy:" + string_proxy);
+		ws.stringToProxy(string_proxy)
+		    .on_response(on_stringToProxy_response);
+	    },
+	});
+	ws.createObjectAdapter("Adapter", "-w browser")
 	    .on_response(on_adapter_ready);
 
 	function on_adapter_ready(adapter) {
 	    adapter.add(new Servant(), "obj1");
+	    console.log("wise ready!");
 	    ws.ready();
 	}
     }
