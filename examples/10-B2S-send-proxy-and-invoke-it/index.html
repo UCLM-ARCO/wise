@@ -31,8 +31,6 @@
     });
 
     function wise_application(ws) {
-	// broker = ws;
-
 	ws.stringToProxy("Server -w ws1 -h 127.0.0.1 -p 8080")
 	    .on_response(on_stringToProxy_response);
 

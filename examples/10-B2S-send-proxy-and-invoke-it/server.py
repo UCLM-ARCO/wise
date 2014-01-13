@@ -5,27 +5,21 @@ import wise
 
 
 class Servant:
-    def __init__(self, broker):
-        self.broker = broker
-        self.cont = 0
-
     def send_proxy(self, string_proxy, current=None):
         print("Received proxy: {}".format(string_proxy))
-
-        proxy = self.broker.stringToProxy(string_proxy)
+        proxy = current.adapter.getCommunicator().stringToProxy(string_proxy)
         proxy.set_message("example message")
 
 
 class Server:
     def __init__(self):
         broker = wise.initialize()
-        servant = Servant(broker)
+        servant = Servant()
 
         adapter = broker.createObjectAdapter("ServerAdapter", "ws1")
         adapter.add(servant, "Server")
 
         broker.register_StaticFS('/static', wise.dirname(__file__))
-
         print("Open: {}".format(broker.get_url('static/index.html')))
 
         broker.waitForShutdown()
