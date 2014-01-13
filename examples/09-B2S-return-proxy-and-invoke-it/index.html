@@ -6,11 +6,10 @@
 
     <p>
     This example will send an invocation from browser to server, and server will
-    send back a proxy. Then the browser will send an invocation back.
+    return a proxy. Then the browser will invoke it.
     </p>
 
-    <input id="content" type="text" value="hello, world!"/>
-    <button onClick="submit_message()">Invoke server</button>
+    <button onClick="submit_message()">get and invoke proxy</button>
 
     <h4>Server replies</h4>
 
@@ -32,9 +31,14 @@
 	}
     }
 
-    function stringToProxy(string_proxy){
-	broker.stringToProxy(string_proxy)
-	    .on_response(invoke_proxy);
+    function submit_message() {
+	remote.get_proxy()
+	    .on_response(stringToProxy_response);
+
+	function stringToProxy_response(string_proxy) {
+	    broker.stringToProxy(string_proxy)
+		.on_response(invoke_proxy);
+	}
 
 	function invoke_proxy(proxy) {
 	    proxy.upper("example message")
@@ -42,11 +46,6 @@
 		    prepend('responses', 'response: ' + reply + '<br/>');
 		});
 	}
-    }
-    // UI callbacks
-    function submit_message() {
-	remote.get_proxy()
-	    .on_response(stringToProxy);
     }
     </script>
 
