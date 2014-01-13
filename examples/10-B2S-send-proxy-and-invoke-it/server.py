@@ -5,9 +5,8 @@ import wise
 
 
 class Servant:
-    def send_proxy(self, string_proxy, current=None):
-        print("Received proxy: {}".format(string_proxy))
-        proxy = current.adapter.getCommunicator().stringToProxy(string_proxy)
+    def send_proxy(self, proxy, current=None):
+        print("Received proxy: {}".format(proxy))
         proxy.set_message("example message")
 
 

@@ -91,7 +91,7 @@ class TransceiverFactory:
     def get(cls, wslocator):
         logging.info("TransceiverFactory: get for websocket '{}'".format(wslocator))
 
-        transceiver = cls._transceivers.get(wslocator, None)
+        transceiver = cls._transceivers.get(wslocator, None)  # FIXME is the default value for get() (many times)
         if transceiver:
             return transceiver
 
@@ -110,8 +110,9 @@ class TransceiverFactory:
 
 
 class RequestMessage:
-    def __init__(self, message):
+    def __init__(self, message, communicator):
         data = jsonpickle.decode(message)
+        self.communicator = communicator
 
         try:
             self.request_id = data['request_id']
@@ -130,6 +131,10 @@ class RequestMessage:
         params = data['params']
         if not isinstance(params, list):
             raise ValueError("Invalid params: '{}'".format(params))
+
+        for i, param in enumerate(params):
+            if isinstance(param, dict) and param.get("wise_typecode") == "Proxy":
+                params[i] = self.communicator.stringToProxy(param["repr"])
 
         return params
 
@@ -167,7 +172,7 @@ class MessageHandler(websocket.WebSocketHandler):
 
     def on_message_async(self, message):
         try:
-            request = RequestMessage(message)
+            request = RequestMessage(message, self._adapter._communicator)
             method = self._get_object_method(request)
             if not method:
                 return

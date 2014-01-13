@@ -69,6 +69,7 @@ _ = bind(console, console.info);
         // And make this class extendable
         Class.extend = arguments.callee;
 
+	// FIXME: Move to wise_getMethods
 	Class.prototype.getMethods = function () {
 	    var res = [];
 	    for(var m in this) {
@@ -97,7 +98,9 @@ function bind(scope, fn) {
     };
 };
 
-
+/*
+FIXME: all() for a promise array is better solution
+*/
 function apply_async(callable, args_vector, on_ready) {
     var barrier = new Barrier(args_vector.length, on_ready);
 
@@ -315,7 +318,7 @@ Transceiver: Class.extend({
 	for (var i in params) {
 	    var p = params[i];
 	    if (p instanceof wise.ObjectPrx)
-		params[i] = p.toString();
+		params[i] = {"wise_typecode": "Proxy", "repr": p.toString()};
 	}
     },
 
@@ -580,7 +583,7 @@ ObjectAdapter: Class.extend({
 }),
 
 ObjectPrx: Class.extend({
-    // FIXME: this is actually two different
+    // FIXME: this is actually two different constructors
     // args: (identity, transceiver) || base
     init: function(args) {
 	if (args.base) {
