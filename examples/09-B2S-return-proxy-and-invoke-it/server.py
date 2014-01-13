@@ -5,9 +5,6 @@ import wise
 
 
 class Servant:
-    def __init__(self, broker):
-        self.broker_ = broker
-
     def upper(self, message, current=None):
         retval = message.upper()
         print "Message received: '{}', return: '{}'".format(message, retval)
@@ -20,7 +17,8 @@ class Servant:
 class Server:
     def __init__(self):
         broker = wise.initialize()
-        servant = Servant(broker)
+        servant = Servant()
+
         adapter = broker.createObjectAdapter("ServerAdapter", "ws1")
         proxy = adapter.add(servant, "Server")
         servant.proxy = proxy

@@ -12,6 +12,8 @@ from .Exceptions import ProtocolException, UnknownLocalException
 from .Current import Current
 from . import Logging as logging
 
+from .ObjectPrx import ObjectPrx
+
 
 class TransceiverApp(WebApplication):
     def __init__(self, communicator, url, adapter):
@@ -230,6 +232,17 @@ class MessageHandler(websocket.WebSocketHandler):
         self.write_message(jsonpickle.encode(response))
 
     def _response(self, request_id, result):
+
+        # FIXME: move to a better place (communicator?)
+        def proxyToString(proxy):
+            return "{} -w {} -h {} -p {}".format(
+                proxy.identity, proxy.endpoint,
+                self._adapter._communicator.host,
+                self._adapter._communicator.port)
+
+        if isinstance(result, ObjectPrx):
+            result = dict(wise_typecode="Proxy", repr=proxyToString(result))
+
         response = {
             'request_id': request_id,
             'result': result

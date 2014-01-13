@@ -196,7 +196,8 @@ no_reconnect: false,
 Transceiver: Class.extend({
     _reconnect_retries: 15,
 
-    init: function(endpoint, promise) {
+    init: function(communicator, endpoint, promise) {
+	this._communicator = communicator;
     	this._response_callbacks = {};
     	this._request_id = 0;
 	this._endpoint_info = endpoint;
@@ -383,8 +384,20 @@ Transceiver: Class.extend({
     	    return;
     	}
 
-    	callback.response(message.result);
-    	delete this._response_callbacks[message.request_id];
+	var result = message.result;
+
+	if (message.result["wise_typecode"] === "Proxy") {
+	    this._communicator.stringToProxy(result["repr"])
+	    .on_response(function(proxy) {
+		result = proxy;
+		callback.response(result);
+    		delete this._response_callbacks[message.request_id];
+	    });
+	}
+	else {
+	    callback.response(result);
+    	    delete this._response_callbacks[message.request_id];
+	}
     },
 
     _parse_error: function(message) {
@@ -410,8 +423,9 @@ Transceiver: Class.extend({
 }),
 
 TransceiverFactory: Class.extend({
-    init: function() {
+    init: function(communicator) {
 	this._transceivers = {};
+	this._communicator = communicator;
     },
 
     // used by stringToProxy
@@ -458,7 +472,7 @@ TransceiverFactory: Class.extend({
 
     _new_transceiver: function(endpoint, promise) {
 	log.debug("TransceiverFactory._new_transceiver,", endpoint.ws_name);
-	var transceiver = new wise.Transceiver(endpoint, promise);
+	var transceiver = new wise.Transceiver(this._communicator, endpoint, promise);
 	this._transceivers[endpoint.ws_name] = transceiver;
     },
 }),
@@ -692,7 +706,7 @@ Communicator: Class.extend({
 	this._host = args.host;
 	this._port = args.port;
 	this._adapters = {};
-	this._transceiverFactory = new wise.TransceiverFactory();
+	this._transceiverFactory = new wise.TransceiverFactory(this);
     },
 
     // args: name, endpoint, callback
@@ -795,6 +809,7 @@ initialize: function(host, port) {
     var ic = new wise.Communicator({ host: host, port: port });
 
     // create server admin proxy
+    // FIXME: what is this "var proxy"??
     var proxy = ic.stringToProxy("WiseAdmin -w wise -h "+ host +" -p "+ port)
 	.on_response(bind(this, on_stringToProxy_response));
 
