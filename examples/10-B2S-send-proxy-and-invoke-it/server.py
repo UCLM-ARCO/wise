@@ -1,7 +1,6 @@
 #!/usr/bin/python -u
 # -*- mode: python; coding: utf-8 -*-
 
-import time
 import wise
 
 
@@ -10,7 +9,7 @@ class Servant:
         self.broker = broker
         self.cont = 0
 
-    def receive_proxy(self, string_proxy, current=None):
+    def send_proxy(self, string_proxy, current=None):
         print("Received proxy: {}".format(string_proxy))
 
         proxy = self.broker.stringToProxy(string_proxy)
@@ -30,6 +29,7 @@ class Server:
         print("Open: {}".format(broker.get_url('static/index.html')))
 
         broker.waitForShutdown()
+
 
 if __name__ == "__main__":
     Server()
