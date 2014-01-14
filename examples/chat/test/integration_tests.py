@@ -7,7 +7,7 @@ from doublex import Spy, called, ANY_ARG
 from hamcrest import assert_that, anything
 from commodity.testing import wait_that, call_with
 
-from sulfurium import Chrome
+from brimstone import Chrome
 
 sys.path.insert(0, os.path.dirname(__file__))
 

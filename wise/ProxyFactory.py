@@ -25,7 +25,8 @@ class ProxyFactory:
 
     @classmethod
     def _get_proxy_fields(cls, ic, string):
-        # proxy should be like: "Object -w ws -h host -p port"
+        # proxy should be like: "Object -w <ws> -h <host> -p <port>"
+        # FIXME: use re to parse proxies
         fields = string.split()
 
         identity = fields[0]

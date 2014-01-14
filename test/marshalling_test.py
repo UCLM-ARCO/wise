@@ -3,7 +3,7 @@
 import sys, os, time
 
 from unittest import TestCase
-from sulfurium import Chrome
+from brimstone import Chrome
 from doublex import Spy, called
 from hamcrest import anything
 from commodity.testing import wait_that

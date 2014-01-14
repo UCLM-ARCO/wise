@@ -8,7 +8,7 @@ from hamcrest import anything
 from commodity.testing import wait_that, call_with, assert_that
 from commodity.net import localhost, listen_port
 
-from sulfurium import Chrome
+from brimstone import Chrome
 
 sys.path.insert(0, os.path.dirname(__file__))
 from server import Server

@@ -7,7 +7,7 @@ from unittest import TestCase
 from commodity.testing import wait_that, call_with
 from commodity.net import localhost, listen_port
 
-from sulfurium import Chrome
+from brimstone import Chrome
 
 import wise
 from wise.Exceptions import UnknownLocalException

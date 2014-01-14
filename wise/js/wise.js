@@ -786,7 +786,7 @@ Communicator: Class.extend({
     },
 
     ready: function() {
-	// notify to sulfurium that we are ready
+	// notify to others that this part is ready
 	wiseReady = true;
     },
 }),
@@ -837,6 +837,7 @@ Promise: Class.extend({
 	return this;
     },
 
+    // FIXME: rename to resolve
     response: function(result) {
 	if (this._on_response_callback == undefined) {
 	    this._cached_result = result;
@@ -856,6 +857,7 @@ Promise: Class.extend({
 	return this;
     },
 
+    // FIXME: rename to reject
     error: function(error) {
 	if (this._on_error_callback == undefined) {
 	    log.warning("Error received, no callback to handle it:", error);
