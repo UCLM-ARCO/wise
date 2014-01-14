@@ -36,7 +36,6 @@ function wise_application(ws) {
     function on_adapter_ready(adapter) {
 	room_listener = adapter.addWithUUID(new Servant());
 
-	// create a proxy to the observable in server
 	ws.stringToProxy("chat1 -w ws1")
 	    .on_response(on_stringToProxy_response);
 
