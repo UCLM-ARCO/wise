@@ -379,14 +379,14 @@ Transceiver: Class.extend({
     },
 
     _parse_response: function(message) {
+	_(message);
     	var callback = this._response_callbacks[message.request_id];
     	if (! callback) {
     	    return;
     	}
 
 	var result = message.result;
-
-	if (message.result["wise_typecode"] === "Proxy") {
+	if (result && result["wise_typecode"] === "Proxy") {
 	    this._communicator.stringToProxy(result["repr"])
 	    .on_response(function(proxy) {
 		result = proxy;
@@ -430,7 +430,7 @@ TransceiverFactory: Class.extend({
 
     // used by stringToProxy
     get_transceiver: function(endpoint) {
-	log.debug("TransceiverFactory: get_transceiver,", endpoint.ws_name);
+	log.debug("TransceiverFactory: get_transceiver: '{0}'".format(endpoint.ws_name));
 
 	var transceiver = this._transceivers[endpoint.ws_name];
 	var promise = new wise.Promise();
@@ -446,7 +446,8 @@ TransceiverFactory: Class.extend({
 
     // used by createObjectAdapter
     create_transceiver: function(endpoint) {
-	log.debug("TransceiverFactory: create_transceiver,", endpoint.ws_name);
+	log.debug("TransceiverFactory: create_transceiver: '{0}'"
+		  .format(endpoint.ws_name));
 
 	var transceiver = this._transceivers[endpoint.ws_name];
 	if (transceiver) {
@@ -729,6 +730,7 @@ Communicator: Class.extend({
     },
 
     stringToProxy: function(str_proxy) {
+	log.debug("stringToProxy: '{0}'".format(str_proxy));
 	var fields = this._get_proxy_fields(str_proxy);
 
 	this._transceiverFactory.get_transceiver(fields.endpoint)
@@ -896,7 +898,6 @@ newDerivedProxy: function(args) {
 };
 
 
-// $(window).ready(function() {
 window.onload = function() {
     if (typeof wise_application == "undefined") {
 
@@ -912,4 +913,4 @@ window.onload = function() {
 	wise_application(ws);
     });
 }
-// );
+
