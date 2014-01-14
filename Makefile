@@ -1,5 +1,7 @@
 # -*- mode: makefile-gmake; coding: utf-8 -*-
 
+rm-r = $(shell find . -name $(1) -delete)
+
 all:
 
 marsha:
@@ -26,5 +28,5 @@ clean:
 	find . -name "*.pyc" -delete
 	find . -name "*~" -delete
 	find . -name "*.log" -delete
-	find . -name "wise.db" -delete
+	$(call rm-r, "wise.db")
 	$(RM) -rfv dist MANIFEST

@@ -7,7 +7,7 @@ import wise
 class Servant:
     def upper(self, message, current=None):
         retval = message.upper()
-        print "Message received: '{}', return: '{}'".format(message, retval)
+        print("Message received: '{}', return: '{}'".format(message, retval))
         return retval
 
     def get_proxy(self, current=None):

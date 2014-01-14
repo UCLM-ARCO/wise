@@ -183,6 +183,9 @@ class MessageHandler(websocket.WebSocketHandler):
             try:
                 retval = method(*request.params + [current])
             except TypeError as e:
+                fd = FuncAsFile(logging.info, "exc:| ")
+                traceback.print_exc(None, fd)
+
                 logging.error("Invalid Params: '{}'".format(request.params))
                 raise
 

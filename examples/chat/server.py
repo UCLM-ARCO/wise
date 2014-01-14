@@ -19,31 +19,31 @@ class ChatManager(object):
         self.redirections = {}
 
     def send(self, nick, message, private, current=None):
-        self.for_each_member(lambda x: x.send(nick, message))
+        self.members_map(lambda x: x.send(nick, message))
 
-    def subscribe(self, nick, member_proxy, current=None):
+    def subscribe(self, nick, member, current=None):
         if nick in self.members.keys():
             raise AlreadySubscribed(nick)
 
-        member = current.adapter.getCommunicator().stringToProxy(member_proxy)
         member.send("Channel", "Welcome to the wise chat")
         map(member.notify_added_member, self.members.keys())
 
         self.members[nick] = member
-        self.for_each_member(lambda x: x.notify_added_member(nick))
+        self.members_map(lambda x: x.notify_added_member(nick))
 
-    def for_each_member(self, func):
+    def members_map(self, func):
+        "exec 'func' with each member"
         for key, member in self.members.copy().items():
             try:
                 func(member)
             except Exception as e:
-                print "server:", key, e
+                print("chat-server: {0} {1}".format(key, e))
                 del self.members[key]
 
     @memoized(ignore=['current'])
     def get_member(self, nick, current=None):
         member = self.members.get(nick)
-        if not member:
+        if member is None:
             raise NoSuchMember(nick)
 
         return current.adapter.add(wise.proxy_as_servant(member),
@@ -52,7 +52,7 @@ class ChatManager(object):
 
 class Server(object):
     def __init__(self):
-        broker = wise.initialize(  # host="161.67.27.109",
+        broker = wise.initialize(  # host="127.0.0.1",
             properties = {"TornadoApp.debug": True})
         adapter = broker.createObjectAdapter("ServerAdapter", "ws1")
         adapter.add(ChatManager(), "chat1")

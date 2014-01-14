@@ -9,6 +9,7 @@ import logging
 class ProxyFactory:
     @classmethod
     def create(cls, ic, string):
+        assert isinstance(string, (str, unicode))
         fields = cls._get_proxy_fields(ic, string)
 
         # FIXME: make this lazy, get transceiver only when needed.

@@ -379,7 +379,6 @@ Transceiver: Class.extend({
     },
 
     _parse_response: function(message) {
-	_(message);
     	var callback = this._response_callbacks[message.request_id];
     	if (! callback) {
     	    return;
