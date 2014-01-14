@@ -258,7 +258,7 @@ Transceiver: Class.extend({
 
 	    connect_count++;
 	    if (connect_count > self._reconnect_retries) {
-		log.error("Connection lost with server");
+		log.error("Server connection lost");
 		clearInterval(timer);
 	    }
 
@@ -386,11 +386,12 @@ Transceiver: Class.extend({
 
 	var result = message.result;
 	if (result && result["wise_typecode"] === "Proxy") {
+	    var self = this;
 	    this._communicator.stringToProxy(result["repr"])
 	    .on_response(function(proxy) {
 		result = proxy;
 		callback.response(result);
-    		delete this._response_callbacks[message.request_id];
+    		delete self._response_callbacks[message.request_id];
 	    });
 	}
 	else {
@@ -914,4 +915,3 @@ window.onload = function() {
 	wise_application(ws);
     });
 }
-

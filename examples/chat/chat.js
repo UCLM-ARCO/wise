@@ -20,12 +20,14 @@ Servant = Class.extend({
     },
 
     notify_added_member: function(nick) {
+	if (nick in members)
+	    return;
+
 	members[nick] = new Member(nick);
     },
 
     notify_removed_member: function(nick) {
-	// FIXME: never called
-	// destroy_member(nick);
+	destroy_member(nick);
     },
 });
 
@@ -75,11 +77,13 @@ function login() {
 	return;
     }
 
-    chatroom.subscribe(mynickname, room_listener)
+    chatroom.login(mynickname)
 	.on_response(login_success)
 	.on_error(login_fail)
 
     function login_success() {
+	chatroom.subscribe(mynickname, room_listener)
+
 	$('#login').hide();
 	$('#chat').show();
 
@@ -117,7 +121,6 @@ function resolve_member_proxy(nick) {
 	.on_error(on_get_member_error)
 
     function on_get_member_response(proxy) {
-	_(proxy);
 	members[nick].proxy = proxy;
     }
     function on_get_member_error(error) {
