@@ -6,7 +6,7 @@ from unittest import TestCase
 from doublex import Spy, called
 from hamcrest import anything
 from commodity.testing import wait_that
-from sulfurium import Chrome
+from brimstone import Chrome
 
 import wise
 

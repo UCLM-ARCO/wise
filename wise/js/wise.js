@@ -768,7 +768,7 @@ Communicator: Class.extend({
     },
 
     ready: function() {
-	// notify to sulfurium that we are ready
+	// notify to others that this part is ready
 	wiseReady = true;
     },
 }),

@@ -4,7 +4,7 @@ from unittest import TestCase
 from commodity.testing import assert_that, call_with
 from hamcrest import has_item
 
-from sulfurium import Chrome
+from brimstone import Chrome
 from server import Server
 
 import wise
