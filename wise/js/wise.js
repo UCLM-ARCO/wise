@@ -231,7 +231,8 @@ Transceiver: Class.extend({
 	    };
     	};
     	websocket.onmessage = function(event) {
-    	    self._on_ws_message(event);
+	    var message = JSON.parse(event.data);
+    	    self._on_ws_message(message);
     	};
 	websocket.onerror = function(event) {
 	    log.debug("Socket error:", event);
@@ -319,30 +320,58 @@ Transceiver: Class.extend({
 	for (var i in params) {
 	    var p = params[i];
 	    if (p instanceof wise.ObjectPrx)
-		params[i] = {"wise_typecode": "Proxy", "repr": p.toString()};
+		params[i] = {"wise_typecode": "Proxy", "repr": p.wise_toString()};
 	}
     },
 
-    _on_ws_message: function(event) {
-	log.debug("Transceiver Incomming message", event);
-
-    	var message = JSON.parse(event.data);
+    _on_ws_message: function(message) {
+	var self = this;
+	log.debug("Transceiver Incomming message:", message);
 
     	// request of method invocation
-    	if (message.method !== undefined)
+    	if (message.method !== undefined) {
+	    if (message.params) {
+		self._unmarshall_params(message.params)
+		    .on_response(function(params) {
+			message.params = params;
+    			self._parse_request(message);
+		    });
+		return;
+	    }
+
     	    this._parse_request(message);
+	    return;
+	}
 
     	// correct response from previous request
-    	else if (message.result !== undefined)
-    	    this._parse_response(message);
+    	if (message.result !== undefined) {
+	    self._unmarshall_params(message.result)
+		.on_response(function(result) {
+		    message.result = result;
+		    self._parse_response(message);
+		});
+	    return;
+	}
 
     	// error response from previous request
-    	else if (message.error !== undefined)
+    	if (message.error !== undefined) {
     	    this._parse_error(message);
+	    return;
+	}
 
     	// invalid protocol format
-    	else
-    	    this._report_invalid_message(message);
+    	this._report_invalid_message(message);
+    },
+
+    _unmarshall_params: function(params) {
+	var promise = new wise.Promise();
+
+	// FIXME: this _unmarshall will return a promise, need all() for this..
+	// for (var i in params)
+	//     params[i] = _unmarshall(params[i]);
+
+	promise.response(params);
+	return promise;
     },
 
     _parse_request: function(message) {
@@ -384,20 +413,8 @@ Transceiver: Class.extend({
     	    return;
     	}
 
-	var result = message.result;
-	if (result && result["wise_typecode"] === "Proxy") {
-	    var self = this;
-	    this._communicator.stringToProxy(result["repr"])
-	    .on_response(function(proxy) {
-		result = proxy;
-		callback.response(result);
-    		delete self._response_callbacks[message.request_id];
-	    });
-	}
-	else {
-	    callback.response(result);
-    	    delete this._response_callbacks[message.request_id];
-	}
+	callback.response(message.result);
+    	delete this._response_callbacks[message.request_id];
     },
 
     _parse_error: function(message) {
@@ -624,7 +641,7 @@ ObjectPrx: Class.extend({
     	return this._identity;
     },
 
-    toString: function() {
+    wise_toString: function() {
 	return this._identity + " " + this._transceiver.toString();
     },
 }),
@@ -802,7 +819,7 @@ initialize: function(host, port) {
 
     // create root logger for Wise
     log = new wise.Logger();
-//    log.set_level(0);
+    log.set_level(0);
     if (typeof console != "undefined") {
 	log.attach(console);
     }
@@ -829,7 +846,7 @@ initialize: function(host, port) {
 
 Promise: Class.extend({
     on_response: function(callback) {
-	if (this._cached_result != undefined) {
+	if (this._cached_result !== undefined) {
 	    callback(this._cached_result);
 	    return this;
 	}
@@ -840,7 +857,7 @@ Promise: Class.extend({
 
     // FIXME: rename to resolve
     response: function(result) {
-	if (this._on_response_callback == undefined) {
+	if (this._on_response_callback === undefined) {
 	    this._cached_result = result;
 	    return;
 	}
@@ -849,7 +866,7 @@ Promise: Class.extend({
     },
 
     on_error: function(callback) {
-	if (this._cached_error != undefined) {
+	if (this._cached_error !== undefined) {
 	    callback(this._cached_error);
 	    return this;
 	}
@@ -860,7 +877,7 @@ Promise: Class.extend({
 
     // FIXME: rename to reject
     error: function(error) {
-	if (this._on_error_callback == undefined) {
+	if (this._on_error_callback === undefined) {
 	    log.warning("Error received, no callback to handle it:", error);
 	    this._cached_error = error;
 	    return;

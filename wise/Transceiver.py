@@ -235,16 +235,8 @@ class MessageHandler(websocket.WebSocketHandler):
         self.write_message(jsonpickle.encode(response))
 
     def _response(self, request_id, result):
-
-        # FIXME: move to a better place (communicator?)
-        def proxyToString(proxy):
-            return "{} -w {} -h {} -p {}".format(
-                proxy.identity, proxy.endpoint,
-                self._adapter._communicator.host,
-                self._adapter._communicator.port)
-
         if isinstance(result, ObjectPrx):
-            result = dict(wise_typecode="Proxy", repr=proxyToString(result))
+            result = result._to_json()
 
         response = {
             'request_id': request_id,

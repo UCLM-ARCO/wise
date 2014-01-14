@@ -17,27 +17,27 @@
     </p>
 
     <script type="text/javascript">
-    function prepend(id, text) {
-        div = document.getElementById(id);
-        div.innerHTML = text + div.innerHTML;
-    }
 
-    function on_stringToProxy_response(proxy) {
-	proxy.upper("example message")
-	    .on_response(function(reply) {
-		prepend('responses', 'response: ' + reply + '<br/>');
-	    });
-    }
+    Servant = Class.extend({
+	receive_object: function(proxy) {
+	    _("Using remote proxy:", proxy);
+	    _("PROXY:", proxy);
+	    _(proxy.wise_toString());
+	    // console.log("Using remote proxy: '{0}'".format(proxy.wise_toString()));
+	    // proxy.upper("example message")
+	     	// .on_response(function(reply) {
+		//     prepend('responses', 'response: ' + reply + '<br/>');
+		// });
+	},
+
+	prepend: function(id, text) {
+	    div = document.getElementById(id);
+	    div.innerHTML = text + div.innerHTML;
+	},
+    });
 
     function wise_application(ws) {
-	Servant = Class.extend({
-	    receive_object: function(string_proxy) {
-		console.log("Remote proxy:" + string_proxy);
-		ws.stringToProxy(string_proxy)
-		    .on_response(on_stringToProxy_response);
-	    },
-	});
-	ws.createObjectAdapter("Adapter", "-w browser")
+     	ws.createObjectAdapter("Adapter", "-w browser")
 	    .on_response(on_adapter_ready);
 
 	function on_adapter_ready(adapter) {

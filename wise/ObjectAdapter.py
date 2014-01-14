@@ -50,7 +50,7 @@ class ObjectAdapter:
         self._asm[identity] = WiseServant(servant)
 
         return ObjectPrx(identity, self._endpoint,
-                         self._communicator._adapters[self._name])
+                         self._communicator.host, self._communicator.port, self)
 
     def addWithUUID(self, servant):
         identity = str(uuid.uuid1())

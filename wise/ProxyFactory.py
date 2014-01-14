@@ -1,9 +1,10 @@
 # -*- mode: python; coding: utf-8 -*-
 
+import logging
+from commodity.pattern import Bunch
+
 from .ObjectPrx import ObjectPrx
 from .Transceiver import TransceiverFactory
-
-import logging
 
 
 class ProxyFactory:
@@ -21,12 +22,13 @@ class ProxyFactory:
                             .format(fields['ws_name']))
             return None
 
-        return ObjectPrx(fields['identity'], fields['endpoint'], transceiver)
+        return ObjectPrx(fields.identity, fields.endpoint,
+                         fields.host, fields.port, transceiver)
 
     @classmethod
     def _get_proxy_fields(cls, ic, string):
         # proxy should be like: "Object -w <ws> -h <host> -p <port>"
-        # FIXME: use re to parse proxies
+        # FIXME: use re to parse proxies (or pyparsing)
         fields = string.split()
 
         identity = fields[0]
@@ -51,11 +53,11 @@ class ProxyFactory:
 
         adapter = ic.resolveAdapter(endpoint = endpoint)
 
-        return {
-            'identity': identity,
-            'ws_name': websocket,
-            'host': host,
-            'port': port,
-            'adapter': adapter,
-            'endpoint': endpoint
-        }
+        return Bunch(
+            identity = identity,
+            ws_name = websocket,
+            host = host,
+            port = port,
+            adapter = adapter,
+            endpoint = endpoint
+        )

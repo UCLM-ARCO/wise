@@ -116,6 +116,9 @@ class Communicator(Thread):
     def stringToProxy(self, stringfied_proxy):
         return ProxyFactory.create(self, stringfied_proxy)
 
+    def proxyToString(self, proxy):
+        return repr(proxy)
+
     def createObjectAdapter(self, name, endpoint):
         if name in self._adapters:
             raise AlreadyRegisteredException()
