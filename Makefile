@@ -1,6 +1,9 @@
 # -*- mode: makefile-gmake; coding: utf-8 -*-
 
-rm-r = $(shell find . -name $(1) -delete)
+define rm-r
+  $(eval files = $(foreach pattern,$(1),$(shell find . -name "$(pattern)")))
+  $(RM) -v $(files)
+endef
 
 all:
 
@@ -25,8 +28,5 @@ test-together:
 
 .PHONY: clean
 clean:
-	find . -name "*.pyc" -delete
-	find . -name "*~" -delete
-	find . -name "*.log" -delete
-	$(call rm-r, "wise.db")
-	$(RM) -rfv dist MANIFEST
+	$(call rm-r, *.pyc *~ *.log wise.db)
+	$(RM) -rv dist MANIFEST
