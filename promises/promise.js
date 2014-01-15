@@ -13,8 +13,8 @@ Promise = Class.extend({
 	return this.chain_promise;
     },
     resolve: function(retval) {
-	self = this;
-	setTimeout(function() {
+	var self = this;
+//	setTimeout(function() {
 	    if (self.onFulfilled === undefined) {
 		self.chain_promise.resolve(retval);
 		return;
@@ -23,15 +23,15 @@ Promise = Class.extend({
 	    try {
 		var x = self.onFulfilled(retval);
 		if (x != undefined)
-		    PRP(self.chain_promise, x);
+		    self.PRP(self.chain_promise, x);
 	    } catch (e) {
 		self.chain_promise.reject(e);
 	    }
-	}, 0);
+//	}, 0);
     },
     reject: function(error) {
-	self = this;
-	setTimeout(function() {
+	var self = this;
+//	setTimeout(function() {
 	    if (self.onRejected === undefined) {
 		self.chain_promise.reject(error);
 		return;
@@ -40,55 +40,91 @@ Promise = Class.extend({
 	    try {
 		var x = self.onRejected(error);
 		if (x != undefined)
-		    PRP(self.chain_promise, x);
+		    self.PRP(self.chain_promise, x);
 	    } catch (e) {
 		self.chain_promise.reject(e);
 	    }
-	}, 0);
+//	}, 0);
     },
     PRP: function(promise, x) {
 	if (promise === x) {
 	    promise.reject("TypeError");
 	    return;
 	}
+
+	// If x is a promise, adopt its state [3.4]:
 	if (typeof(x) === 'Promise') {
-	    x.then(promise.resolve, promise.reject);  // FIXME: "promise" or this??
+	    x.then(promise.resolve, promise.reject);
 	    return;
 	}
-	if (typeof(x) != 'function') {
+
+	// If x is not an object or function, fulfill promise with x.
+	if (typeof(x) != 'function' && typeof(x) != 'object') {
 	    promise.resolve(x);
 	    return;
 	}
 
+	// if x is an object or function
 	try {
 	    var then = x.then;
 	} catch (e) {
 	    promise.reject(e);
-	}
-	if (typeof(then) != 'function') {
-	    promise.resolve(x);
+	    return;
 	}
 
+	if (typeof(then) != 'function') {
+	    promise.resolve(x);
+	    return;
+	}
+
+	var resolved = false;
 	try {
 	    bind(x, then)(resolvePromise, rejectPromise);
 	} catch(e) {
-	    // FIXME: ignore if callbacks were invoked
-	    promise.reject(e);
+	    if (!resolved) {
+		promise.reject(e);
+		resolved = true;
+	    }
+	    return;
 	}
 
-	// FIXME: only a call
 	function resolvePromise(y) {
-	    PRP(promise, y);
+	    if (!resolved)
+		PRP(promise, y);
+	    resolved = true;
 	}
 	function rejectPromise(r) {
-	    promise.reject(r);
+	    if (!resolved)
+		promise.reject(r);
+	    resolved = true;
 	}
     }
 });
 
+
+function map(array, callable) {
+    var promise = new Promise();
+    var results = [];
+    var len = array.length;
+
+    for (var i in array)
+	resolveOne(array[i], i);
+
+    function resolveOne(item, i) {
+	item.then(callable).then(function(retval) {
+	    results[i] = retval;
+	    if (!--len)
+		promise.resolve(results);
+	});
+    }
+
+    return promise;
+};
+
+
 // then_resolve_only();
 // then_reject();
-chain();
+// chain();
 
 function then_resolve() {
     var promise = new Promise();
@@ -127,3 +163,133 @@ function fullfilled2(retval) {
 function rejected(error) {
     _("rejected:", error);
 }
+
+
+describe("A promise", function() {
+    var promise;
+    var fullfill;
+    var reject;
+
+    beforeEach(function() {
+	fullfill = jasmine.createSpy();
+	reject = jasmine.createSpy();
+	promise = new Promise();
+    });
+
+    it("(only with onFullfilled) should call resolved", function() {
+	promise.then(fullfill);
+
+	runs(function() {
+	    promise.resolve(4);
+	});
+
+	waitsFor(function() {
+	    return fullfill.calls.length > 0;
+	}, "function to be called", 100);
+
+	runs(function() {
+	    expect(fullfill).toHaveBeenCalledWith(4);
+	});
+    });
+
+    it("(only with onReject) should call rejected if fails", function() {
+	promise.then(undefined, reject);
+
+	runs(function() {
+	    promise.reject("error");
+	});
+
+	waitsFor(function() {
+	    return reject.calls.length > 0;
+	}, "function to be called", 100);
+
+	runs(function() {
+	    expect(reject).toHaveBeenCalledWith("error");
+	});
+    });
+
+    it("(chained) should resolve second promise", function() {
+	promise2 = promise.then();
+	promise2.then(fullfill);
+
+	runs(function() {
+	    promise.resolve(4);
+	});
+
+	waitsFor(function() {
+	    return fullfill.calls.length > 0;
+	}, "function to be called", 100);
+
+	runs(function() {
+	    expect(fullfill).toHaveBeenCalledWith(4);
+	});
+    });
+
+    it("(chained) add 2 numbers", function() {
+	var just_return_5 = jasmine.createSpy().andReturn(5);
+
+	promise2 = promise.then(just_return_5);
+	promise2.then(fullfill);
+
+	runs(function() {
+	    promise.resolve(1);
+	});
+
+	waitsFor(function() {
+	    return fullfill.calls.length > 0;
+	}, "function to be called", 100);
+
+	runs(function() {
+	    expect(fullfill).toHaveBeenCalledWith(5);
+	});
+    });
+
+    xit("all without consumers", function() {
+	var p0 = new Promise();
+	var p1 = new Promise();
+	var promise_vector = [p0, p1];
+	all(promise_vector).then(fullfill);
+
+	runs(function() {
+	    p0.resolve();
+	    p1.resolve();
+	});
+
+	waitsFor(function() {
+	    return fullfill.calls.length > 0;
+	}, "function to be called", 100);
+
+	runs(function() {
+	    expect(fullfill).toHaveBeenCalled();
+	});
+    });
+
+    it("map without consumers", function() {
+	var p0 = new Promise();
+	var p1 = new Promise();
+
+	p0.then(jasmine.createSpy().andReturn(2));
+	p1.then(jasmine.createSpy().andReturn(3));
+
+	var promise_vector = [p0, p1];
+
+	function add2(v) {
+	    return v + 2;
+	}
+
+	map(promise_vector, add2).then(fullfill);
+
+	runs(function() {
+	    p0.resolve(0);
+	    p1.resolve(0);
+	});
+
+	waitsFor(function() {
+	    return fullfill.calls.length > 0;
+	}, "function to be called", 100);
+
+	runs(function() {
+	    expect(fullfill).toHaveBeenCalledWith([4, 6]);
+	});
+    });
+});
