@@ -1,8 +1,13 @@
 wise
 ====
 
-Invoking a remote object from the browser
------------------------------------------
+Object-oriented web communication framework.
+
+
+Invoking a server object
+------------------------
+
+JavaScript code in the browser:
 
 ::
 
