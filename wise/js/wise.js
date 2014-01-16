@@ -847,6 +847,7 @@ newDerivedProxy: function(args) {
 
 
 Promise: Class.extend({
+    // lazy attribute (memoized?)
     _chain_promise: function() {
 	if (this._the_chain_promise === undefined)
 	    this._the_chain_promise = new wise.Promise();
@@ -858,12 +859,11 @@ Promise: Class.extend({
 	if (this.onFulfilled != undefined || this.onRejected != undefined)
 	    throw "Promise.then() already called."
 
-	if (typeof(onFulfilled) === 'function') {
+	if (typeof(onFulfilled) === 'function')
 	    this.onFulfilled = onFulfilled;
-	}
-	if (typeof(onRejected) === 'function') {
+
+	if (typeof(onRejected) === 'function')
 	    this.onRejected = onRejected;
-	}
 
 	return this._chain_promise();
     },
@@ -875,40 +875,34 @@ Promise: Class.extend({
     resolve: function(retval) {
 	var self = this;
 	setTimeout(function() {
-	    if (self.onFulfilled === undefined) {
-		self._chain_promise().resolve(retval);
-		return;
-	    }
+	    if (self.onFulfilled === undefined)
+		return self._chain_promise().resolve(retval);
 
-	    try {
-		var x = self.onFulfilled(retval);
-		if (x != undefined)
-		    self.PRP(self._chain_promise(), x);
-	    } catch (e) {
-		self._chain_promise().reject(e);
-	    }
+	    bind(self, self._exec_callback)(self.onFulfilled, retval);
 	}, 0);
     },
 
     reject: function(error) {
 	var self = this;
 	setTimeout(function() {
-	    if (self.onRejected === undefined) {
+	    if (self.onRejected === undefined)
 		self._chain_promise().reject(error);
-		return;
-	    }
 
-	    try {
-		var x = self.onRejected(error);
-		if (x != undefined)
-		    self.PRP(self._chain_promise(), x);
-	    } catch (e) {
-		self._chain_promise().reject(e);
-	    }
+	    bind(self, self._exec_callback)(self.onRejected, error);
 	}, 0);
     },
 
-    PRP: function(promise, x) {
+    _exec_callback: function(func, value) {
+	try {
+	    var x = func(value);
+	    if (x != undefined)
+		this._PRP(this._chain_promise(), x);
+	} catch (e) {
+	    this._chain_promise().reject(e);
+	}
+    },
+
+    _PRP: function(promise, x) {
 	if (promise === x) {
 	    promise.reject("TypeError");
 	    return;
@@ -952,7 +946,7 @@ Promise: Class.extend({
 
 	function resolvePromise(y) {
 	    if (!resolved)
-		PRP(promise, y);
+		this._PRP(promise, y);
 	    resolved = true;
 	}
 	function rejectPromise(r) {

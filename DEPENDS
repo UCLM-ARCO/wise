@@ -1,3 +1,6 @@
-python-tornado
-python-jsonpickle
-python-brimstone
+deb: python-tornado
+deb: python-jsonpickle
+deb: python-brimstone
+deb: nodejs-legacy
+deb: npm
+npm: karma
