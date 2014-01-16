@@ -1,13 +1,5 @@
 // http://promises-aplus.github.io/promises-spec
 
-function create_promise(onFullfilled) {
-    var p = new Promise();
-    if (onFullfilled == undefined)
-	return p;
-
-    return p.then(onFullfilled);
-}
-
 Promise = Class.extend({
     then: function(onFulfilled, onRejected) {
 	if (this.onFulfilled != undefined || this.onRejected != undefined)
@@ -150,6 +142,15 @@ function identity(x) {
     return x;
 }
 
+
+// just for testing
+// function create_promise(onFullfilled, onRejected) {
+//     var p = new Promise();
+//     if (onFullfilled == undefined && onRejected == undefined)
+// 	return p;
+
+//     return p.then(onFullfilled, onRejected);
+// }
 
 describe("A promise", function() {
     var promise;
