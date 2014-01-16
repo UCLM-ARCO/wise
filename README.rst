@@ -7,7 +7,9 @@ Object-oriented web communication framework.
 Invoking a server object
 ------------------------
 
-Python code in the server::
+Python code in the server:
+
+.. sourcecode:: python
 
     import wise
 
@@ -24,7 +26,9 @@ Python code in the server::
             broker.waitForShutdown()
 
 
-JavaScript code in the browser::
+JavaScript code in the browser:
+
+.. sourcecode:: javascript
 
     function wise_application(broker) {
         broker.stringToProxy("printer1 -w ws1 -h 127.0.0.1 -p 8080")
@@ -40,7 +44,9 @@ JavaScript code in the browser::
 Invoking a browser object
 -------------------------
 
-JavaScript code in the browser::
+JavaScript code in the browser:
+
+.. sourcecode:: javascript
 
     Printer = Class.extend({
 	write: function(message) {
