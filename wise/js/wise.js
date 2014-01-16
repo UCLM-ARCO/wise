@@ -1,6 +1,5 @@
 // -*- mode: js; coding: utf-8 -*-
 
-// FIXME: remove this, used only for DEBUG
 _ = bind(console, console.info);
 
 (function() {
@@ -109,6 +108,7 @@ if (typeof String.prototype.format != 'function') {
     };
 }
 
+// FIXME: this is using jquery!!!
 if (typeof String.prototype.render != 'function') {
     String.prototype.render = function() {
 	var text = this.format.apply(this, arguments);
