@@ -14,7 +14,7 @@ Promise = Class.extend({
     },
     resolve: function(retval) {
 	var self = this;
-//	setTimeout(function() {
+	setTimeout(function() {
 	    if (self.onFulfilled === undefined) {
 		self.chain_promise.resolve(retval);
 		return;
@@ -27,11 +27,11 @@ Promise = Class.extend({
 	    } catch (e) {
 		self.chain_promise.reject(e);
 	    }
-//	}, 0);
+	}, 0);
     },
     reject: function(error) {
 	var self = this;
-//	setTimeout(function() {
+	setTimeout(function() {
 	    if (self.onRejected === undefined) {
 		self.chain_promise.reject(error);
 		return;
@@ -44,7 +44,7 @@ Promise = Class.extend({
 	    } catch (e) {
 		self.chain_promise.reject(e);
 	    }
-//	}, 0);
+	}, 0);
     },
     PRP: function(promise, x) {
 	if (promise === x) {
@@ -107,8 +107,10 @@ function map(array, callable) {
     var results = [];
     var len = array.length;
 
-    for (var i in array)
+    for (var i in array) {
+	_("-->", i);
 	resolveOne(array[i], i);
+    }
 
     function resolveOne(item, i) {
 	item.then(callable).then(function(retval) {
@@ -121,47 +123,8 @@ function map(array, callable) {
     return promise;
 };
 
-
-// then_resolve_only();
-// then_reject();
-// chain();
-
-function then_resolve() {
-    var promise = new Promise();
-    promise.then(fullfilled, rejected);
-    promise.resolve(4);
-}
-
-function then_resolve_only() {
-    var promise = new Promise();
-    promise.then(fullfilled);
-    promise.resolve(4);
-}
-
-function then_reject() {
-    var promise = new Promise();
-    promise.then(fullfilled, rejected);
-    promise.reject("bad");
-}
-
-function chain() {
-    var promise1 = new Promise();
-    var promise2 = promise1.then(fullfilled, rejected);
-    promise2.then(fullfilled2);
-    promise1.resolve(4);
-}
-
-function fullfilled(retval) {
-    _("fulfilled:", retval);
-    return retval + 1;
-}
-
-function fullfilled2(retval) {
-    _("fulfilled2:", retval);
-}
-
-function rejected(error) {
-    _("rejected:", error);
+function all(array) {
+    return map(array, function(x) {return x;});
 }
 
 
@@ -171,9 +134,9 @@ describe("A promise", function() {
     var reject;
 
     beforeEach(function() {
+	promise = new Promise();
 	fullfill = jasmine.createSpy();
 	reject = jasmine.createSpy();
-	promise = new Promise();
     });
 
     it("(only with onFullfilled) should call resolved", function() {
@@ -244,11 +207,20 @@ describe("A promise", function() {
 	});
     });
 
-    xit("all without consumers", function() {
+    it("map 2 promises", function() {
 	var p0 = new Promise();
 	var p1 = new Promise();
-	var promise_vector = [p0, p1];
-	all(promise_vector).then(fullfill);
+
+	var promise_vector = [
+	    p0.then(jasmine.createSpy().andReturn(2)),
+	    p1.then(jasmine.createSpy().andReturn(3)),
+	]
+
+	function add2(v) {
+	    return v + 2;
+	}
+
+	map(promise_vector, add2).then(fullfill);
 
 	runs(function() {
 	    p0.resolve();
@@ -260,24 +232,16 @@ describe("A promise", function() {
 	}, "function to be called", 100);
 
 	runs(function() {
-	    expect(fullfill).toHaveBeenCalled();
+	    expect(fullfill).toHaveBeenCalledWith([4, 5]);
 	});
     });
 
-    it("map without consumers", function() {
+    it("all 2 promises", function() {
 	var p0 = new Promise();
 	var p1 = new Promise();
-
-	p0.then(jasmine.createSpy().andReturn(2));
-	p1.then(jasmine.createSpy().andReturn(3));
-
 	var promise_vector = [p0, p1];
 
-	function add2(v) {
-	    return v + 2;
-	}
-
-	map(promise_vector, add2).then(fullfill);
+	map(promise_vector, function(x) { return x;}).then(fullfill);
 
 	runs(function() {
 	    p0.resolve(0);
@@ -289,7 +253,8 @@ describe("A promise", function() {
 	}, "function to be called", 100);
 
 	runs(function() {
-	    expect(fullfill).toHaveBeenCalledWith([4, 6]);
+	    expect(fullfill).toHaveBeenCalled();
 	});
     });
+
 });
