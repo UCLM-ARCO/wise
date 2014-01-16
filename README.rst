@@ -54,11 +54,12 @@ JavaScript code in the browser::
 
 	function on_adapter_ready(adapter) {
 	    adapter.add(new Printer(), "printer2");
-	    broker.ready();
 	}
     }
 
-Python code in the server::
+Python code in the server:
+
+.. sourcecode:: python
 
     broker = wise.initialize()
     broker.register_StaticFS('/static', wise.dirname(__file__))
