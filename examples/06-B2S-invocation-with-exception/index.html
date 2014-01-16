@@ -19,7 +19,7 @@
     <script type="text/javascript">
     function wise_application(ws) {
 	ws.stringToProxy("Server -w ws -h 127.0.0.1 -p 8080")
-	    .on_response(on_stringToProxy_response);
+	    .then(on_stringToProxy_response);
 
 	function on_stringToProxy_response(proxy) {
 	    remote = proxy;
@@ -27,7 +27,7 @@
     }
 
     function send() {
-	remote.send().on_error(print_error);
+	remote.send().catch(print_error);
 
 	function print_error(error) {
 	    $('#responses').prepend("response: '{0}'<br>".format(error));

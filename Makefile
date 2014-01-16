@@ -7,18 +7,18 @@ endef
 
 all:
 
-marsha:
-	for i in $(shell seq 1 5); do \
-		nosetests test/marshalling_test.py:TestMarshalling_FromServerToBrowser; \
-	done
-
-
 .PHONY: test
 test:
 	@for t in test/*.py; do \
 	    echo "running test: $$t"; \
 	    xvfb-run -s "-screen 0 1600x1200x24" nosetests -vs $$t; \
 	done
+
+js-test:
+	karma start test/karma.conf.js --single-run
+
+run-karma:
+	karma start test/karma.conf.js
 
 
 .PHONY: test-together

@@ -29,16 +29,16 @@
 
     function wise_application(ws) {
 	ws.createObjectAdapter("WebAdapter")
-	    .on_response(on_adapter_ready);
+	    .then(on_adapter_ready);
 
 	function on_adapter_ready(adapter) {
 	    var observer = adapter.addWithUUID(new Servant());
 
 	    ws.stringToProxy("Observable -w ws1")
-		.on_response(on_stringToProxy_response);
+		.then(on_stringToProxy_response);
 
 	    function on_stringToProxy_response(proxy) {
-		proxy.attach(observer).on_response(ws.ready);
+		proxy.attach(observer).then(ws.ready);
 	    }
 	}
     }

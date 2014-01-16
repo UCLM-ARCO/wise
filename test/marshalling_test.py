@@ -37,9 +37,6 @@ class TestMarshalling_FromServerToBrowser(TestCase):
         self.remote = self.ws.stringToProxy("Marshall -w browser -h 127.0.0.1 -p 8080")
         wait_that(localhost, listen_port(8081))
 
-    # def tearDown(self):
-    #
-
     def test_send_positive_integer_32bits(self):
         self.check_number(2 ** 32)
 

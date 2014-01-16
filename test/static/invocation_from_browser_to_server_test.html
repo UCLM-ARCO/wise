@@ -42,8 +42,7 @@
     }
 
     function get_error() {
-	remote.get_error().on_error(
-	    function(error) {
+	remote.get_error().catch(function(error) {
 		$('#error').val(error);
 	    }
 	);

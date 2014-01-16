@@ -98,23 +98,8 @@ function bind(scope, fn) {
     };
 };
 
-/*
-FIXME: all() for a promise array is better solution
-*/
-function apply_async(callable, args_vector, on_ready) {
-    var barrier = new Barrier(args_vector.length, on_ready);
 
-    for (var i in args_vector) {
-	args_vector[i].push(function() { barrier.notify(); });
-	callable.apply(undefined, args_vector[i]);
-    }
-};
-
-
-/*
-  from: http://stackoverflow.com/questions/610406/javascript-equivalent-to-printf-string-format
-*/
-
+// from: http://stackoverflow.com/questions/610406/javascript-equivalent-to-printf-string-format
 if (typeof String.prototype.format != 'function') {
     String.prototype.format = function() {
 	var args = arguments;
@@ -145,20 +130,6 @@ if (typeof String.prototype.endsWith != 'function') {
 	return this.slice(-str.length) == str;
     };
 }
-
-
-Barrier = Class.extend({
-    init: function(state, callback) {
-	this.state = state;
-	this.callback = callback;
-    },
-
-    notify: function() {
-	this.state--;
-        if (this.state == 0)
-            this.callback();
-    }
-});
 
 
 Observable = Class.extend({
@@ -196,12 +167,12 @@ no_reconnect: false,
 Transceiver: Class.extend({
     _reconnect_retries: 15,
 
-    init: function(communicator, endpoint, promise) {
+    init: function(communicator, endpoint, socket, promise) {
 	this._communicator = communicator;
     	this._response_callbacks = {};
     	this._request_id = 0;
 	this._endpoint_info = endpoint;
-	this._waiting_callbacks = [bind(promise, promise.response)];
+	this._waiting_callbacks = [bind(promise, promise.resolve)];
 	this._is_ready = false;
 
 	this._socket_url = "ws://" + endpoint.host +
@@ -332,7 +303,7 @@ Transceiver: Class.extend({
     	if (message.method !== undefined) {
 	    if (message.params) {
 		self._unmarshall_params(message.params)
-		    .on_response(function(params) {
+		    .then(function(params) {
 			message.params = params;
     			self._parse_request(message);
 		    });
@@ -346,7 +317,7 @@ Transceiver: Class.extend({
     	// correct response from previous request
     	if (message.result !== undefined) {
 	    self._unmarshall_params(message.result)
-		.on_response(function(result) {
+		.then(function(result) {
 		    message.result = result;
 		    self._parse_response(message);
 		});
@@ -370,7 +341,7 @@ Transceiver: Class.extend({
 	// for (var i in params)
 	//     params[i] = _unmarshall(params[i]);
 
-	promise.response(params);
+	promise.resolve(params);
 	return promise;
     },
 
@@ -413,7 +384,7 @@ Transceiver: Class.extend({
     	    return;
     	}
 
-	callback.response(message.result);
+	callback.resolve(message.result);
     	delete this._response_callbacks[message.request_id];
     },
 
@@ -453,7 +424,7 @@ TransceiverFactory: Class.extend({
 	var promise = new wise.Promise();
 
 	if (transceiver) {
-	    transceiver.notify_when_ready(bind(promise, promise.response));
+	    transceiver.notify_when_ready(bind(promise, promise.resolve));
 	    return promise;
 	}
 
@@ -478,7 +449,7 @@ TransceiverFactory: Class.extend({
 	}
 
 	this._server_admin.create_socket(endpoint)
-	    .on_response(bind(this, on_create_socket_response));
+	    .then(bind(this, on_create_socket_response));
 
 	var promise = new wise.Promise();
 	function on_create_socket_response() {
@@ -734,13 +705,13 @@ Communicator: Class.extend({
 
 	var transceiver = this._transceiverFactory.create_transceiver(
 	    new wise.EndpointInfo(endpoint, {host: this._host, port: this._port}))
-	    .on_response(bind(this, on_create_transceiver_response));
+	    .then(bind(this, on_create_transceiver_response));
 
 	var promise = new wise.Promise();
 	function on_create_transceiver_response(transceiver) {
 	    var adapter = new wise.ObjectAdapter(transceiver);
 	    this._adapters[name] = adapter;
-	    promise.response(adapter);
+	    promise.resolve(adapter);
 	}
 
 	return promise;
@@ -750,8 +721,9 @@ Communicator: Class.extend({
 	log.debug("stringToProxy: '{0}'".format(str_proxy));
 	var fields = this._get_proxy_fields(str_proxy);
 
+
 	this._transceiverFactory.get_transceiver(fields.endpoint)
-	    .on_response(bind(this, on_get_transceiver_response));
+	    .then(bind(this, on_get_transceiver_response));
 
 	var promise = new wise.Promise();
 	function on_get_transceiver_response(transceiver) {
@@ -766,9 +738,11 @@ Communicator: Class.extend({
 
 	    // build dynamic methods for remote object
 	    base.wise_getMethodNames()
-		.on_response(on_getMethodNames_response);
+		.then(on_getMethodNames_response);
 
 	    function on_getMethodNames_response(result) {
+		_("AQUI", result);
+
 		result = result.concat(['wise_getMethodNames'])
 		var DerivedPrx = wise.newDerivedProxy({
 		    methods: result
@@ -778,7 +752,7 @@ Communicator: Class.extend({
 		    transceiver: transceiver
 		});
 
-		promise.response(proxy);
+		promise.resolve(proxy);
 	    }
 	}
 
@@ -828,9 +802,8 @@ initialize: function(host, port) {
     var ic = new wise.Communicator({ host: host, port: port });
 
     // create server admin proxy
-    // FIXME: what is this "var proxy"??
-    var proxy = ic.stringToProxy("WiseAdmin -w wise -h "+ host +" -p "+ port)
-	.on_response(bind(this, on_stringToProxy_response));
+    ic.stringToProxy("WiseAdmin -w wise -h "+ host +" -p "+ port)
+	.then(bind(this, on_stringToProxy_response));
 
     // response: proxy
     var promise = new wise.Promise();
@@ -838,54 +811,12 @@ initialize: function(host, port) {
 	wise.TransceiverFactory.prototype._server_admin = proxy;
 
 	// finish intialization
-	promise.response(ic);
+	promise.resolve(ic);
     }
 
     return promise;
 },
 
-Promise: Class.extend({
-    on_response: function(callback) {
-	if (this._cached_result !== undefined) {
-	    callback(this._cached_result);
-	    return this;
-	}
-
-	this._on_response_callback = callback;
-	return this;
-    },
-
-    // FIXME: rename to resolve
-    response: function(result) {
-	if (this._on_response_callback === undefined) {
-	    this._cached_result = result;
-	    return;
-	}
-
-	this._on_response_callback(result);
-    },
-
-    on_error: function(callback) {
-	if (this._cached_error !== undefined) {
-	    callback(this._cached_error);
-	    return this;
-	}
-
-	this._on_error_callback = callback;
-	return this;
-    },
-
-    // FIXME: rename to reject
-    error: function(error) {
-	if (this._on_error_callback === undefined) {
-	    log.warning("Error received, no callback to handle it:", error);
-	    this._cached_error = error;
-	    return;
-	}
-
-	this._on_error_callback(error);
-    },
-}),
 
 // args: methods
 newDerivedProxy: function(args) {
@@ -914,7 +845,164 @@ newDerivedProxy: function(args) {
     return wise.ObjectPrx.extend(methods);
 },
 
-};
+
+Promise: Class.extend({
+    _chain_promise: function() {
+	if (this._the_chain_promise === undefined)
+	    this._the_chain_promise = new wise.Promise();
+
+	return this._the_chain_promise;
+    },
+
+    then: function(onFulfilled, onRejected) {
+	if (this.onFulfilled != undefined || this.onRejected != undefined)
+	    throw "Promise.then() already called."
+
+	if (typeof(onFulfilled) === 'function') {
+	    this.onFulfilled = onFulfilled;
+	}
+	if (typeof(onRejected) === 'function') {
+	    this.onRejected = onRejected;
+	}
+
+	return this._chain_promise();
+    },
+
+    "catch": function(onRejected) {
+	return this.then(undefined, onRejected);
+    },
+
+    resolve: function(retval) {
+	var self = this;
+	setTimeout(function() {
+	    if (self.onFulfilled === undefined) {
+		self._chain_promise().resolve(retval);
+		return;
+	    }
+
+	    try {
+		var x = self.onFulfilled(retval);
+		if (x != undefined)
+		    self.PRP(self._chain_promise(), x);
+	    } catch (e) {
+		self._chain_promise().reject(e);
+	    }
+	}, 0);
+    },
+
+    reject: function(error) {
+	var self = this;
+	setTimeout(function() {
+	    if (self.onRejected === undefined) {
+		self._chain_promise().reject(error);
+		return;
+	    }
+
+	    try {
+		var x = self.onRejected(error);
+		if (x != undefined)
+		    self.PRP(self._chain_promise(), x);
+	    } catch (e) {
+		self._chain_promise().reject(e);
+	    }
+	}, 0);
+    },
+
+    PRP: function(promise, x) {
+	if (promise === x) {
+	    promise.reject("TypeError");
+	    return;
+	}
+
+	// If x is a promise, adopt its state [3.4]:
+	if (typeof(x) === 'Promise') {
+	    x.then(promise.resolve, promise.reject);
+	    return;
+	}
+
+	// If x is not an object or function, fulfill promise with x.
+	if (typeof(x) != 'function' && typeof(x) != 'object') {
+	    promise.resolve(x);
+	    return;
+	}
+
+	// if x is an object or function
+	try {
+	    var then = x.then;
+	} catch (e) {
+	    promise.reject(e);
+	    return;
+	}
+
+	if (typeof(then) != 'function') {
+	    promise.resolve(x);
+	    return;
+	}
+
+	var resolved = false;
+	try {
+	    bind(x, then)(resolvePromise, rejectPromise);
+	} catch(e) {
+	    if (!resolved) {
+		promise.reject(e);
+		resolved = true;
+	    }
+	    return;
+	}
+
+	function resolvePromise(y) {
+	    if (!resolved)
+		PRP(promise, y);
+	    resolved = true;
+	}
+	function rejectPromise(r) {
+	    if (!resolved)
+		promise.reject(r);
+	    resolved = true;
+	}
+    }
+}),
+
+map: function(array, callable) {
+    // https://github.com/cujojs/when/blob/master/when.js
+
+    function resolveOne(item, i) {
+	cast(item).then(callable).then(function(retval) {
+	    results[i] = retval;
+	    if (!--len)
+		promise.resolve(results);
+	});
+    }
+
+    function cast(x) {
+        if (x instanceof wise.Promise)
+	    return x;
+
+	var p = new wise.Promise();
+	p.resolve(x);
+	return p.then(wise.identity);
+    }
+
+    var promise = new wise.Promise();
+    var results = [];
+    var len = array.length;
+
+    for (var i in array) {
+	resolveOne(array[i], i);
+    }
+
+    return promise;
+},
+
+all: function(array) {
+    return wise.map(array, wise.identity);
+},
+
+identity: function(x) {
+    return x;
+},
+
+}; // wise namespace
 
 
 window.onload = function() {
@@ -928,7 +1016,7 @@ window.onload = function() {
 	return;
     }
 
-    wise.initialize().on_response(function(ws) {
+    wise.initialize().then(function(ws) {
 	wise_application(ws);
     });
 }

@@ -25,7 +25,7 @@
 	    _(proxy.wise_toString());
 	    // console.log("Using remote proxy: '{0}'".format(proxy.wise_toString()));
 	    // proxy.upper("example message")
-	     	// .on_response(function(reply) {
+	     	// .then(function(reply) {
 		//     prepend('responses', 'response: ' + reply + '<br/>');
 		// });
 	},
@@ -38,7 +38,7 @@
 
     function wise_application(ws) {
      	ws.createObjectAdapter("Adapter", "-w browser")
-	    .on_response(on_adapter_ready);
+	    .then(on_adapter_ready);
 
 	function on_adapter_ready(adapter) {
 	    adapter.add(new Servant(), "obj1");
