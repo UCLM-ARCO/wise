@@ -7,25 +7,7 @@ Object-oriented web communication framework.
 Invoking a server object
 ------------------------
 
-JavaScript code in the browser:
-
-::
-
-    function wise_application(ws) {
-        ws.stringToProxy("printer1 -h 127.0.0.1 -p 8080 -w ws1")
-            .on_response(on_stringToProxy_response);
-
-        function on_stringToProxy_response(proxy) {
-            proxy.write("hello world!");
-        }
-    }
-
-
-Server objects
---------------
-
-::
-
+Python code in the server::
 
     import wise
 
@@ -36,12 +18,83 @@ Server objects
     class Server:
         def __init__(self):
             broker = wise.initialize()
-            adapter = broker.createObjectAdapter("ServerAdapter", "ws1")
+            adapter = broker.createObjectAdapter("adapter1", "ws1")
             adapter.add(Printer(), "printer1")
             broker.register_StaticFS('/static', wise.dirname(__file__))
             broker.waitForShutdown()
 
 
+JavaScript code in the browser::
+
+    function wise_application(broker) {
+        broker.stringToProxy("printer1 -w ws1 -h 127.0.0.1 -p 8080")
+            .then(on_stringToProxy_response);
+
+        function on_stringToProxy_response(proxy) {
+            proxy.write("hello world from the browser!");
+        }
+    }
+
+
+
+Invoking a browser object
+-------------------------
+
+JavaScript code in the browser::
+
+    Printer = Class.extend({
+	write: function(message) {
+	    console.log(message);
+	},
+    });
+
+    function wise_application(broker) {
+	broker.createObjectAdapter("adapter2", "-w ws2")
+	    .then(on_adapter_ready);
+
+	function on_adapter_ready(adapter) {
+	    adapter.add(new Printer(), "printer2");
+	    broker.ready();
+	}
+    }
+
+Python code in the server::
+
+    broker = wise.initialize()
+    broker.register_StaticFS('/static', wise.dirname(__file__))
+    [... wait browser is ready ...]
+    proxy = broker.stringToProxy("printer2 -w ws2")
+    proxy.write("hello world from the server!")
+
+
+Servants
+--------
+
+Object adapters
+---------------
+
+Proxies
+-------
+
+Remote duck typing
+------------------
+
+API
+---
+
+Communicator.createObjectAdapter(name, endpoint)
+Communicator.stringToProxy(stringfied_proxy)
+
+Adapter.add(instance, identity)
+Adapter.addWithUUID(instance)
+
+(python only)
+wise.initialize()
+Communicator.register_StaticFS(url, path)
+Communicator.waitForShutdown()
+
+(js only)
+wise_application(communicator)
 
 .. Local Variables:
 ..  coding: utf-8
