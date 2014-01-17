@@ -72,7 +72,9 @@ _ = bind(console, console.info);
 	Class.prototype.getMethods = function () {
 	    var res = [];
 	    for(var m in this) {
-		if ((typeof this[m] == "function") && (m != "constructor") && (m != "getMethods")) {
+		if ((typeof this[m] == "function")
+		    && (m != "constructor")
+		    && (m != "getMethods")) {
 		    res.push(m)
 		}
 	    }
@@ -86,7 +88,7 @@ _ = bind(console, console.info);
 
 
 // bind a method to an specific object
-// taken from: http://fitzgeraldnick.com/weblog/26/
+// from: http://fitzgeraldnick.com/weblog/26/
 function bind(scope, fn) {
     if (!fn)
 	throw "Invalid function to bind:", fn
@@ -98,7 +100,7 @@ function bind(scope, fn) {
 };
 
 
-// from: http://stackoverflow.com/questions/610406/javascript-equivalent-to-printf-string-format
+// from: http://goo.gl/OTwTQi
 if (typeof String.prototype.format != 'function') {
     String.prototype.format = function() {
 	var args = arguments;
@@ -116,9 +118,8 @@ if (typeof String.prototype.render != 'function') {
     };
 }
 
-/*
-  from: http://stackoverflow.com/questions/646628/javascript-startswith
-*/
+
+// from: http://goo.gl/rw1ku7
 if (typeof String.prototype.startsWith != 'function') {
     String.prototype.startsWith = function(str) {
 	return this.slice(0, str.length) == str;
@@ -152,9 +153,11 @@ Observable = Class.extend({
 	this._observers.splice(index, 1);
     },
 
-    notify: function(args) {
+    notify: function() {
+	var args = Array.prototype.slice.call(arguments);
 	for (var i in this._observers) {
-	    this._observers[i].notify(args);
+	    var obj = this._observers[i];
+	    obj.notify.apply(obj, args);
 	}
     },
 });
