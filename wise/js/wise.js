@@ -167,7 +167,7 @@ no_reconnect: false,
 Transceiver: Class.extend({
     _reconnect_retries: 15,
 
-    init: function(communicator, endpoint, socket, promise) {
+    init: function(communicator, endpoint, promise) {
 	this._communicator = communicator;
     	this._response_callbacks = {};
     	this._request_id = 0;
@@ -679,7 +679,6 @@ Logger: Class.extend({
 
     _notify: function(args, method) {
 	args = Array.prototype.slice.call(args, 0);
-	args.unshift(new Date().toLocaleString());
 
 	for (var i in this._observers) {
 	    var o = this._observers[i];

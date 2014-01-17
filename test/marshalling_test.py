@@ -1,6 +1,8 @@
 # -*- mode: python; coding: utf-8 -*-
 
-import sys, os, time
+import sys
+import os
+import time
 
 from unittest import TestCase
 from brimstone import Chrome
@@ -41,7 +43,7 @@ class TestMarshalling_FromServerToBrowser(TestCase):
         self.check_number(2 ** 32)
 
     def test_send_negative_integer_32bits(self):
-        self.check_number(-2 ** 32)
+        self.check_number((2 ** 32 - 1) * -1)
 
     def test_send_positive_float(self):
         self.check_number(54450.254468)
@@ -110,6 +112,7 @@ class TestMarshalling_FromServerToBrowser(TestCase):
     #     self.assertTrue(equal)
 
     def check_number(self, number):
+        self.remote = self.ws.stringToProxy("Marshall -w browser -h 127.0.0.1 -p 8080")
         time.sleep(0.5)
         self.remote.set_number(number)
         self.assertTrue(self.browser.js("return _number == {}".format(number)))
@@ -193,6 +196,5 @@ class TestMarshalling_FromBrowserToServer(TestCase):
 
     def check_number(self, number):
         self.browser.js("server.set_number({});".format(str(number)))
-
         wait_that(self.servant.set_number,
                   called().with_args(number, anything()))

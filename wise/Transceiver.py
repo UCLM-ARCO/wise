@@ -244,3 +244,6 @@ class MessageHandler(websocket.WebSocketHandler):
         }
 
         self.write_message(jsonpickle.encode(response))
+
+    def allow_draft76(self):
+        return True

@@ -6,19 +6,19 @@
 
     <script type="text/javascript">
     Servant = Class.extend({
-	set_number: function(number) { _number = number; },
-	set_string: function(string) { _string = string; },
-	set_boolean: function(state) { _boolean = state; },
-	set_none: function(none) { _none = none; },
-	set_array: function(array) { _array = array; },
-	set_dictionary: function(dictionary) { _dictionary = dictionary; },
-	set_object: function(obj) { _object = obj; },
+    	set_number: function(number) { _number = number; },
+    	set_string: function(string) { _string = string; },
+    	set_boolean: function(state) { _boolean = state; },
+    	set_none: function(none) { _none = none; },
+    	set_array: function(array) { _array = array; },
+    	set_dictionary: function(dictionary) { _dictionary = dictionary; },
+    	set_object: function(obj) { _object = obj; },
     });
 
     function wise_application(ws) {
 	// create an object adapter to register our servant
 	ws.createObjectAdapter("WebAdapter", "-w browser")
-	    .on_response(on_adapter_ready);
+	    .then(on_adapter_ready);
 
 	function on_adapter_ready(adapter) {
 	    adapter.add(new Servant(), "Marshall");
@@ -27,9 +27,9 @@
 
 	function create_proxy() {
 	    ws.stringToProxy("Server -w ws -h 127.0.0.1 -p 8080")
-		.on_response(on_stringToProxy_response);
+	     	.then(on_stringToProxy_response);
 
-            function on_stringToProxy_response(proxy) {
+	    function on_stringToProxy_response(proxy) {
 		server = proxy;
 		ws.ready();
 	    }
