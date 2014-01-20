@@ -103,6 +103,14 @@ Communicator.waitForShutdown()
 (js only)
 wise_application(communicator)
 
+
+
+tests
+-----
+
+* http://jsfiddle.net/NKBJ4/6/
+
+
 .. Local Variables:
 ..  coding: utf-8
 ..  mode: flyspell
