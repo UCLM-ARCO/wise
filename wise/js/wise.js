@@ -68,19 +68,6 @@ _ = bind(console, console.info);
         // And make this class extendable
         Class.extend = arguments.callee;
 
-	// FIXME: Move to wise_getMethods
-	Class.prototype.getMethods = function () {
-	    var res = [];
-	    for(var m in this) {
-		if ((typeof this[m] == "function")
-		    && (m != "constructor")
-		    && (m != "getMethods")) {
-		    res.push(m)
-		}
-	    }
-	    return res;
-	}
-
         return Class;
     };
 
@@ -538,7 +525,11 @@ ObjectAdapter: Class.extend({
     	this._asm[identity] = servant;
 
 	servant.wise_getMethodNames = function() {
-	    return servant.getMethods();
+	    var res = [];
+	    for(var m in this)
+		if ((typeof this[m] == "function") && (m != "constructor"))
+		    res.push(m)
+	    return res;
 	};
 
 	log.debug("Adding object: " + identity);
@@ -743,8 +734,6 @@ Communicator: Class.extend({
 		.then(on_getMethodNames_response);
 
 	    function on_getMethodNames_response(result) {
-		_("AQUI", result);
-
 		result = result.concat(['wise_getMethodNames'])
 		var DerivedPrx = wise.newDerivedProxy({
 		    methods: result
@@ -781,6 +770,7 @@ Communicator: Class.extend({
 
     ready: function() {
 	// notify to others that this part is ready
+	_("wise.ready called");
 	wiseReady = true;
     },
 }),
@@ -888,7 +878,7 @@ Promise: Class.extend({
 	var self = this;
 	setTimeout(function() {
 	    if (self.onRejected === undefined)
-		self._chain_promise().reject(error);
+		return self._chain_promise().reject(error);
 
 	    bind(self, self._exec_callback)(self.onRejected, error);
 	}, 0);

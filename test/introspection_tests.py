@@ -1,5 +1,6 @@
 # -*- mode: python; coding: utf-8 -*-
 
+import time
 from unittest import TestCase
 from commodity.testing import assert_that, call_with
 from hamcrest import has_item
@@ -16,7 +17,7 @@ class IntrospectionTests(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.server = Server()
-        cls.browser = Chrome(left_open=True)
+        cls.browser = Chrome(left_open=False)
         cls.ws = wise.initialize(port=8081)
 
     @classmethod
@@ -39,6 +40,7 @@ class IntrospectionTests(TestCase):
 
     def test_browser_wise_getMethodNames(self):
         self.browser.open(self.url)
+        time.sleep(1)
 
         web_obj = self.ws.stringToProxy("obj1 -w browser")
         assert web_obj

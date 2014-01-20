@@ -16,30 +16,28 @@
     });
 
     function wise_application(ws) {
-	var barrier = new Barrier(2, ws.ready);
+        var p1 = ws.stringToProxy("Server -w ws -h 127.0.0.1 -p 8080")
+	    .then(on_stringToProxy_response);
 
-	// create a proxy to object in server
-	ws.stringToProxy("Server -w ws -h 127.0.0.1 -p 8080")
-	    .on_response(on_stringToProxy_response);
+	var p2 = ws.createObjectAdapter("WebAdapter", "-w browser")
+	    .then(on_adapter_ready);
 
-	ws.createObjectAdapter("WebAdapter", "-w browser")
-	    .on_response(on_adapter_ready);
+	wise.all([p1, p2]).then(ws.ready);
 
 	function on_stringToProxy_response(proxy) {
 	    remote = proxy;
-            barrier.notify();
+	    return 0;
 	}
 
 	function on_adapter_ready(adapter) {
-	    var servant = new Servant();
-	    adapter.add(servant, "obj1");
-	    barrier.notify();
+	    adapter.add(new Servant(), "obj1");
+	    return 0;
 	}
     }
 
     function invoke() {
 	remote.wise_getMethodNames()
-	    .on_response(function(names) {
+	    .then(function(names) {
 		$('#result').val(names.sort().join(', '));
 	    });
     }
