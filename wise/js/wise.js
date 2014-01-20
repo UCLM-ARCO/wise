@@ -785,7 +785,7 @@ initialize: function(host, port) {
 
     // create root logger for Wise
     log = new wise.Logger();
-    log.set_level(0);
+//    log.set_level(0);
     if (typeof console != "undefined") {
 	log.attach(console);
     }
