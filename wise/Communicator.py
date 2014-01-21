@@ -45,6 +45,7 @@ class TornadoApplication(web.Application):
                 spec = web.URLSpec(pattern, handler, kwargs)
 
             # replace old spec with new one
+            assert isinstance(spec, web.URLSpec)
             for old in specs[:]:
                 if old._path == spec._path:
                     specs.remove(old)

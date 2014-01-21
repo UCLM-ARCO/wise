@@ -213,4 +213,8 @@ describe("all", function() {
 	    expect(fullfill).toHaveBeenCalled();
 	});
     });
+
+    // promise.resolve(undefined)
+
+    // promise without then
 });

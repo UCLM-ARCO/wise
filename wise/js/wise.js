@@ -176,13 +176,12 @@ Transceiver: Class.extend({
     },
 
     _create_socket: function(on_ready) {
-    	var websocket = new WebSocket(this._socket_url);
-
 	var self = this;
+    	var websocket = new WebSocket(this._socket_url);
     	websocket.onopen = function(event) {
 	    self._websocket = this;
 
-	    log.debug("Socket opened (" + this.url + "),", event);
+	    log.debug("Socket opened (" + self._socket_url + "),", event);
 	    on_ready();
 
 	    websocket.onclose = function(event) {
@@ -771,7 +770,10 @@ Communicator: Class.extend({
     ready: function() {
 	// notify to others that this part is ready
 	_("wise.ready called");
-	wiseReady = true;
+	var div = document.createElement('div');
+	div.id = 'wiseReady';
+	var body = document.querySelector('body');
+	body.appendChild(div);
     },
 }),
 
