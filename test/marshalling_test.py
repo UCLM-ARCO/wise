@@ -5,7 +5,7 @@ import os
 import time
 
 from unittest import TestCase
-from brimstone import Chrome
+from brimstone import PhantomJS
 from doublex import Spy, called
 from hamcrest import anything
 from commodity.testing import wait_that
@@ -15,7 +15,7 @@ import wise
 sys.path.insert(0, os.path.dirname(__file__))
 from server import Server
 
-_browser = Chrome(left_open=False)
+_browser = PhantomJS(left_open=False)
 
 
 class TestMarshalling_FromServerToBrowser(TestCase):
@@ -25,19 +25,16 @@ class TestMarshalling_FromServerToBrowser(TestCase):
     def setUpClass(cls):
         cls.browser = _browser
         cls.server = Server()
-        cls.ws = wise.initialize(port=8081)
 
     @classmethod
     def tearDownClass(cls):
         cls.server.stop()
-        cls.ws.shutdown()
-        cls.browser.driver.quit()
+        cls.browser.exit()
 
     def setUp(self):
         self.browser.open(self.url)
         self.browser.js('wise.no_reconnect = true;')
-        self.remote = self.ws.stringToProxy("Marshall -w browser -h 127.0.0.1 -p 8080")
-        wait_that(localhost, listen_port(8081))
+        self.remote = self.server.ws.stringToProxy("Marshall -w browser -h 127.0.0.1 -p 8080")
 
     def test_send_positive_integer_32bits(self):
         self.check_number(2 ** 32)
@@ -112,7 +109,7 @@ class TestMarshalling_FromServerToBrowser(TestCase):
     #     self.assertTrue(equal)
 
     def check_number(self, number):
-        self.remote = self.ws.stringToProxy("Marshall -w browser -h 127.0.0.1 -p 8080")
+        self.remote = self.server.ws.stringToProxy("Marshall -w browser -h 127.0.0.1 -p 8080")
         time.sleep(0.5)
         self.remote.set_number(number)
         self.assertTrue(self.browser.js("return _number == {}".format(number)))

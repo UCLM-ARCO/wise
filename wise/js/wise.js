@@ -383,13 +383,11 @@ Transceiver: Class.extend({
     	    return;
     	}
 
-	if (callback.error == undefined) {
+	if (callback.onRejected === undefined) {
 	    log.error("Error received, no callback to handle it:", message.error);
 	}
-	else {
-    	    callback.error(message.error);
-	}
 
+	callback.reject(message.error);
     	delete this._response_callbacks[message.request_id];
     },
 
