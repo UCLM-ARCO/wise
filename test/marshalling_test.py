@@ -9,9 +9,7 @@ from brimstone import PhantomJS
 from doublex import Spy, called
 from hamcrest import anything
 from commodity.testing import wait_that
-from commodity.net import localhost, listen_port
 
-import wise
 sys.path.insert(0, os.path.dirname(__file__))
 from server import Server
 

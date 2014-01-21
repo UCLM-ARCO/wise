@@ -1,6 +1,5 @@
 # -*- mode: python; coding: utf-8 -*-
 
-import os
 from threading import Thread
 from unittest import TestCase
 from doublex import Spy, called
