@@ -42,7 +42,7 @@ class TestBrowserToServer(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.browser.exit()
+        cls.browser.quit()
         cls.server.stop()
 
     def test_browser_to_server_no_response(self):

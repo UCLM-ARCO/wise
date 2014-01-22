@@ -27,7 +27,7 @@ class TestMarshalling_FromServerToBrowser(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.server.stop()
-        cls.browser.exit()
+        cls.browser.quit()
 
     def setUp(self):
         self.browser.open(self.url)

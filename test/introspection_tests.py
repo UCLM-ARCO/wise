@@ -18,7 +18,7 @@ class IntrospectionTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.browser.exit()
+        cls.browser.quit()
         cls.server.stop()
 
     def setUp(self):
@@ -38,4 +38,3 @@ class IntrospectionTests(TestCase):
         web_obj = self.server.ws.stringToProxy("obj1 -w browser")
         assert web_obj
         assert_that(web_obj.wise_getMethodNames(), has_item("echo"))
-

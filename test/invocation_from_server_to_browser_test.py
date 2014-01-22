@@ -25,7 +25,7 @@ class TestServerToBrowser(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.browser.exit()
+        cls.browser.quit()
         cls.server.stop()
 
     def setUp(self):
