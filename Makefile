@@ -11,20 +11,16 @@ all:
 test:
 	@for t in test/*.py; do \
 	    echo "running test: $$t"; \
-	    xvfb-run -s "-screen 0 1600x1200x24" nosetests -vs $$t; \
+	    nosetests -vs $$t; \
 	done
 
-js-test:
+ #	    xvfb-run -s "-screen 0 1600x1200x24" nosetests -vs $$t; \
+
+karma-single:
 	karma start test/karma.conf.js --single-run
 
-run-karma:
+karma:
 	karma start test/karma.conf.js
-
-
-.PHONY: test-together
-test-together:
-	find test -name "_test.py" | xargs nosetests -s
-
 
 .PHONY: clean
 clean:
