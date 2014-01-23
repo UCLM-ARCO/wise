@@ -1,6 +1,5 @@
 // -*- mode: js; coding: utf-8 -*-
 
-// FIXME: remove this, used only for DEBUG
 _ = bind(console, console.info);
 
 (function() {
@@ -69,16 +68,6 @@ _ = bind(console, console.info);
         // And make this class extendable
         Class.extend = arguments.callee;
 
-	Class.prototype.getMethods = function () {
-	    var res = [];
-	    for(var m in this) {
-		if ((typeof this[m] == "function") && (m != "constructor") && (m != "getMethods")) {
-		    res.push(m)
-		}
-	    }
-	    return res;
-	}
-
         return Class;
     };
 
@@ -86,7 +75,7 @@ _ = bind(console, console.info);
 
 
 // bind a method to an specific object
-// taken from: http://fitzgeraldnick.com/weblog/26/
+// from: http://fitzgeraldnick.com/weblog/26/
 function bind(scope, fn) {
     if (!fn)
 	throw "Invalid function to bind:", fn
@@ -98,20 +87,7 @@ function bind(scope, fn) {
 };
 
 
-function apply_async(callable, args_vector, on_ready) {
-    var barrier = new Barrier(args_vector.length, on_ready);
-
-    for (var i in args_vector) {
-	args_vector[i].push(function() { barrier.notify(); });
-	callable.apply(undefined, args_vector[i]);
-    }
-};
-
-
-/*
-  from: http://stackoverflow.com/questions/610406/javascript-equivalent-to-printf-string-format
-*/
-
+// from: http://goo.gl/OTwTQi
 if (typeof String.prototype.format != 'function') {
     String.prototype.format = function() {
 	var args = arguments;
@@ -121,6 +97,7 @@ if (typeof String.prototype.format != 'function') {
     };
 }
 
+// FIXME: this is using jquery!!!
 if (typeof String.prototype.render != 'function') {
     String.prototype.render = function() {
 	var text = this.format.apply(this, arguments);
@@ -128,9 +105,8 @@ if (typeof String.prototype.render != 'function') {
     };
 }
 
-/*
-  from: http://stackoverflow.com/questions/646628/javascript-startswith
-*/
+
+// from: http://goo.gl/rw1ku7
 if (typeof String.prototype.startsWith != 'function') {
     String.prototype.startsWith = function(str) {
 	return this.slice(0, str.length) == str;
@@ -142,20 +118,6 @@ if (typeof String.prototype.endsWith != 'function') {
 	return this.slice(-str.length) == str;
     };
 }
-
-
-Barrier = Class.extend({
-    init: function(state, callback) {
-	this.state = state;
-	this.callback = callback;
-    },
-
-    notify: function() {
-	this.state--;
-        if (this.state == 0)
-            this.callback();
-    }
-});
 
 
 Observable = Class.extend({
@@ -178,9 +140,11 @@ Observable = Class.extend({
 	this._observers.splice(index, 1);
     },
 
-    notify: function(args) {
+    notify: function() {
+	var args = Array.prototype.slice.call(arguments);
 	for (var i in this._observers) {
-	    this._observers[i].notify(args);
+	    var obj = this._observers[i];
+	    obj.notify.apply(obj, args);
 	}
     },
 });
@@ -193,11 +157,12 @@ no_reconnect: false,
 Transceiver: Class.extend({
     _reconnect_retries: 15,
 
-    init: function(endpoint, promise) {
+    init: function(communicator, endpoint, promise) {
+	this._communicator = communicator;
     	this._response_callbacks = {};
     	this._request_id = 0;
 	this._endpoint_info = endpoint;
-	this._waiting_callbacks = [bind(promise, promise.response)];
+	this._waiting_callbacks = [bind(promise, promise.resolve)];
 	this._is_ready = false;
 
 	this._socket_url = "ws://" + endpoint.host +
@@ -211,13 +176,12 @@ Transceiver: Class.extend({
     },
 
     _create_socket: function(on_ready) {
-    	var websocket = new WebSocket(this._socket_url);
-
 	var self = this;
+    	var websocket = new WebSocket(this._socket_url);
     	websocket.onopen = function(event) {
 	    self._websocket = this;
 
-	    log.debug("Socket opened (" + this.url + "),", event);
+	    log.debug("Socket opened (" + self._socket_url + "),", event);
 	    on_ready();
 
 	    websocket.onclose = function(event) {
@@ -227,7 +191,8 @@ Transceiver: Class.extend({
 	    };
     	};
     	websocket.onmessage = function(event) {
-    	    self._on_ws_message(event);
+	    var message = JSON.parse(event.data);
+    	    self._on_ws_message(message);
     	};
 	websocket.onerror = function(event) {
 	    log.debug("Socket error:", event);
@@ -254,7 +219,7 @@ Transceiver: Class.extend({
 
 	    connect_count++;
 	    if (connect_count > self._reconnect_retries) {
-		log.error("Connection lost with server");
+		log.error("Server connection lost");
 		clearInterval(timer);
 	    }
 
@@ -315,30 +280,58 @@ Transceiver: Class.extend({
 	for (var i in params) {
 	    var p = params[i];
 	    if (p instanceof wise.ObjectPrx)
-		params[i] = p.toString();
+		params[i] = {"wise_typecode": "Proxy", "repr": p.wise_toString()};
 	}
     },
 
-    _on_ws_message: function(event) {
-	log.debug("Transceiver Incomming message", event);
-
-    	var message = JSON.parse(event.data);
+    _on_ws_message: function(message) {
+	var self = this;
+	log.debug("Transceiver Incomming message:", message);
 
     	// request of method invocation
-    	if (message.method !== undefined)
+    	if (message.method !== undefined) {
+	    if (message.params) {
+		self._unmarshall_params(message.params)
+		    .then(function(params) {
+			message.params = params;
+    			self._parse_request(message);
+		    });
+		return;
+	    }
+
     	    this._parse_request(message);
+	    return;
+	}
 
     	// correct response from previous request
-    	else if (message.result !== undefined)
-    	    this._parse_response(message);
+    	if (message.result !== undefined) {
+	    self._unmarshall_params(message.result)
+		.then(function(result) {
+		    message.result = result;
+		    self._parse_response(message);
+		});
+	    return;
+	}
 
     	// error response from previous request
-    	else if (message.error !== undefined)
+    	if (message.error !== undefined) {
     	    this._parse_error(message);
+	    return;
+	}
 
     	// invalid protocol format
-    	else
-    	    this._report_invalid_message(message);
+    	this._report_invalid_message(message);
+    },
+
+    _unmarshall_params: function(params) {
+	var promise = new wise.Promise();
+
+	// FIXME: this _unmarshall will return a promise, need all() for this..
+	// for (var i in params)
+	//     params[i] = _unmarshall(params[i]);
+
+	promise.resolve(params);
+	return promise;
     },
 
     _parse_request: function(message) {
@@ -380,7 +373,7 @@ Transceiver: Class.extend({
     	    return;
     	}
 
-    	callback.response(message.result);
+	callback.resolve(message.result);
     	delete this._response_callbacks[message.request_id];
     },
 
@@ -390,13 +383,11 @@ Transceiver: Class.extend({
     	    return;
     	}
 
-	if (callback.error == undefined) {
+	if (callback.onRejected === undefined) {
 	    log.error("Error received, no callback to handle it:", message.error);
 	}
-	else {
-    	    callback.error(message.error);
-	}
 
+	callback.reject(message.error);
     	delete this._response_callbacks[message.request_id];
     },
 
@@ -407,19 +398,20 @@ Transceiver: Class.extend({
 }),
 
 TransceiverFactory: Class.extend({
-    init: function() {
+    init: function(communicator) {
 	this._transceivers = {};
+	this._communicator = communicator;
     },
 
     // used by stringToProxy
     get_transceiver: function(endpoint) {
-	log.debug("TransceiverFactory: get_transceiver,", endpoint.ws_name);
+	log.debug("TransceiverFactory: get_transceiver: '{0}'".format(endpoint.ws_name));
 
 	var transceiver = this._transceivers[endpoint.ws_name];
 	var promise = new wise.Promise();
 
 	if (transceiver) {
-	    transceiver.notify_when_ready(bind(promise, promise.response));
+	    transceiver.notify_when_ready(bind(promise, promise.resolve));
 	    return promise;
 	}
 
@@ -429,7 +421,8 @@ TransceiverFactory: Class.extend({
 
     // used by createObjectAdapter
     create_transceiver: function(endpoint) {
-	log.debug("TransceiverFactory: create_transceiver,", endpoint.ws_name);
+	log.debug("TransceiverFactory: create_transceiver: '{0}'"
+		  .format(endpoint.ws_name));
 
 	var transceiver = this._transceivers[endpoint.ws_name];
 	if (transceiver) {
@@ -443,7 +436,7 @@ TransceiverFactory: Class.extend({
 	}
 
 	this._server_admin.create_socket(endpoint)
-	    .on_response(bind(this, on_create_socket_response));
+	    .then(bind(this, on_create_socket_response));
 
 	var promise = new wise.Promise();
 	function on_create_socket_response() {
@@ -455,7 +448,7 @@ TransceiverFactory: Class.extend({
 
     _new_transceiver: function(endpoint, promise) {
 	log.debug("TransceiverFactory._new_transceiver,", endpoint.ws_name);
-	var transceiver = new wise.Transceiver(endpoint, promise);
+	var transceiver = new wise.Transceiver(this._communicator, endpoint, promise);
 	this._transceivers[endpoint.ws_name] = transceiver;
     },
 }),
@@ -529,7 +522,11 @@ ObjectAdapter: Class.extend({
     	this._asm[identity] = servant;
 
 	servant.wise_getMethodNames = function() {
-	    return servant.getMethods();
+	    var res = [];
+	    for(var m in this)
+		if ((typeof this[m] == "function") && (m != "constructor"))
+		    res.push(m)
+	    return res;
 	};
 
 	log.debug("Adding object: " + identity);
@@ -580,7 +577,7 @@ ObjectAdapter: Class.extend({
 }),
 
 ObjectPrx: Class.extend({
-    // FIXME: this is actually two different
+    // FIXME: this is actually two different constructors
     // args: (identity, transceiver) || base
     init: function(args) {
 	if (args.base) {
@@ -606,7 +603,7 @@ ObjectPrx: Class.extend({
     	return this._identity;
     },
 
-    toString: function() {
+    wise_toString: function() {
 	return this._identity + " " + this._transceiver.toString();
     },
 }),
@@ -673,7 +670,6 @@ Logger: Class.extend({
 
     _notify: function(args, method) {
 	args = Array.prototype.slice.call(args, 0);
-	args.unshift(new Date().toLocaleString());
 
 	for (var i in this._observers) {
 	    var o = this._observers[i];
@@ -689,7 +685,7 @@ Communicator: Class.extend({
 	this._host = args.host;
 	this._port = args.port;
 	this._adapters = {};
-	this._transceiverFactory = new wise.TransceiverFactory();
+	this._transceiverFactory = new wise.TransceiverFactory(this);
     },
 
     // args: name, endpoint, callback
@@ -699,23 +695,25 @@ Communicator: Class.extend({
 
 	var transceiver = this._transceiverFactory.create_transceiver(
 	    new wise.EndpointInfo(endpoint, {host: this._host, port: this._port}))
-	    .on_response(bind(this, on_create_transceiver_response));
+	    .then(bind(this, on_create_transceiver_response));
 
 	var promise = new wise.Promise();
 	function on_create_transceiver_response(transceiver) {
 	    var adapter = new wise.ObjectAdapter(transceiver);
 	    this._adapters[name] = adapter;
-	    promise.response(adapter);
+	    promise.resolve(adapter);
 	}
 
 	return promise;
     },
 
     stringToProxy: function(str_proxy) {
+	log.debug("stringToProxy: '{0}'".format(str_proxy));
 	var fields = this._get_proxy_fields(str_proxy);
 
+
 	this._transceiverFactory.get_transceiver(fields.endpoint)
-	    .on_response(bind(this, on_get_transceiver_response));
+	    .then(bind(this, on_get_transceiver_response));
 
 	var promise = new wise.Promise();
 	function on_get_transceiver_response(transceiver) {
@@ -730,7 +728,7 @@ Communicator: Class.extend({
 
 	    // build dynamic methods for remote object
 	    base.wise_getMethodNames()
-		.on_response(on_getMethodNames_response);
+		.then(on_getMethodNames_response);
 
 	    function on_getMethodNames_response(result) {
 		result = result.concat(['wise_getMethodNames'])
@@ -742,7 +740,7 @@ Communicator: Class.extend({
 		    transceiver: transceiver
 		});
 
-		promise.response(proxy);
+		promise.resolve(proxy);
 	    }
 	}
 
@@ -769,7 +767,11 @@ Communicator: Class.extend({
 
     ready: function() {
 	// notify to others that this part is ready
-	wiseReady = true;
+	_("wise.ready called");
+	var div = document.createElement('div');
+	div.id = 'wiseReady';
+	var body = document.querySelector('body');
+	body.appendChild(div);
     },
 }),
 
@@ -792,8 +794,8 @@ initialize: function(host, port) {
     var ic = new wise.Communicator({ host: host, port: port });
 
     // create server admin proxy
-    var proxy = ic.stringToProxy("WiseAdmin -w wise -h "+ host +" -p "+ port)
-	.on_response(bind(this, on_stringToProxy_response));
+    ic.stringToProxy("WiseAdmin -w wise -h "+ host +" -p "+ port)
+	.then(bind(this, on_stringToProxy_response));
 
     // response: proxy
     var promise = new wise.Promise();
@@ -801,54 +803,12 @@ initialize: function(host, port) {
 	wise.TransceiverFactory.prototype._server_admin = proxy;
 
 	// finish intialization
-	promise.response(ic);
+	promise.resolve(ic);
     }
 
     return promise;
 },
 
-Promise: Class.extend({
-    on_response: function(callback) {
-	if (this._cached_result != undefined) {
-	    callback(this._cached_result);
-	    return this;
-	}
-
-	this._on_response_callback = callback;
-	return this;
-    },
-
-    // FIXME: rename to resolve
-    response: function(result) {
-	if (this._on_response_callback == undefined) {
-	    this._cached_result = result;
-	    return;
-	}
-
-	this._on_response_callback(result);
-    },
-
-    on_error: function(callback) {
-	if (this._cached_error != undefined) {
-	    callback(this._cached_error);
-	    return this;
-	}
-
-	this._on_error_callback = callback;
-	return this;
-    },
-
-    // FIXME: rename to reject
-    error: function(error) {
-	if (this._on_error_callback == undefined) {
-	    log.warning("Error received, no callback to handle it:", error);
-	    this._cached_error = error;
-	    return;
-	}
-
-	this._on_error_callback(error);
-    },
-}),
 
 // args: methods
 newDerivedProxy: function(args) {
@@ -877,10 +837,160 @@ newDerivedProxy: function(args) {
     return wise.ObjectPrx.extend(methods);
 },
 
-};
+
+Promise: Class.extend({
+    // lazy attribute (memoized?)
+    _chain_promise: function() {
+	if (this._the_chain_promise === undefined)
+	    this._the_chain_promise = new wise.Promise();
+
+	return this._the_chain_promise;
+    },
+
+    then: function(onFulfilled, onRejected) {
+	if (this.onFulfilled != undefined || this.onRejected != undefined)
+	    throw "Promise.then() already called."
+
+	if (typeof(onFulfilled) === 'function')
+	    this.onFulfilled = onFulfilled;
+
+	if (typeof(onRejected) === 'function')
+	    this.onRejected = onRejected;
+
+	return this._chain_promise();
+    },
+
+    "catch": function(onRejected) {
+	return this.then(undefined, onRejected);
+    },
+
+    resolve: function(retval) {
+	var self = this;
+	setTimeout(function() {
+	    if (self.onFulfilled === undefined)
+		return self._chain_promise().resolve(retval);
+
+	    bind(self, self._exec_callback)(self.onFulfilled, retval);
+	}, 0);
+    },
+
+    reject: function(error) {
+	var self = this;
+	setTimeout(function() {
+	    if (self.onRejected === undefined)
+		return self._chain_promise().reject(error);
+
+	    bind(self, self._exec_callback)(self.onRejected, error);
+	}, 0);
+    },
+
+    _exec_callback: function(func, value) {
+	try {
+	    var x = func(value);
+	    if (x != undefined)
+		this._PRP(this._chain_promise(), x);
+	} catch (e) {
+	    this._chain_promise().reject(e);
+	}
+    },
+
+    _PRP: function(promise, x) {
+	if (promise === x) {
+	    promise.reject("TypeError");
+	    return;
+	}
+
+	// If x is a promise, adopt its state [3.4]:
+	if (typeof(x) === 'Promise') {
+	    x.then(promise.resolve, promise.reject);
+	    return;
+	}
+
+	// If x is not an object or function, fulfill promise with x.
+	if (typeof(x) != 'function' && typeof(x) != 'object') {
+	    promise.resolve(x);
+	    return;
+	}
+
+	// if x is an object or function
+	try {
+	    var then = x.then;
+	} catch (e) {
+	    promise.reject(e);
+	    return;
+	}
+
+	if (typeof(then) != 'function') {
+	    promise.resolve(x);
+	    return;
+	}
+
+	var resolved = false;
+	try {
+	    bind(x, then)(resolvePromise, rejectPromise);
+	} catch(e) {
+	    if (!resolved) {
+		promise.reject(e);
+		resolved = true;
+	    }
+	    return;
+	}
+
+	function resolvePromise(y) {
+	    if (!resolved)
+		this._PRP(promise, y);
+	    resolved = true;
+	}
+	function rejectPromise(r) {
+	    if (!resolved)
+		promise.reject(r);
+	    resolved = true;
+	}
+    }
+}),
+
+map: function(array, callable) {
+    // https://github.com/cujojs/when/blob/master/when.js
+
+    function resolveOne(item, i) {
+	cast(item).then(callable).then(function(retval) {
+	    results[i] = retval;
+	    if (!--len)
+		promise.resolve(results);
+	});
+    }
+
+    function cast(x) {
+        if (x instanceof wise.Promise)
+	    return x;
+
+	var p = new wise.Promise();
+	p.resolve(x);
+	return p.then(wise.identity);
+    }
+
+    var promise = new wise.Promise();
+    var results = [];
+    var len = array.length;
+
+    for (var i in array) {
+	resolveOne(array[i], i);
+    }
+
+    return promise;
+},
+
+all: function(array) {
+    return wise.map(array, wise.identity);
+},
+
+identity: function(x) {
+    return x;
+},
+
+}; // wise namespace
 
 
-// $(window).ready(function() {
 window.onload = function() {
     if (typeof wise_application == "undefined") {
 
@@ -892,8 +1002,7 @@ window.onload = function() {
 	return;
     }
 
-    wise.initialize().on_response(function(ws) {
+    wise.initialize().then(function(ws) {
 	wise_application(ws);
     });
 }
-// );

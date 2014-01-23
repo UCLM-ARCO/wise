@@ -20,10 +20,13 @@ def any_to_json(value):
             fields[k] = any_to_json(v)
         return fields
 
+    if isinstance(value, ObjectPrx):
+        return value._to_json()
+
     # NOTE: let this be the last resort (structures)
     attrs = {}
     for name in dir(value):
-        if name.startswith("__"):
+        if name.startswith("_"):
             continue
 
         attr = getattr(value, name)
@@ -32,7 +35,6 @@ def any_to_json(value):
 
         attrs[name] = any_to_json(attr)
 
-#    attrs["__wise_typecode"] = value.__class__.__name__
     return attrs
 
 
@@ -52,16 +54,21 @@ class MethodHandler:
 
 
 class ObjectPrx(object):
-    def __init__(self, identity, endpoint, transceiver):
+    def __init__(self, identity, endpoint, host, port, transceiver):
         self.identity = identity
         self.endpoint = endpoint
+        self.host = host
+        self.port = port
         self._transceiver = transceiver
 
     def wise_getIdentity(self):
         return self.identity
 
+    def _to_json(self):
+        return dict(wise_typecode="Proxy", repr=repr(self))
+
     def __getattr__(self, name):
-        if name.startswith("__"):
+        if name.startswith("_"):
             raise AttributeError(name)
 
         return MethodHandler(self.identity, self._transceiver, name)
@@ -72,5 +79,9 @@ class ObjectPrx(object):
     def __eq__(self, other):
         return (self.identity, self.endpoint) == (other.identity, other.endpoint)
 
+    def __repr__(self):
+        return "{} -w {} -h {} -p {}".format(
+            self.identity, self.endpoint, self.host, self.port)
+
     def __str__(self):
-        return "{} {}".format(self.identity, self.endpoint)
+        return repr(self)

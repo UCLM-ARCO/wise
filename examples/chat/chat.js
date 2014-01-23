@@ -8,6 +8,10 @@ function widget_animate(widget) {
     widget.stop().animate({ scrollTop: widget[0].scrollHeight }, 800);
 };
 
+function warning(message) {
+    e = template('warning').render(message).appendTo('#warning-area');
+    e.show().delay(2000).fadeOut(300, function() { e.remove(); });
+}
 
 Servant = Class.extend({
     send: function(nick, message, private) {
@@ -16,12 +20,14 @@ Servant = Class.extend({
     },
 
     notify_added_member: function(nick) {
+	if (nick in members)
+	    return;
+
 	members[nick] = new Member(nick);
     },
 
     notify_removed_member: function(nick) {
-	// FIXME: never called
-	// destroy_member(nick);
+	destroy_member(nick);
     },
 });
 
@@ -44,7 +50,7 @@ function wise_application(ws) {
 	    set_UI_callbacks();
 	    ws.ready();
 
-//	    return;
+	    return;
 	    autologin();
 	}
     }
@@ -67,18 +73,28 @@ function set_UI_callbacks() {
 function login() {
     mynickname = $('#mynickname').val();
     if (mynickname === "") {
-	$('#wrong-login').show().delay(2000).fadeOut(300);
+	warning("Wrong nick name!")
 	return;
     }
 
-    $('#login').hide();
-    $('#chat').show();
+    chatroom.login(mynickname)
+	.on_response(login_success)
+	.on_error(login_fail)
 
-    chatroom.subscribe(mynickname, room_listener);
+    function login_success() {
+	chatroom.subscribe(mynickname, room_listener)
 
-    channel = new Member("Channel", chatroom);
-    channel.select();
-    members['Channel'] = channel;
+	$('#login').hide();
+	$('#chat').show();
+
+	channel = new Member("Channel", chatroom);
+	channel.select();
+	members['Channel'] = channel;
+    }
+
+    function login_fail(error) {
+	warning(error);
+    }
 }
 
 function send_message() {
@@ -91,7 +107,7 @@ function send_message() {
     private = (destination !== "Channel")
     members[destination].proxy.send(mynickname, message, private)
 	.on_error(function(error) {
-	    _(error);
+	    warning("Not existing member".format(destination))
 	    destroy_member(destination);
 	})
 
@@ -104,16 +120,11 @@ function resolve_member_proxy(nick) {
 	.on_response(on_get_member_response)
 	.on_error(on_get_member_error)
 
-    function on_get_member_response(strproxy) {
-	broker.stringToProxy(strproxy)
-	    .on_response(on_stringToProxy_response);
-    }
-
-    function on_stringToProxy_response(proxy) {
+    function on_get_member_response(proxy) {
 	members[nick].proxy = proxy;
     }
     function on_get_member_error(error) {
-	_(error);
+	warning(error);
 	destroy_member(nick);
     }
 }
@@ -136,7 +147,6 @@ Member = Class.extend({
 	this.proxy = proxy;
 
 	var are_you = (nick == mynickname) ? " <b>(you)</b>" : "";
-
 	template('member').render(nick, are_you).appendTo('#members');
 
 	if (are_you) return;
@@ -172,7 +182,7 @@ Member = Class.extend({
 
     select: function() {
 	if (this.nick == mynickname) {
-	    alert("internal dialog?");
+	    warning("internal dialog is not supported")
 	    return;
 	}
 

@@ -8,7 +8,7 @@
     function wise_application(ws) {
 	// create a proxy to object in server
 	ws.stringToProxy("Server -w ws -h 127.0.0.1 -p 8888")
-	    .on_response(on_stringToProxy_response);
+	    .then(on_stringToProxy_response);
 
 	function on_stringToProxy_response(response) {
 	    remote = response;

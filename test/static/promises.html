@@ -1,0 +1,41 @@
+<html>
+  <body>
+    <link rel="stylesheet" href="/static/jasmine/jasmine.css">
+
+    <script src="/wise/js/jquery-2.0.3.min.js"></script>
+    <script src="/wise/js/wise.js"></script>
+
+    <script src="/static/jasmine/jasmine.js"></script>
+    <script src="/static/jasmine/jasmine-html.js"></script>
+
+    <script type="text/javascript">
+    (function() {
+	var jasmineEnv = jasmine.getEnv();
+	jasmineEnv.updateInterval = 250;
+
+	var htmlReporter = new jasmine.HtmlReporter();
+	jasmineEnv.addReporter(htmlReporter);
+
+	jasmineEnv.specFilter = function(spec) {
+	    return htmlReporter.specFilter(spec);
+	};
+
+	var currentWindowOnload = window.onload;
+	window.onload = function() {
+	    if (currentWindowOnload) {
+		currentWindowOnload();
+	    }
+
+	    execJasmine();
+	};
+
+	function execJasmine() {
+	    jasmineEnv.execute();
+	}
+    })()
+    </script>
+
+    <script src="/static/promises_test.js"></script>
+
+  </body>
+</html>

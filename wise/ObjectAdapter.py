@@ -4,6 +4,7 @@ import uuid
 
 from .Transceiver import TransceiverApp
 from .Exceptions import AlreadyRegisteredException
+from .ObjectPrx import ObjectPrx
 
 
 class WiseServant(object):
@@ -48,9 +49,8 @@ class ObjectAdapter:
             raise AlreadyRegisteredException("Object: " + identity)
         self._asm[identity] = WiseServant(servant)
 
-        return "{} -w {} -h {} -p {}".format(
-            identity, self._endpoint,
-            self._communicator.host, self._communicator.port)
+        return ObjectPrx(identity, self._endpoint,
+                         self._communicator.host, self._communicator.port, self)
 
     def addWithUUID(self, servant):
         identity = str(uuid.uuid1())

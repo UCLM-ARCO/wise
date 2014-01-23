@@ -28,7 +28,7 @@
     function wise_application(ws) {
 	//create an object adapter to register our servant
 	ws.createObjectAdapter( "WebAdapter", "-w browser")
-	    .on_response(on_adapter_ready);
+	    .then(on_adapter_ready);
 
 	function on_adapter_ready(adapter) {
 	    adapter.add(new Servant(), "Message");
@@ -39,3 +39,9 @@
 
   </body>
 </html>
+
+<!--
+:Local Variables:
+:mode: js
+:End:
+-->

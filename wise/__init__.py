@@ -1,7 +1,6 @@
 # -*- mode: python; coding: utf-8 -*-
 
 import os
-import inspect
 import socket
 
 from .Communicator import Communicator
@@ -14,21 +13,27 @@ from .StaticFSApplication import StaticFSApplication
 from .Object import Observable
 
 
+__ic = None
+
+
 def initialize(host="127.0.0.1", port=8080, properties=None):
+    global __ic
+    assert __ic is None, "Only one communicator instance is supported"
+
     properties = properties or {}
 
     if properties.get("TornadoApp.debug", False):
         logger.warning("Wise: Debug Mode enabled, remove on production!!")
 
     host = host or socket.gethostbyname_ex(socket.gethostname())[0]
-    ic = Communicator(host=host, port=port, properties=properties)
-    ic.is_ready.wait()
+    __ice = Communicator(host=host, port=port, properties=properties)
+    __ice.is_ready.wait()
 
-    admin_adapter = ic.createObjectAdapter("WiseAdmin", "wise")
-    servant = WiseAdmin(ic)
+    admin_adapter = __ice.createObjectAdapter("WiseAdmin", "wise")
+    servant = WiseAdmin(__ice)
     admin_adapter.add(servant, "WiseAdmin")
 
-    return ic
+    return __ice
 
 
 def dirname(path):

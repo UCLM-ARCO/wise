@@ -1,12 +1,11 @@
 # -*- mode: python; coding: utf-8 -*-
 
-import os
 from threading import Thread
 from unittest import TestCase
 from doublex import Spy, called
 from hamcrest import anything
 from commodity.testing import wait_that
-from brimstone import Chrome
+from brimstone import PhantomJS
 
 import wise
 
@@ -63,7 +62,7 @@ class TestReconnection(TestCase):
     def test_reconnect_for_knwon_websocket_locator(self):
         self.server.start()
 
-        self.browser = Chrome(left_open=False)
+        self.browser = PhantomJS()
         self.browser.open("http://127.0.0.1:8888/static/reconnection_test.html")
 
         self.check_data_is_received(1)

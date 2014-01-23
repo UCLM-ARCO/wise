@@ -46,6 +46,9 @@ class ActiveHandler(websocket.WebSocketHandler):
         response = ResponseMessage(message)
         self._response_callback(response)
 
+    def allow_draft76(self):
+        return True
+
 
 class WiseAdmin:
     def __init__(self, ic):

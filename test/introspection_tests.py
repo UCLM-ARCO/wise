@@ -4,10 +4,8 @@ from unittest import TestCase
 from commodity.testing import assert_that, call_with
 from hamcrest import has_item
 
-from brimstone import Chrome
+from brimstone import PhantomJS
 from server import Server
-
-import wise
 
 
 class IntrospectionTests(TestCase):
@@ -16,18 +14,17 @@ class IntrospectionTests(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.server = Server()
-        cls.browser = Chrome(left_open=True)
-        cls.ws = wise.initialize(port=8081)
+        cls.browser = PhantomJS(left_open=False)
 
     @classmethod
     def tearDownClass(cls):
-        del cls.server
-        cls.browser.exit()
-        del cls.browser
+        cls.browser.quit()
+        cls.server.stop()
 
-    def test_server_wise_getMethodNames(self):
+    def setUp(self):
         self.browser.open(self.url)
 
+    def test_server_wise_getMethodNames(self):
         result = self.browser.find_element("#result")
         button = self.browser.find_element('#invoke')
         button.click()
@@ -38,8 +35,6 @@ class IntrospectionTests(TestCase):
                     call_with().returns(expected_message))
 
     def test_browser_wise_getMethodNames(self):
-        self.browser.open(self.url)
-
-        web_obj = self.ws.stringToProxy("obj1 -w browser")
+        web_obj = self.server.ws.stringToProxy("obj1 -w browser")
         assert web_obj
         assert_that(web_obj.wise_getMethodNames(), has_item("echo"))

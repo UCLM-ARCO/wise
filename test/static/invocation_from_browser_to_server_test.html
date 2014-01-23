@@ -20,7 +20,7 @@
     function wise_application(ws) {
 	// create a proxy to object in server
 	ws.stringToProxy("Server -w ws -h 127.0.0.1 -p 8080")
-	    .on_response(on_stringToProxy_response);
+	    .then(on_stringToProxy_response);
 
 	function on_stringToProxy_response(proxy) {
 	    remote = proxy;
@@ -35,18 +35,17 @@
     }
 
     function get_message() {
-	remote.get_message().on_response(
-	    function(arg) {
+	remote.get_message()
+	    .then(function(arg) {
 		$('#message').val(arg.message);
 	    });
     }
 
     function get_error() {
-	remote.get_error().on_error(
-	    function(error) {
+	remote.get_error()
+	    .catch(function(error) {
 		$('#error').val(error);
-	    }
-	);
+	    });
     }
     </script>
 

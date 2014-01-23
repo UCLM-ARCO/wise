@@ -45,6 +45,7 @@ class TornadoApplication(web.Application):
                 spec = web.URLSpec(pattern, handler, kwargs)
 
             # replace old spec with new one
+            assert isinstance(spec, web.URLSpec)
             for old in specs[:]:
                 if old._path == spec._path:
                     specs.remove(old)
@@ -115,6 +116,9 @@ class Communicator(Thread):
 
     def stringToProxy(self, stringfied_proxy):
         return ProxyFactory.create(self, stringfied_proxy)
+
+    def proxyToString(self, proxy):
+        return repr(proxy)
 
     def createObjectAdapter(self, name, endpoint):
         if name in self._adapters:

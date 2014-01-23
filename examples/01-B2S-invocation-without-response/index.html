@@ -15,7 +15,7 @@
     <script type="text/javascript">
     function wise_application(ws) {
 	ws.stringToProxy("printer1 -h 127.0.0.1 -p 8080 -w ws1")
-	    .on_response(on_stringToProxy_response);
+	    .then(on_stringToProxy_response);
 
 	function on_stringToProxy_response(proxy) {
 	    remote = proxy;

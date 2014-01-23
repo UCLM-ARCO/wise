@@ -1,0 +1,38 @@
+<html>
+  <body style="font-family: helvetica; width:600px">
+    <script src="/wise/js/wise.js"></script>
+
+    <h3>JQuery servant</h3>
+
+    <p>
+    On button click, invoke a remote object that hide and show the button.
+    </p>
+
+    <button id="button1" onClick="remote_changes()">Send</button>
+
+    <script type="text/javascript">
+    function wise_application(ws) {
+	ws.createObjectAdapter("WebAdapter", "-w browser")
+	    .then(on_adapter_ready);
+
+	function on_adapter_ready(adapter) {
+	    button1 = adapter.add($('#button1'), "button1");
+	    _(button1);
+	}
+
+	ws.stringToProxy("changer1 -w ws1")
+	    .then(on_stringToProxy_response);
+
+	function on_stringToProxy_response(proxy) {
+	    changer = proxy;
+	    _(changer);
+	}
+    }
+
+    function remote_changes() {
+	changer.toggle_me(button1);
+    }
+    </script>
+
+  </body>
+</html>

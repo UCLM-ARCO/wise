@@ -5,10 +5,13 @@ import wise
 
 
 class Servant:
-    def send_proxy(self, string_proxy, current=None):
-        print("Received proxy: {}".format(string_proxy))
-        proxy = current.adapter.getCommunicator().stringToProxy(string_proxy)
-        proxy.set_message("example message")
+    def upper(self, message, current=None):
+        retval = message.upper()
+        print("Message received: '{}', return: '{}'".format(message, retval))
+        return retval
+
+    def get_proxy(self, current=None):
+        return self.proxy
 
 
 class Server:
@@ -17,13 +20,14 @@ class Server:
         servant = Servant()
 
         adapter = broker.createObjectAdapter("ServerAdapter", "ws1")
-        adapter.add(servant, "Server")
+        proxy = adapter.add(servant, "Server")
+        servant.proxy = proxy
 
         broker.register_StaticFS('/static', wise.dirname(__file__))
+
         print("Open: {}".format(broker.get_url('static/index.html')))
 
         broker.waitForShutdown()
-
 
 if __name__ == "__main__":
     Server()
