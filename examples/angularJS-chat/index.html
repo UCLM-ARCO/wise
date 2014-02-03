@@ -37,7 +37,10 @@
 
 	<input ng-model="message" autofocus required/>
 	  <button ng-click="send_message()" ng-disabled="chatBox.$invalid">Send!</button>
-	  <div id="members" class="list-group"> 	NickName: {{nickname}}<br /></div>
+	  Members:
+	  <div id="members" ng-repeat="member in members">
+	    {{member}}
+	  </div>
       </form>
       <p>(Control-F5 forces page refresh)</p>
     </div>

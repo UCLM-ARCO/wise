@@ -1,31 +1,7 @@
 // -*- mode: js; coding: utf-8 -*-
 var chatApp = angular.module('chat', []);
 
-// chatApp.run(["$rootScope",function($rootScope, ws) {
-//     broker = ws;
-//     members = {};
-
-//     // create an object adapter to register our servant
-//     ws.createObjectAdapter("WebAdapter")
-// 	.on_response(on_adapter_ready);
-
-//     function on_adapter_ready(adapter) {
-// 	room_listener = adapter.addWithUUID(new Servant());
-
-// 	ws.stringToProxy("chat1 -w ws1")
-// 	    .on_response(on_stringToProxy_response);
-
-// 	function on_stringToProxy_response(proxy) {
-// 	    chatroom = proxy;
-// 	    set_UI_callbacks();
-// 	    ws.ready();
-
-// //	    return;
-// //	    autologin();
-// 	}
-//     }
-// }]);
-
+//Controllers
 function loginCtrl($scope, loginInfo) {
     $scope.logged = false; //FIXME: Find better name for logged/unlogged state
 
@@ -38,10 +14,15 @@ function loginCtrl($scope, loginInfo) {
 function chatCtrl($scope, loginInfo) {
     $scope.logged = false;
     $scope.messages = [];
+    $scope.members = [];
+
+
 
     $scope.$on('loginEvent', function(logged, nickname){
 	$scope.logged = logged;
 	$scope.nickname = nickname;
+	$scope.members.push(nickname);
+	$scope.members.push(nickname + "1");
     });
 
     $scope.send_message = function() {
@@ -50,6 +31,8 @@ function chatCtrl($scope, loginInfo) {
     }
 };
 
+
+//Services
 chatApp.service('loginInfo', function($rootScope) {
     return {
 	login: function(nickname) {
@@ -60,35 +43,36 @@ chatApp.service('loginInfo', function($rootScope) {
     };
 });
 
-
-// Servant = Class.extend({
+// chatApp.factory("Servant", function($rootScope) {
 //     send: function(nick, message, private) {
 // 	var member = (private) ? nick : "Channel";
 // 	members[member].append_remote_message(nick, message);
 //     },
 
 //     notify_added_member: function(nick) {
+// 	if (nick in members)
+// 	    return;
+
 // 	members[nick] = new Member(nick);
 //     },
 
 //     notify_removed_member: function(nick) {
-// 	// FIXME: never called
-// 	// destroy_member(nick);
+// 	destroy_member(nick);
 //     },
 // });
 
-// chatApp.factory('Member'.factory($scope) {
-//     function Member(nick, proxy) {
+// chatApp.factory('Member', function($rootScope){
+//     init: function(nick, proxy) {
 // 	this.nick = nick;
 // 	this.proxy = proxy;
 
-// 	var are_you = (nick == $scope.mynickname) ? " <b>(you)</b>" : "";
-
+// 	var are_you = (nick == mynickname) ? " <b>(you)</b>" : "";
 // 	template('member').render(nick, are_you).appendTo('#members');
 
 // 	if (are_you) return;
 
 // 	template('incoming').render(nick).appendTo('#notepad');
+// 	$('#incoming-' + nick).hide();
 //     },
 
 //     destroy: function() {
@@ -118,7 +102,7 @@ chatApp.service('loginInfo', function($rootScope) {
 
 //     select: function() {
 // 	if (this.nick == mynickname) {
-// 	    alert("internal dialog?");
+// 	    warning("internal dialog is not supported")
 // 	    return;
 // 	}
 
@@ -154,3 +138,31 @@ chatApp.service('loginInfo', function($rootScope) {
 // 	widget_animate(this.tab());
 //     },
 // });
+
+
+angular.element(document).ready(function(){ //same as $(document).ready
+    function wise_application(ws) {
+	broker = ws;
+	members = {};
+
+	// create an object adapter to register our servant
+	ws.createObjectAdapter("WebAdapter")
+	    .on_response(on_adapter_ready);
+
+	function on_adapter_ready(adapter) {
+	    room_listener = adapter.addWithUUID(new Servant());
+
+	    ws.stringToProxy("chat1 -w ws1")
+		.on_response(on_stringToProxy_response);
+
+	    function on_stringToProxy_response(proxy) {
+		chatroom = proxy;
+		set_UI_callbacks();
+		ws.ready();
+
+		return;
+		autologin();
+	    }
+	}
+    }
+});
