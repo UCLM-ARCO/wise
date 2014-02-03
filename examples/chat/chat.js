@@ -37,20 +37,20 @@ function wise_application(ws) {
 
     // create an object adapter to register our servant
     ws.createObjectAdapter("WebAdapter")
-	.on_response(on_adapter_ready);
+	.then(on_adapter_ready);
 
     function on_adapter_ready(adapter) {
 	room_listener = adapter.addWithUUID(new Servant());
 
 	ws.stringToProxy("chat1 -w ws1")
-	    .on_response(on_stringToProxy_response);
+	    .then(on_stringToProxy_response);
 
 	function on_stringToProxy_response(proxy) {
 	    chatroom = proxy;
 	    set_UI_callbacks();
 	    ws.ready();
 
-	    return;
+//	    return;
 	    autologin();
 	}
     }
@@ -78,8 +78,7 @@ function login() {
     }
 
     chatroom.login(mynickname)
-	.on_response(login_success)
-	.on_error(login_fail)
+	.then(login_success, login_fail)
 
     function login_success() {
 	chatroom.subscribe(mynickname, room_listener)
@@ -106,7 +105,7 @@ function send_message() {
 
     private = (destination !== "Channel")
     members[destination].proxy.send(mynickname, message, private)
-	.on_error(function(error) {
+	.catch(function(error) {
 	    warning("Not existing member".format(destination))
 	    destroy_member(destination);
 	})
@@ -117,8 +116,7 @@ function send_message() {
 
 function resolve_member_proxy(nick) {
     chatroom.get_member(nick)
-	.on_response(on_get_member_response)
-	.on_error(on_get_member_error)
+	.then(on_get_member_response, on_get_member_error)
 
     function on_get_member_response(proxy) {
 	members[nick].proxy = proxy;
