@@ -2,13 +2,12 @@
 <html ng-app="chat">
   <head>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.9/angular.js"></script>
-    <script src="http://angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.8.0.js"></script>
-    <!-- <script src="/wise/js/wise.js"></script> -->
-    <!-- <script src="/static/chat.js"></script> -->
-    <script src="./chat.js"></script>
+    <!-- <script src="http://angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.8.0.js"></script> -->
+    <script src="/wise/js/wise.js"></script>
+    <script src="/static/chat.js"></script>
   </head>
   <body>
-    <h2><b>wise</b> chat example</h2>
+    <h2><b>AngularJS-wise</b> chat example</h2>
 
     <p>
       In this example, the browser holds an object to receive incoming
@@ -22,7 +21,7 @@
 
     <div ng-controller="loginCtrl" ng-hide="logged" >
       <form name="loginBox">
-	<input type="text" ng-model="nickname" placeholder="Nickname" autofocus required/>
+	<input type="text" ng-model="nickname" placeholder="nickname" autofocus required/>
 	  <button ng-click="login(nickname)" ng-disabled="loginBox.$invalid">Go!</button>
       </form>
     </div>
@@ -30,15 +29,17 @@
 
     <div ng-controller="chatCtrl" ng-show="logged">
       <form name="chatBox">
-
-	<div id="incoming-{0}" class="panel-body incoming">
-	  {{messages}}
+	<!-- 	  TODO: Use a directive to use: -->
+	<!-- 	  function widget_animate(widget) { -->
+	<!--     widget.stop().animate({ scrollTop: widget[0].scrollHeight }, 800); -->
+	<!-- }; -->
+	<div class="incoming" append_messages>
 	</div>
 
 	<input ng-model="message" autofocus required/>
 	  <button ng-click="send_message()" ng-disabled="chatBox.$invalid">Send!</button>
 	  Members:
-	  <div id="members" ng-repeat="member in members">
+	  <div ng-repeat="member in members track by $index">
 	    {{member}}
 	  </div>
       </form>

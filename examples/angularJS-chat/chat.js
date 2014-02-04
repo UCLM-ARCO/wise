@@ -10,37 +10,64 @@ function loginCtrl($scope, loginInfo) {
 	$scope.logged = true;
     }
 };
-
-function chatCtrl($scope, loginInfo) {
+//commented lines are correct code. There are so many things to change
+function chatCtrl($scope, $window, loginInfo, Member) {
     $scope.logged = false;
     $scope.messages = [];
+    // $scope.members = {};
     $scope.members = [];
+    $scope.show_incomming = true;
 
-    $scope.$on('loginEvent', function(logged, nickname){
+    $scope.$on('loginEvent', function(logged, nickname, Member){
 	$scope.logged = logged;
 	$scope.nickname = nickname;
 	$scope.members.push(nickname);
+	// $scope.members[nickname] = Member;
     });
 
     $scope.send_message = function() {
 	$scope.messages.push($scope.message);
+	// members[destination].proxy.send($scope.nickname, message, private)
 	$scope.message = '';
     }
 };
 
+//Directives
+chatApp.directive('append_messages', function(){
+    console.log("append_directive");
 
-//Services
-chatApp.service('loginInfo', function($rootScope) {
     return {
-	login: function(nickname) {
-	    logged = true;
-	    nickname = nickname;
-	    $rootScope.$broadcast('loginEvent', nickname, logged);  //FIXME: dont broadcast events. Find better way to inform to controllers.
-	}
+	//FIXME: change nickname for sender when it works other functionality
+        template: '<div ng-repeat="sentence in messages">'
+	    + '<b>{{nickname}}: {{sentence}} <\b>'
+	    + '<\div>'
     };
 });
 
-chatApp.factory("Servant", function($rootScope, Member) {
+//Services
+chatApp.service('loginInfo', function($rootScope, $window, Member) {
+    return {
+	login: function(nickname) {
+	    logged = true;
+	    // FIXME: chatroom.login is not visible
+	    // becouse promise on_adapter_ready is not
+	    // $window.chatroom.login($rootScope.nickname)
+	    // 	.then(login_success, login_fail)
+	    //
+
+	    // function login_success() {
+	    // 	chatroom.subscribe(mynickname, room_listener)
+
+	    // 	channel = new Member("Channel", chatroom);
+	    // 	channel.select();
+	    // 	members['Channel'] = channel;
+	    // }
+	    $rootScope.$broadcast('loginEvent',nickname, logged); //FIXME: dont broadcast events. Find better way to inform to controllers.
+	 }
+    };
+});
+
+chatApp.factory("Servant", function($rootScope) {
     function Servant() {
 
     }
@@ -48,7 +75,7 @@ chatApp.factory("Servant", function($rootScope, Member) {
     Servant.prototype = {
 	send: function(nick, message, private) {
 	    var member = (private) ? nick : "Channel";
-	    members[member].append_remote_message(nick, message);
+	    $rootScope.members[member].append_remote_message(nick, message);
 	},
 
 	notify_added_member: function(nick) {
@@ -70,23 +97,18 @@ chatApp.factory('Member', function($rootScope){
 	this.nick = nick;
 	this.proxy = proxy;
 
-	var are_you = (nick == mynickname) ? " <b>(you)</b>" : "";
+	var are_you = (nick == nickname) ? " <b>(you)</b>" : "";
 	template('member').render(nick, are_you).appendTo('#members');
 
 	if (are_you) return;
 
-	template('incoming').render(nick).appendTo('#notepad');
+	template('incoming').render(nick).appendTo('#notepad');//angular.compile
 	$('#incoming-' + nick).hide();
     }
 
     Member.prototype = {
-	destroy: function() {
-	    this.tab().remove();
-	    $('#member-' + this.nick).remove();
-	},
-
-	tab: function() {
-	    return $("#incoming-" + this.nick);
+	destroy: function($index) {
+	    $rootScope.members.splice($index,1);
 	},
 
 	button: function() {
@@ -106,12 +128,12 @@ chatApp.factory('Member', function($rootScope){
 	},
 
 	select: function() {
-	    if (this.nick == mynickname) {
-	    warning("internal dialog is not supported")
+	    if (this.nick == $rootScope.nickname) {
+		warning("internal dialog is not supported")
 		return;
 	    }
 
-	    this.tab_switch();
+	    incoming_switch();
 	    this.badge_clean();
 	    destination = this.nick;
 
@@ -139,8 +161,8 @@ chatApp.factory('Member', function($rootScope){
 	},
 
 	append_message: function(sender, message) {
-	    this.tab().append("<b>{0}:</b> {1}<br/>".format(sender, message));
-	    widget_animate(this.tab());
+	    $rootScope.incoming.append("<b>{0}:</b> {1}<br/>".format(sender, message));
+	    widget_animate(this.$rootScope.incoming());
 	},
     }
     return(Member);
@@ -149,20 +171,25 @@ chatApp.factory('Member', function($rootScope){
 //non-angular javascript
 function wise_application(ws) {
     broker = ws;
+    console.log("wise_application");
 
     // create an object adapter to register our servant
     ws.createObjectAdapter("WebAdapter")
 	.then(on_adapter_ready);
 
-    function on_adapter_ready(adapter) {
-	var $injector = angular.injector(['Servant']);
-	new Servant()
-	room_listener = adapter.addWithUUID();
-	console.log(room_listener);
-	ws.stringToProxy("chat1 -w ws1")
-	    .then(on_stringToProxy_response);
+    function on_adapter_ready(adapter) {    //this promise is not executed. Why?
+	controllers.log("on_adapter_ready");
+
+	var $injector  = angular.injector(['Servant']);
+	$injector.invoke(function(Servant) {
+	    room_listener = adapter.addWithUUID(new Servant());
+	    console.log(room_listener);
+	    ws.stringToProxy("chat1 -w ws1")
+		.then(on_stringToProxy_response);
+	});
 
 	function on_stringToProxy_response(proxy) {
+	    console.log("on_stringToProxy_response");
 	    chatroom = proxy;
 	    set_UI_callbacks();
 	    ws.ready();
