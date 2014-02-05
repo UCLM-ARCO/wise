@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html ng-app="chat">
+<html ng-app="chatApp">
   <head>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.9/angular.js"></script>
     <!-- <script src="http://angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.8.0.js"></script> -->
@@ -21,27 +21,30 @@
 
     <div ng-controller="loginCtrl" ng-hide="logged" >
       <form name="loginBox">
-	<input type="text" ng-model="nickname" placeholder="nickname" autofocus required/>
-	  <button ng-click="login(nickname)" ng-disabled="loginBox.$invalid">Go!</button>
+    	<input type="text" ng-model="nickname" placeholder="nickname" autofocus required/>
+    	  <button ng-click="login(nickname)" ng-disabled="loginBox.$invalid">Go!</button>
       </form>
     </div>
 
-
     <div ng-controller="chatCtrl" ng-show="logged">
       <form name="chatBox">
-	<!-- 	  TODO: Use a directive to use: -->
-	<!-- 	  function widget_animate(widget) { -->
-	<!--     widget.stop().animate({ scrollTop: widget[0].scrollHeight }, 800); -->
-	<!-- }; -->
-	<div class="incoming" append_messages>
-	</div>
+    	<!-- 	  TODO: Use a directive to use: -->
+    	<!-- 	  function widget_animate(widget) { -->
+    	<!--     widget.stop().animate({ scrollTop: widget[0].scrollHeight }, 800); -->
+    	<!-- }; -->
 
-	<input ng-model="message" autofocus required/>
-	  <button ng-click="send_message()" ng-disabled="chatBox.$invalid">Send!</button>
-	  Members:
-	  <div ng-repeat="member in members track by $index">
-	    {{member}}
-	  </div>
+        <div ng-repeat="message in messages track by $index">
+    	  <b>{{nickname}}: {{message}} </b>
+    	</div>
+
+    	<input ng-model="message" autofocus required/>
+    	  <button ng-click="send_message()" ng-disabled="chatBox.$invalid">Send!</button>
+    	  <div class="members">
+    	    <span>Members:	    </span>
+    	      <a ng-repeat="member in members track by $index">
+    		{{member}}
+    	      </a>
+    	  </div>
       </form>
       <p>(Control-F5 forces page refresh)</p>
     </div>

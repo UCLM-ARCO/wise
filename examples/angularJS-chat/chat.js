@@ -1,17 +1,20 @@
 // -*- mode: js; coding: utf-8 -*-
-var chatApp = angular.module('chat', []);
+var chatApp = angular.module('chatApp', []);
+chatApp.config(function($logProvider){
+  $logProvider.debugEnabled(true);
+});
 
 //Controllers
 function loginCtrl($scope, loginInfo) {
-    $scope.logged = false; //FIXME: Find better name for logged/unlogged state
 
+    $scope.logged = false; //FIXME: Find better name for logged/unlogged state
     $scope.login = function() {
 	loginInfo.login($scope.nickname);
 	$scope.logged = true;
     }
 };
-//commented lines are correct code. There are so many things to change
-function chatCtrl($scope, $window, loginInfo, Member) {
+//commented lines are correct code. There are so many things to change , Member
+function chatCtrl($scope, $window, Servant, loginInfo) {
     $scope.logged = false;
     $scope.messages = [];
     // $scope.members = {};
@@ -32,20 +35,8 @@ function chatCtrl($scope, $window, loginInfo, Member) {
     }
 };
 
-//Directives
-chatApp.directive('append_messages', function(){
-    console.log("append_directive");
-
-    return {
-	//FIXME: change nickname for sender when it works other functionality
-        template: '<div ng-repeat="sentence in messages">'
-	    + '<b>{{nickname}}: {{sentence}} <\b>'
-	    + '<\div>'
-    };
-});
-
 //Services
-chatApp.service('loginInfo', function($rootScope, $window, Member) {
+chatApp.service('loginInfo', function($rootScope, $window, $log, Member) {
     return {
 	login: function(nickname) {
 	    logged = true;
@@ -67,32 +58,7 @@ chatApp.service('loginInfo', function($rootScope, $window, Member) {
     };
 });
 
-chatApp.factory("Servant", function($rootScope) {
-    function Servant() {
-
-    }
-
-    Servant.prototype = {
-	send: function(nick, message, private) {
-	    var member = (private) ? nick : "Channel";
-	    $rootScope.members[member].append_remote_message(nick, message);
-	},
-
-	notify_added_member: function(nick) {
-	    if (nick in members)
-		return;
-
-	    members[nick] = new Member(nick);
-	},
-
-	notify_removed_member: function(nick) {
-	    destroy_member(nick);
-	},
-    };
-    return(Servant);
-});
-
-chatApp.factory('Member', function($rootScope){
+chatApp.factory('Member', function($rootScope, $log){
     function Member(nick, proxy) {
 	this.nick = nick;
 	this.proxy = proxy;
@@ -168,33 +134,58 @@ chatApp.factory('Member', function($rootScope){
     return(Member);
 });
 
+chatApp.factory("Servant", function($rootScope, $log) {
+    function Servant() {
+	$log.debug("constructor del sirviente");
+    }
+
+    Servant.prototype = {
+	send: function(nick, message, private) {
+	    var member = (private) ? nick : "Channel"; //
+	    $rootScope.members[member].append_remote_message(nick, message);
+	},
+
+	notify_added_member: function(nick) {
+	    if (nick in members)
+		return;
+
+	    members[nick] = new Member(nick);
+	},
+
+	notify_removed_member: function(nick) {
+	    destroy_member(nick);
+	},
+    };
+    return(Servant);
+});
+
 //non-angular javascript
 function wise_application(ws) {
     broker = ws;
-    console.log("wise_application");
 
     // create an object adapter to register our servant
     ws.createObjectAdapter("WebAdapter")
 	.then(on_adapter_ready);
 
-    function on_adapter_ready(adapter) {    //this promise is not executed. Why?
-	controllers.log("on_adapter_ready");
+    function on_adapter_ready(adapter) {
 
-	var $injector  = angular.injector(['Servant']);
-	$injector.invoke(function(Servant) {
-	    room_listener = adapter.addWithUUID(new Servant());
-	    console.log(room_listener);
-	    ws.stringToProxy("chat1 -w ws1")
-		.then(on_stringToProxy_response);
-	});
+	var servant = angular.injector(['ng', 'chatApp'])
+	    .invoke(function(Servant, $log) {
+		$log.debug("Creating Servant");
+		return new Servant();
+	    });
+
+	room_listener = adapter.addWithUUID(servant);
+	ws.stringToProxy("chat1 -w ws1")
+	    .then(on_stringToProxy_response);
+
 
 	function on_stringToProxy_response(proxy) {
-	    console.log("on_stringToProxy_response");
 	    chatroom = proxy;
-	    set_UI_callbacks();
 	    ws.ready();
 
 	    return;
 	}
     }
 }
+
