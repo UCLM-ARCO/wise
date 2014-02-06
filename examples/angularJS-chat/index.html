@@ -28,11 +28,6 @@
 
     <div ng-controller="chatCtrl" ng-show="logged">
       <form name="chatBox">
-    	<!-- 	  TODO: Use a directive to use: -->
-    	<!-- 	  function widget_animate(widget) { -->
-    	<!--     widget.stop().animate({ scrollTop: widget[0].scrollHeight }, 800); -->
-    	<!-- }; -->
-
         <div ng-repeat="message in messages track by $index">
     	  <b>{{nickname}}: {{message}} </b>
     	</div>
@@ -42,7 +37,7 @@
     	  <div class="members">
     	    <span>Members:	    </span>
     	      <a ng-repeat="member in members track by $index">
-    		{{member}}
+    		{{member.nick}}
     	      </a>
     	  </div>
       </form>
