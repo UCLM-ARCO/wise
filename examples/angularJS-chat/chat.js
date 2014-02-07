@@ -4,6 +4,7 @@ chatApp.config(function($logProvider){
   $logProvider.debugEnabled(true);
 });
 
+
 //non-angular javascript
 function wise_application(ws) {
     broker = ws;
@@ -14,7 +15,7 @@ function wise_application(ws) {
 
     function on_adapter_ready(adapter) {
 
-	var servant = angular.injector(['ng', 'chatApp'])
+	servant = angular.injector(['ng', 'chatApp'])
 	    .invoke(function(Servant, $log) {
 		$log.debug("Creating Servant");
 		return new Servant();
@@ -28,7 +29,6 @@ function wise_application(ws) {
 	function on_stringToProxy_response(proxy) {
 	    chatroom = proxy;
 	    ws.ready();
-
 	    return;
 	}
     }
@@ -36,8 +36,7 @@ function wise_application(ws) {
 
 //AngularJS
 //Controllers
-function loginCtrl($scope, loginInfo) {
-
+function loginCtrl($scope, $window, loginInfo) {
     $scope.logged = false; //FIXME: Find better name for logged/unlogged state
     $scope.login = function() {
 	loginInfo.login($scope.nickname);
@@ -46,7 +45,7 @@ function loginCtrl($scope, loginInfo) {
 };
 
 //commented lines are correct code. There are so many things to change
-function chatCtrl($scope, $window, Servant, loginInfo, Member) {
+function chatCtrl($rootScope, $scope, $window, Servant, loginInfo, Member) {
     $scope.logged = false;
     $scope.messages = [];
     $scope.members = {};
@@ -54,8 +53,8 @@ function chatCtrl($scope, $window, Servant, loginInfo, Member) {
     $scope.$on('loginEvent', function(event, nickname, logged){
 	$scope.logged = logged;
 	$scope.nickname = nickname;
-	var channel = new Member("Channel", $window.chatroom);
-	$scope.members['Channel'] = channel;
+	$scope.members['Channel'] = new Member("Channel", $window.chatroom);
+	$scope.members[nickname] = new Member(nickname, $window.chatroom);
     });
 
     $scope.send_message = function() {
@@ -93,12 +92,13 @@ chatApp.factory('Member', function($rootScope, $log){
 
     Member.prototype = {
 	append_remote_message: function(sender, message) {
+
 	}
     }
     return(Member);
 });
 
-chatApp.factory("Servant", function($rootScope, $log) {
+chatApp.factory("Servant", function($rootScope, $window, $log, Member) {
     function Servant() {
 	$log.debug("constructor del sirviente");
     }
