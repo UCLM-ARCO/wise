@@ -1,6 +1,13 @@
 'use strict';
 
 describe("A chat that use wise", function(){
+    beforeEach(inject(function() {
+	wise.initialize().then(function(ws) {
+	wise_application(ws);
+    });
+
+    }));
+
     it("call ws.ready()", function() {
 	expect(ws_ready).toBe(true);
     });

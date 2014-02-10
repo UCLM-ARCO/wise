@@ -4,40 +4,11 @@ chatApp.config(function($logProvider){
   $logProvider.debugEnabled(true);
 });
 
-
-//non-angular javascript
-function wise_application(ws) {
-    broker = ws;
-
-    // create an object adapter to register our servant
-    ws.createObjectAdapter("WebAdapter")
-	.then(on_adapter_ready);
-
-    function on_adapter_ready(adapter) {
-
-	servant = angular.injector(['ng', 'chatApp'])
-	    .invoke(function(Servant, $log) {
-		$log.debug("Creating Servant");
-		return new Servant();
-	    });
-
-	room_listener = adapter.addWithUUID(servant);
-	ws.stringToProxy("chat1 -w ws1")
-	    .then(on_stringToProxy_response);
-
-
-	function on_stringToProxy_response(proxy) {
-	    chatroom = proxy;
-	    ws.ready();
-	    return;
-	}
-    }
-}
-
 //AngularJS
 //Controllers
-function loginCtrl($scope, $window, loginInfo) {
+function loginCtrl($rootScope, $scope, $log, loginInfo) {
     $scope.logged = false; //FIXME: Find better name for logged/unlogged state
+
     $scope.login = function() {
 	loginInfo.login($scope.nickname);
 	$scope.logged = true;
@@ -45,16 +16,20 @@ function loginCtrl($scope, $window, loginInfo) {
 };
 
 //commented lines are correct code. There are so many things to change
-function chatCtrl($rootScope, $scope, $window, Servant, loginInfo, Member) {
-    $scope.logged = false;
+function chatCtrl($rootScope, $scope, $window, $log, Servant, loginInfo, Member) {
     $scope.messages = [];
     $scope.members = {};
+    $scope.logged = false;
 
-    $scope.$on('loginEvent', function(event, nickname, logged){
-	$scope.logged = logged;
+    $scope.$on('loginSucess', function(event, nickname){
+	$log.debug("[chatCtrl] loginSucess: ", nickname);
+	$scope.logged = true;
 	$scope.nickname = nickname;
-	$scope.members['Channel'] = new Member("Channel", $window.chatroom);
-	$scope.members[nickname] = new Member(nickname, $window.chatroom);
+    });
+
+    $scope.$on('subscribeEvent', function(event, member){
+	$log.debug("[chatCtrl] subscribeEvent: ", member)
+	$scope.member[member.nick] = member;
     });
 
     $scope.send_message = function() {
@@ -67,32 +42,33 @@ function chatCtrl($rootScope, $scope, $window, Servant, loginInfo, Member) {
 chatApp.service('loginInfo', function($rootScope, $window, $log) {
     return {
 	login: function(nickname) {
-	    logged = true;
 	    $window.chatroom.login(nickname)
-		.then(login_sucess, login_fail);
+		.then(login_sucess);
 
 	    function login_sucess() {
+		$log.debug("[loginInfo] loginSucess: ", nickname);
 		$window.chatroom.subscribe(nickname, $window.room_listener);
+		$rootScope.$broadcast('loginSucess', nickname);
 	    };
 
 	    function login_fail(error){
-		$log.debug("Login failed");
+		$log.debug("[loginInfo] loginFail: ", error);
+		$rootScope.$broadcast('loginFailed', logged);
 	    }
-
-	    $rootScope.$broadcast('loginEvent',nickname, logged);
 	 }
     };
 });
 
-chatApp.factory('Member', function($rootScope, $log){
+chatApp.factory('Member', function($log){
     function Member(nick, proxy) {
+	$log.debug("[Member] constructor de Member:", nick, proxy);
 	this.nick = nick;
 	this.proxy = proxy;
+
     }
 
     Member.prototype = {
 	append_remote_message: function(sender, message) {
-
 	}
     }
     return(Member);
@@ -100,26 +76,68 @@ chatApp.factory('Member', function($rootScope, $log){
 
 chatApp.factory("Servant", function($rootScope, $window, $log, Member) {
     function Servant() {
-	$log.debug("constructor del sirviente");
+	this.members = {};
+	this.members['Channel'] = new Member("Channel", $window.chatroom);
+	$log.debug("[Servant] constructor del sirviente:", this.members, $window.chatroom);
     }
 
     Servant.prototype = {
 	send: function(nick, message) {
 	    var member = (private) ? nick : "Channel"; //
-	    $rootScope.members[member].append_remote_message(nick, message);
+	    this.members[member].append_remote_message(nick, message);
 	},
 
 	notify_added_member: function(nick) {
-	    if (nick in $rootScope.members)
+	    if (nick in this.members)
 		return;
-	    $rootScope.members[nick] = new Member(nick, $window.chatroom);
+	    this.members[nick] = new Member(nick, $window.chatroom);
+	    $log.debug("[Servant] notify added member:", this.members);
+	    $rootScope.$broadcast('subscribeEvent', this.members[nick]);
 	},
 
 	notify_removed_member: function(nick) {
-	    $rootScope.members[nick].destroy();
-	    delete $rootScope.members[nick];
+	    this.members[nick].destroy();
+	    delete this.members[nick];
 	},
+	select: function(nick) {
+	    $window.chatroom.get_member(nick)
+		.then(on_get_member_response, on_get_member_error)
+
+	    function on_get_member_response(proxy) {
+		this.members[nick].proxy = proxy;
+	    }
+	    function on_get_member_error(error) {
+		warning(error);
+		destroy_member(nick);
+	    }
+	}
     };
     return(Servant);
 });
 
+
+//non-angular javascript
+function wise_application(ws) {
+    broker = ws;
+
+    // create an object adapter to register our servant
+    ws.createObjectAdapter("WebAdapter")
+	.then(on_adapter_ready);
+
+    function on_adapter_ready(adapter) {
+	ws.stringToProxy("chat1 -w ws1")
+	    .then(on_stringToProxy_response);
+
+	function on_stringToProxy_response(proxy) {
+	    chatroom = proxy;
+	    servant = angular.injector(['ng', 'chatApp'])
+		.invoke(function(Servant, $log) {
+		    $log.debug("[wise_application] Creating Servant");
+		    return new Servant();
+		});
+	    room_listener = adapter.addWithUUID(servant);
+	    ws.ready();
+	    return;
+	}
+    }
+}

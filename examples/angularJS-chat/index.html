@@ -3,8 +3,8 @@
   <head>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.9/angular.js"></script>
     <!-- <script src="http://angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.8.0.js"></script> -->
-    <script src="/wise/js/wise.js"></script>
     <script src="/static/chat.js"></script>
+    <script src="/wise/js/wise.js"></script>
   </head>
   <body>
     <h2><b>AngularJS-wise</b> chat example</h2>
@@ -24,6 +24,9 @@
     	<input type="text" ng-model="nickname" placeholder="nickname" autofocus required/>
     	  <button ng-click="login(nickname)" ng-disabled="loginBox.$invalid">Go!</button>
       </form>
+      <div ng-show="login_failed">
+	Try another nickname: {{error}}
+      </div>
     </div>
 
     <div ng-controller="chatCtrl" ng-show="logged">
@@ -36,7 +39,7 @@
     	  <button ng-click="send_message()" ng-disabled="chatBox.$invalid">Send!</button>
     	  <div class="members">
     	    <span>Members:	    </span>
-    	      <a ng-repeat="member in members track by $index">
+    	      <a ng-repeat="member in $window.members track by $index">
     		{{member.nick}}
     	      </a>
     	  </div>
