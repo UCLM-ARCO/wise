@@ -11,8 +11,18 @@ function loginCtrl($rootScope, $scope, $log, loginInfo) {
     $scope.logged = false; //FIXME: Find better name for logged/unlogged state
     $scope.login = function() {
 	loginInfo.login($scope.nickname);
+    };
+
+    $scope.$on('loginSucess', function(event) {
 	$scope.logged = true;
-    }
+    });
+
+    $scope.$on('loginFailed', function(event, error) {
+	$scope.$apply(function(){
+	    $scope.login_failed = true;
+	    $scope.error = error[0];
+	});
+    });
 };
 
 function chatCtrl($scope, $window, $log, Servant, loginInfo, Member) {
@@ -38,18 +48,19 @@ function chatCtrl($scope, $window, $log, Servant, loginInfo, Member) {
 chatApp.service('loginInfo', function($rootScope, $window, $log) {
     return {
 	login: function(nickname) {
+	    _nickname = nickname;
 	    $window.chatroom.login(nickname)
-		.then(login_sucess);
+		.then(login_sucess, login_fail);
 
 	    function login_sucess() {
-		$log.debug("[loginInfo] loginSucess: ", nickname);
+		$log.debug("[loginInfo] loginSucess: ", _nickname);
 		$window.chatroom.subscribe(nickname, $window.room_listener);
-		$rootScope.$broadcast('loginSucess', nickname);
+		$rootScope.$broadcast('loginSucess', _nickname);
 	    };
 
 	    function login_fail(error){
 		$log.debug("[loginInfo] loginFail: ", error);
-		$rootScope.$broadcast('loginFailed', logged);
+		$rootScope.$broadcast('loginFailed', error);
 	    }
 	 }
     };
@@ -73,7 +84,7 @@ chatApp.factory('Member', function($log){
 chatApp.factory("Servant", function($rootScope, $window, $log, Member) {
     function Servant() {
 	$window.members['Channel'] = new Member("Channel", $window.chatroom);
-	$log.debug("[Servant] constructor del sirviente:", this.members, $window.chatroom);
+	$log.debug("[Servant] constructor del sirviente:", $window.members, $window.chatroom);
     }
 
     Servant.prototype = {

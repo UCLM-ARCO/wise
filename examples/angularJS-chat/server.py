@@ -56,7 +56,7 @@ class ChatManager(object):
 
 class Server(object):
     def __init__(self):
-        broker = wise.initialize(  # host="127.0.0.1",
+        broker = wise.initialize(host="127.0.0.1",
             properties = {"TornadoApp.debug": True})
         adapter = broker.createObjectAdapter("ServerAdapter", "ws1")
         adapter.add(ChatManager(), "chat1")
