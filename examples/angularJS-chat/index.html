@@ -32,7 +32,7 @@
     <div ng-controller="chatCtrl" ng-show="logged">
       <form name="chatBox">
         <div ng-repeat="message in messages track by $index">
-    	  <b>{{nickname}}: {{message}} </b>
+    	  <b>{{message}} </b>
     	</div>
 
     	<input ng-model="message" autofocus required/>

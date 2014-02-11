@@ -5,6 +5,7 @@ var chatApp = angular.module('chatApp', []);
 chatApp.config(function($logProvider){
   $logProvider.debugEnabled(true);
 });
+
 //AngularJS
 //Controllers
 function loginCtrl($rootScope, $scope, $log, loginInfo) {
@@ -39,8 +40,11 @@ function chatCtrl($scope, $window, $log, Servant, loginInfo, Member) {
     });
 
     $scope.send_message = function() {
-	$scope.messages.push($scope.message);
+	var message = $scope.message;
+	$scope.messages.push($scope.nickname + message);
 	$scope.message = '';
+
+	$scope.members['Channel'].proxy.send($scope.nickname, message);
     }
 };
 
@@ -66,7 +70,7 @@ chatApp.service('loginInfo', function($rootScope, $window, $log) {
     };
 });
 
-chatApp.factory('Member', function($log){
+chatApp.factory('Member', function($rootScope, $log){
     function Member(nick, proxy) {
 	$log.debug("[Member] constructor de Member:", nick, proxy);
 	this.nick = nick;
@@ -76,8 +80,10 @@ chatApp.factory('Member', function($log){
 
     Member.prototype = {
 	append_remote_message: function(sender, message) {
+	    $rootScope.messages.push(sender + message);
 	}
     }
+
     return(Member);
 });
 
@@ -120,6 +126,7 @@ chatApp.factory("Servant", function($rootScope, $window, $log, Member) {
 	    }
 	}
     };
+
     return(Servant);
 });
 
@@ -141,10 +148,12 @@ function wise_application(ws) {
 	    servant = angular.injector(['ng', 'chatApp'])
 		.invoke(function(Servant, $log) {
 		    $log.debug("[wise_application] Creating Servant");
+
 		    return new Servant();
 		});
 	    room_listener = adapter.addWithUUID(servant);
 	    ws.ready();
+
 	    return;
 	}
     }
