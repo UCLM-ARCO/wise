@@ -1,35 +1,31 @@
 // -*- mode: js; coding: utf-8 -*-
+members = {};
+
 var chatApp = angular.module('chatApp', []);
 chatApp.config(function($logProvider){
   $logProvider.debugEnabled(true);
 });
-
 //AngularJS
 //Controllers
 function loginCtrl($rootScope, $scope, $log, loginInfo) {
     $scope.logged = false; //FIXME: Find better name for logged/unlogged state
-
     $scope.login = function() {
 	loginInfo.login($scope.nickname);
 	$scope.logged = true;
     }
 };
 
-//commented lines are correct code. There are so many things to change
-function chatCtrl($rootScope, $scope, $window, $log, Servant, loginInfo, Member) {
+function chatCtrl($scope, $window, $log, Servant, loginInfo, Member) {
     $scope.messages = [];
-    $scope.members = {};
     $scope.logged = false;
+    $scope.members = $window.members;
 
     $scope.$on('loginSucess', function(event, nickname){
 	$log.debug("[chatCtrl] loginSucess: ", nickname);
-	$scope.logged = true;
-	$scope.nickname = nickname;
-    });
-
-    $scope.$on('subscribeEvent', function(event, member){
-	$log.debug("[chatCtrl] subscribeEvent: ", member)
-	$scope.member[member.nick] = member;
+	$scope.$apply(function() {
+	    $scope.logged = true;
+	    $scope.nickname = nickname;
+	})
     });
 
     $scope.send_message = function() {
@@ -76,8 +72,7 @@ chatApp.factory('Member', function($log){
 
 chatApp.factory("Servant", function($rootScope, $window, $log, Member) {
     function Servant() {
-	this.members = {};
-	this.members['Channel'] = new Member("Channel", $window.chatroom);
+	$window.members['Channel'] = new Member("Channel", $window.chatroom);
 	$log.debug("[Servant] constructor del sirviente:", this.members, $window.chatroom);
     }
 
@@ -88,14 +83,16 @@ chatApp.factory("Servant", function($rootScope, $window, $log, Member) {
 	},
 
 	notify_added_member: function(nick) {
-	    if (nick in this.members)
+	    if (nick in $window.members)
 		return;
-	    this.members[nick] = new Member(nick, $window.chatroom);
-	    $log.debug("[Servant] notify added member:", this.members);
-	    $rootScope.$broadcast('subscribeEvent', this.members[nick]);
+	    $log.debug("[Servant] notify added member:", members);
+	    $rootScope.$apply(function(){
+		$window.members[nick] = new Member(nick, $window.chatroom);
+	    });
 	},
 
 	notify_removed_member: function(nick) {
+
 	    this.members[nick].destroy();
 	    delete this.members[nick];
 	},

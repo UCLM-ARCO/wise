@@ -39,8 +39,8 @@
     	  <button ng-click="send_message()" ng-disabled="chatBox.$invalid">Send!</button>
     	  <div class="members">
     	    <span>Members:	    </span>
-    	      <a ng-repeat="member in $window.members track by $index">
-    		{{member.nick}}
+    	      <a ng-repeat="member in members">
+    		->{{member.nick}} <br />
     	      </a>
     	  </div>
       </form>
