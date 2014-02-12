@@ -1,9 +1,10 @@
 // -*- mode: js; coding: utf-8 -*-
 members = {};
+messages = [];
 
 var chatApp = angular.module('chatApp', []);
 chatApp.config(function($logProvider){
-  $logProvider.debugEnabled(true);
+    $logProvider.debugEnabled(true);
 });
 
 //AngularJS
@@ -27,9 +28,9 @@ function loginCtrl($rootScope, $scope, $log, loginInfo) {
 };
 
 function chatCtrl($scope, $window, $log, Servant, loginInfo, Member) {
-    $scope.messages = [];
     $scope.logged = false;
     $scope.members = $window.members;
+    $scope.messages = $window.messages;
 
     $scope.$on('loginSucess', function(event, nickname){
 	$log.debug("[chatCtrl] loginSucess: ", nickname);
@@ -40,11 +41,8 @@ function chatCtrl($scope, $window, $log, Servant, loginInfo, Member) {
     });
 
     $scope.send_message = function() {
-	var message = $scope.message;
-	$scope.messages.push($scope.nickname + message);
+	$scope.members['Channel'].proxy.send($scope.nickname, $scope.message);
 	$scope.message = '';
-
-	$scope.members['Channel'].proxy.send($scope.nickname, message);
     }
 };
 
@@ -66,7 +64,7 @@ chatApp.service('loginInfo', function($rootScope, $window, $log) {
 		$log.debug("[loginInfo] loginFail: ", error);
 		$rootScope.$broadcast('loginFailed', error);
 	    }
-	 }
+	}
     };
 });
 
@@ -79,9 +77,6 @@ chatApp.factory('Member', function($rootScope, $log){
     }
 
     Member.prototype = {
-	append_remote_message: function(sender, message) {
-	    $rootScope.messages.push(sender + message);
-	}
     }
 
     return(Member);
@@ -94,9 +89,10 @@ chatApp.factory("Servant", function($rootScope, $window, $log, Member) {
     }
 
     Servant.prototype = {
-	send: function(nick, message) {
-	    var member = (private) ? nick : "Channel"; //
-	    this.members[member].append_remote_message(nick, message);
+	send: function(nick, message, private) {
+	    $rootScope.$apply(function(){
+		$window.messages.push(nick + ": " + message);
+	    });
 	},
 
 	notify_added_member: function(nick) {
@@ -109,22 +105,9 @@ chatApp.factory("Servant", function($rootScope, $window, $log, Member) {
 	},
 
 	notify_removed_member: function(nick) {
-
-	    this.members[nick].destroy();
-	    delete this.members[nick];
+	    $window.members[nick].destroy();
+	    delete $window.members[nick];
 	},
-	select: function(nick) {
-	    $window.chatroom.get_member(nick)
-		.then(on_get_member_response, on_get_member_error)
-
-	    function on_get_member_response(proxy) {
-		this.members[nick].proxy = proxy;
-	    }
-	    function on_get_member_error(error) {
-		warning(error);
-		destroy_member(nick);
-	    }
-	}
     };
 
     return(Servant);
