@@ -290,7 +290,8 @@ Transceiver: Class.extend({
 
     	// request of method invocation
     	if (message.method !== undefined) {
-	    if (message.params) {
+	    if (message.params.length > 0) {
+		_(message.params);
 		self._unmarshall_params(message.params)
 		    .then(function(params) {
 			message.params = params;
@@ -299,13 +300,14 @@ Transceiver: Class.extend({
 		return;
 	    }
 
+	    _("no params");
     	    this._parse_request(message);
 	    return;
 	}
 
     	// correct response from previous request
     	if (message.result !== undefined) {
-	    self._unmarshall_params(message.result)
+	    self._unmarshall(message.result)
 		.then(function(result) {
 		    message.result = result;
 		    self._parse_response(message);
@@ -323,14 +325,38 @@ Transceiver: Class.extend({
     	this._report_invalid_message(message);
     },
 
+    // FIXME: rename to "_unmarshall_seq"
     _unmarshall_params: function(params) {
-	var promise = new wise.Promise();
-
 	// FIXME: this _unmarshall will return a promise, need all() for this..
 	// for (var i in params)
 	//     params[i] = _unmarshall(params[i]);
 
-	promise.resolve(params);
+	var promises = [];
+	for (var i in params)
+	    promises.push(this._unmarshall(params[i]))
+
+	return wise.all(promises);
+    },
+
+    _unmarshall: function(value) {
+	if (value && value["wise_typecode"] === "Proxy") {
+	    var promise = new wise.Promise();
+	    this._communicator.stringToProxy(value["repr"])
+		.then(function(proxy) {
+		    promise.resolve(proxy);
+		});
+	    return promise;
+
+	    // FIXME: or just:
+	    // this._communicator.stringToProxy(value["repr"])
+	    //    .then(promise.resolve);
+
+	    // FIXME: or just:
+	    // return this._communicator.stringToProxy(value["repr"]);
+	}
+
+	var promise = new wise.Promise();
+	promise.resolve(value);
 	return promise;
     },
 
@@ -338,11 +364,13 @@ Transceiver: Class.extend({
 	log.debug("parse request (", message, ") using:", this._object_adapter);
 
     	if (! this._object_adapter) {
+	    // FIXME: what is that case?
     	    return;
     	}
 
 	try {
     	    var result = this._object_adapter.process_request(message);
+	    // FIXME: marshall result
 	    this._send_response({
 		request_id: message.request_id,
 		result: result
@@ -785,7 +813,7 @@ initialize: function(host, port) {
 
     // create root logger for Wise
     log = new wise.Logger();
-//    log.set_level(0);
+    log.set_level(0);
     if (typeof console != "undefined") {
 	log.attach(console);
     }
@@ -815,9 +843,8 @@ newDerivedProxy: function(args) {
     var methods = {};
 
     function new_method(name) {
-
-	var promise = new wise.Promise();
 	return function() {
+	    var promise = new wise.Promise();
 	    this.wise_invoke({
 		request: {
 		    method: name,

@@ -67,6 +67,8 @@ class Transceiver:
         if self._handler is None:
             raise RuntimeError("Can not reach remote object!")
 
+        print request
+
         try:
             self._handler.write_message(request)
         except Exception as e:

@@ -1,5 +1,9 @@
 # -*- mode: python; coding: utf-8 -*-
 
+from commodity.type_ import checked_type
+
+from endpoint import Endpoint
+
 
 def any_to_json(value):
     if isinstance(value, str):
@@ -38,7 +42,7 @@ def any_to_json(value):
     return attrs
 
 
-class MethodHandler:
+class MethodHandler(object):
     def __init__(self, identity, transceiver, method_name):
         self._identity = identity
         self._transceiver = transceiver
@@ -46,7 +50,7 @@ class MethodHandler:
 
     def __call__(self, *args):
         params = [any_to_json(value) for value in args]
-
+        print "MethodHandler:", params
         return self._transceiver.send_request(
             {'identity': self._identity,
              'method': self._method_name,
@@ -54,11 +58,9 @@ class MethodHandler:
 
 
 class ObjectPrx(object):
-    def __init__(self, identity, endpoint, host, port, transceiver):
+    def __init__(self, identity, endpoint, transceiver):
         self.identity = identity
-        self.endpoint = endpoint
-        self.host = host
-        self.port = port
+        self.endpoint = checked_type(Endpoint, endpoint)
         self._transceiver = transceiver
 
     def wise_getIdentity(self):
@@ -80,8 +82,7 @@ class ObjectPrx(object):
         return (self.identity, self.endpoint) == (other.identity, other.endpoint)
 
     def __repr__(self):
-        return "{} -w {} -h {} -p {}".format(
-            self.identity, self.endpoint, self.host, self.port)
+        return "{} {}".format(self.identity, self.endpoint)
 
     def __str__(self):
         return repr(self)

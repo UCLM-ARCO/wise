@@ -3,13 +3,14 @@
 from threading import Thread, Event
 from tornado import web, ioloop, httpserver
 from commodity import path
+from commodity.type_ import checked_type
 
 from .ObjectAdapter import ObjectAdapter
 from .Exceptions import AlreadyRegisteredException
 from .StaticFSApplication import StaticFSApplication
 from .ProxyFactory import ProxyFactory
 from . import Logging as logging
-
+from endpoint import Endpoint
 
 PROJECT_DIR = path.find_in_ancestors('project.mk', __file__)
 WISE_JS_DIR = path.resolve_path('wise', [PROJECT_DIR or "", '/usr/share/pyshared'])[0]
@@ -124,7 +125,8 @@ class Communicator(Thread):
         if name in self._adapters:
             raise AlreadyRegisteredException()
 
-        adapter = ObjectAdapter(self, name, endpoint)
+        adapter = ObjectAdapter(self, name,
+                                checked_type(Endpoint, endpoint))
         self._adapters[name] = adapter
         return adapter
 

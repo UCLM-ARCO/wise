@@ -121,6 +121,7 @@ function resolve_member_proxy(nick) {
 	.on_error(on_get_member_error)
 
     function on_get_member_response(proxy) {
+	_("member is:", proxy);
 	members[nick].proxy = proxy;
     }
     function on_get_member_error(error) {
