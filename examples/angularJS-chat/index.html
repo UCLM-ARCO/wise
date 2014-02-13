@@ -31,17 +31,15 @@
 
     <div ng-controller="chatCtrl" ng-show="logged">
       <form name="chatBox">
-        <div ng-repeat="message in messages track by $index">
-    	  <b>{{message}} </b>
-    	</div>
-
+	<div ng-show="private">Private Messages</div>
+	<b ng-repeat="message in messages track by $index"> {{message}} <br /></b>
     	<input ng-model="message" autofocus required/>
-    	  <button ng-click="send_message()" ng-disabled="chatBox.$invalid">Send!</button>
+    	  <button ng-click="send()" ng-disabled="chatBox.$invalid">Send!</button>
     	  <div class="members">
     	    <span>Members:	    </span>
-    	      <a ng-repeat="member in members">
-    		->{{member.nick}} <br />
-    	      </a>
+	    <a ng-repeat="member in members" ng-click="select(member)">
+	      <li>{{member.nick}}</li>
+	    </a>
     	  </div>
       </form>
       <p>(Control-F5 forces page refresh)</p>
