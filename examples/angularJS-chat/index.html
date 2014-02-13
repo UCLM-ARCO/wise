@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html ng-app="chatApp">
+  <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.9/angular.js"></script>
+    <!-- <script src="http://angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.8.0.js"></script> -->
+    <script src="/static/chat.js"></script>
+    <script src="/wise/js/wise.js"></script>
+  </head>
+  <body>
+    <h2><b>AngularJS-wise</b> chat example</h2>
+
+    <p>
+      In this example, the browser holds an object to receive incoming
+      text messages. That object is registered in the chat server
+      using the subscribe() method.
+    </p>
+    <p>
+      The chat room or the other room members send messages to you
+      using that proxy.  None of the invocations require replies.
+    </p>
+
+    <div ng-controller="loginCtrl" ng-hide="logged" >
+      <form name="loginBox">
+    	<input type="text" ng-model="nickname" placeholder="nickname" autofocus required/>
+    	  <button ng-click="login(nickname)" ng-disabled="loginBox.$invalid">Go!</button>
+      </form>
+      <div ng-show="login_failed">
+	Try another nickname. {{error}}
+      </div>
+    </div>
+
+    <div ng-controller="chatCtrl" ng-show="logged">
+      <form name="chatBox">
+	<div ng-show="private">Private Messages</div>
+	<b ng-repeat="message in messages track by $index"> {{message}} <br /></b>
+    	<input ng-model="message" autofocus required/>
+    	  <button ng-click="send()" ng-disabled="chatBox.$invalid">Send!</button>
+    	  <div class="members">
+    	    <span>Members:	    </span>
+	    <a ng-repeat="member in members" ng-click="select(member)">
+	      <li>{{member.nick}}</li>
+	    </a>
+    	  </div>
+      </form>
+      <p>(Control-F5 forces page refresh)</p>
+    </div>
+
+  </body>
+</html>

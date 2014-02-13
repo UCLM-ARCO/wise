@@ -77,14 +77,22 @@ Python code in the server:
 Servants
 --------
 
+The servant is the instance you want to be remotely accesible from "the other side". The servant is which makes the job.
+
 Object adapters
 ---------------
+
+The adapters map "proxies" to "servants".
 
 Proxies
 -------
 
+The proxies are local references to remote objets.
+
 Remote duck typing
 ------------------
+
+**wise** assumes the remote object implements the right method... but it may not be so.
 
 API
 ---
@@ -102,6 +110,14 @@ Communicator.waitForShutdown()
 
 (js only)
 wise_application(communicator)
+
+
+
+tests
+-----
+
+* http://jsfiddle.net/NKBJ4/6/
+
 
 .. Local Variables:
 ..  coding: utf-8

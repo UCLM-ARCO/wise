@@ -875,14 +875,19 @@ Promise: Class.extend({
     },
 
     then: function(onFulfilled, onRejected) {
-	if (this.onFulfilled != undefined || this.onRejected != undefined)
-	    throw "Promise.then() already called."
+	if (typeof(onFulfilled) === 'function') {
+	    if (this.onFulfilled != undefined)
+		throw "Promise.onFullfilled handler already set."
 
-	if (typeof(onFulfilled) === 'function')
 	    this.onFulfilled = onFulfilled;
+	}
 
-	if (typeof(onRejected) === 'function')
+	if (typeof(onRejected) === 'function') {
+	    if (this.onRejected != undefined)
+		throw "Promise.onRejected handler already set."
+
 	    this.onRejected = onRejected;
+	}
 
 	return this._chain_promise();
     },
