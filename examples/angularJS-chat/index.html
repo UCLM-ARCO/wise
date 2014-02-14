@@ -30,15 +30,15 @@
     </div>
 
     <div ng-controller="chatCtrl" ng-show="logged">
+      <b> Destination: {{destination}}      </b>
       <form name="chatBox">
-	<div ng-show="private">Private Messages</div>
-	<b ng-repeat="message in messages track by $index"> {{message}} <br /></b>
+	<a ng-repeat="message in messages track by $index"> {{message}} <br /></a>
     	<input ng-model="message" autofocus required/>
     	  <button ng-click="send()" ng-disabled="chatBox.$invalid">Send!</button>
     	  <div class="members">
     	    <span>Members:	    </span>
 	    <a ng-repeat="member in members" ng-click="select(member)">
-	      <li>{{member.nick}}</li>
+	      <li>{{member.nick}} | {{member.new_messages}}</li>
 	    </a>
     	  </div>
       </form>

@@ -3,9 +3,6 @@
 members = {};
 
 var chatApp = angular.module('chatApp', []);
-chatApp.config(function($logProvider){
-    $logProvider.debugEnabled(true);
-});
 
 //AngularJS
 //Controllers
@@ -30,21 +27,33 @@ function chatCtrl($scope, $window, Servant, loginInfo, Member) {
 	$scope.logged = true;
 	$scope.nickname = nickname;
 	$scope.members = $window.members;
-	$scope.messages = $window.members['Channel'].private_messages;
 	$scope.destination = 'Channel';
     });
 
     $scope.send = function() {
-	var private = ($scope.destination !== "Channel");
-	$scope.members[$scope.destination].proxy
-	    .send($scope.nickname, $scope.message, private)
+	$scope.messages = $window.members[$scope.destination].messages;
+
+	var send_info = {source: $scope.nickname,
+			destination: $scope.destination}
+	var message  = $scope.nickname + ": " + $scope.message;
+
+	$scope.members[send_info.destination].proxy
+	    .send(send_info, message)
 	    .then(function() {
 		$scope.message = '';
 		$scope.$apply();
 	    });
     };
 
+    $scope.select = function (member) {
+	if(member.nick !== $scope.nickname){
+	    $scope.destination = member.nick;
+	    member.new_messages = 0;
+	    $scope.$apply();
+	}
+    };
 };
+
 //Services
 chatApp.service('loginInfo', function($rootScope, $window) {
     return {
@@ -69,37 +78,45 @@ chatApp.service('loginInfo', function($rootScope, $window) {
 
 chatApp.factory('Member', function($rootScope){
     function Member(nick, proxy) {
-	this.private_messages = [];
 	this.nick = nick;
 	this.proxy = proxy;
+	this.messages = [];
+	this.new_messages = 0;
     }
 
     Member.prototype = {
-	append: function(sender, message) {
-	    this.private_messages.push(nick + ": " + message);
-	    $rootScope.$apply();
+	append: function(message) {
+	    this.new_messages++;
+	    this.messages.push(message);
 	},
     }
 
     return(Member);
 });
 
-chatApp.factory("Servant", function($rootScope, $window, $log, Member) {
+chatApp.factory("Servant", function($rootScope, $window, Member) {
     function Servant() {
 	$window.members['Channel'] = new Member("Channel", $window.chatroom);
     }
 
     Servant.prototype = {
-	send: function(sender, message, private) {
-	    var destination = (private) ? nick : "Channel";
-	    $window.members[destination].append(sender, message);
+	send: function(send_info, message) {
+	    var private = (send_info.destination !== 'Channel');
+	    if(private){
+		var my_self = (send_info.source == _nickname);
+		var member = my_self ? send_info.destination :
+		    send_info.source;
+		$window.members[member].append(message);
+	    }
+	    else{
+		$window.members[send_info.destination].append(message);
+	    }
 	    $rootScope.$apply();
 	},
 
 	notify_added_member: function(nick) {
 	    if (nick in $window.members)
 		return;
-	    $log.debug("[Servant] notify added member:", members);
 	    $window.members[nick] = new Member(nick, $window.chatroom);
 	    $rootScope.$apply();
 	},
