@@ -11,7 +11,6 @@ import Logging as logger
 from .WebApplication import WebApplication
 from .StaticFSApplication import StaticFSApplication
 from .Object import Observable
-from .endpoint import Endpoint
 
 __ic = None
 
@@ -29,8 +28,7 @@ def initialize(host="127.0.0.1", port=8080, properties=None):
     __ice = Communicator(host=host, port=port, properties=properties)
     __ice.is_ready.wait()
 
-    admin_adapter = __ice.createObjectAdapter("WiseAdmin",
-                                              Endpoint("wise"))
+    admin_adapter = __ice.createObjectAdapter("WiseAdmin", "-w wise")
     servant = WiseAdmin(__ice)
     admin_adapter.add(servant, "WiseAdmin")
 

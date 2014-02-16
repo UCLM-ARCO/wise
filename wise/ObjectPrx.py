@@ -5,6 +5,7 @@ from commodity.type_ import checked_type
 from endpoint import Endpoint
 
 
+# FIXME: move to json_marshalling.py?
 def any_to_json(value):
     if isinstance(value, str):
         return unicode(value)
@@ -50,7 +51,6 @@ class MethodHandler(object):
 
     def __call__(self, *args):
         params = [any_to_json(value) for value in args]
-        print "MethodHandler:", params
         return self._transceiver.send_request(
             {'identity': self._identity,
              'method': self._method_name,

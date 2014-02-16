@@ -3,7 +3,6 @@
 from threading import Thread, Event
 from tornado import web, ioloop, httpserver
 from commodity import path
-from commodity.type_ import checked_type
 
 from .ObjectAdapter import ObjectAdapter
 from .Exceptions import AlreadyRegisteredException
@@ -125,8 +124,10 @@ class Communicator(Thread):
         if name in self._adapters:
             raise AlreadyRegisteredException()
 
-        adapter = ObjectAdapter(self, name,
-                                checked_type(Endpoint, endpoint))
+        if isinstance(endpoint, (str, unicode)):
+            endpoint = Endpoint.from_string(endpoint)
+
+        adapter = ObjectAdapter(self, name, endpoint)
         self._adapters[name] = adapter
         return adapter
 

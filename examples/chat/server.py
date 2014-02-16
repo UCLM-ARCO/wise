@@ -50,15 +50,8 @@ class ChatManager(object):
         if not member:
             raise NoSuchMember(nick)
 
-        print "member:", member
-        print "member identity:", member.wise_getIdentity()
-
-        print type(member)
-        print member.wise_getMethodNames()
-
         proxy = current.adapter.add(wise.proxy_as_servant(member),
                                     member.wise_getIdentity())
-        print "proxy:", proxy
         return proxy
 
 
@@ -66,8 +59,7 @@ class Server(object):
     def __init__(self):
         broker = wise.initialize(  # host="127.0.0.1",
             properties = {"TornadoApp.debug": True})
-        adapter = broker.createObjectAdapter("ServerAdapter",
-                                             wise.endpoint.Endpoint("ws1"))
+        adapter = broker.createObjectAdapter("ServerAdapter", "-w ws1")
         adapter.add(ChatManager(), "chat1")
         broker.register_StaticFS('/static', wise.dirname(__file__))
 
