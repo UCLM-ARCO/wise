@@ -6,6 +6,8 @@ import cPickle as pickle
 import os
 import time
 
+from commodity.type_ import checked_type
+
 from .Transceiver import TransceiverFactory
 from .Exceptions import ProtocolException
 from . import Logging as logging
@@ -83,7 +85,7 @@ class WiseAdmin:
 
     def _save_on_db(self, endpoint):
         now = int(time.time() / 60)  # stored in minutes
-        self._endpoints.append((now, endpoint))
+        self._endpoints.append((now, checked_type(Endpoint, endpoint)))
 
         # remove oldest endpoints
         endpoints = []

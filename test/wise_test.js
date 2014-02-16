@@ -86,7 +86,7 @@ describe("Communicator", function() {
 	}, "communicator to be ready");
     });
 
-    it("is created correclty", function() {
+    xit("is created correclty", function() {
 	expect(ws).toEqual(jasmine.any(wise.Communicator));
     });
 

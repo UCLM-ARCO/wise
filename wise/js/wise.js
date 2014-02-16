@@ -697,7 +697,7 @@ Logger: Class.extend({
 	if (this._level > 2)
 	    return;
 
-	this._notify(arguments, 'error');
+	this._notify(arguments, 'warn');
     },
 
     error: function() {
@@ -877,37 +877,31 @@ newDerivedProxy: function(args) {
 
 Promise: Class.extend({
     init: function() {
-	this.resolved = false;
-	this.chain_promise = undefined;
-    },
-
-    chain_resolve: function(value) {
-	if (this.chain_promise)
-	    return this.chain_promise.resolve(value);
-    },
-
-    chain_reject: function(reason) {
-	if (this.chain_promise)
-	    return this.chain_promise.reject(reason);
+	this.value = null;
+	this.reason = null;
+	this.callbacks = [];
     },
 
     then: function(onFulfilled, onRejected) {
-	if (typeof(onFulfilled) === 'function') {
-	    if (this.onFulfilled !== undefined)
-		throw "Promise.onFullfilled handler already set."
+	var promise = new wise.Promise();
 
-	    this.onFulfilled = onFulfilled;
-	}
+	if (typeof(onFulfilled) !== 'function')
+	    onFulfilled = undefined;
+	else if (this.value)
+	    this._exec_callback(promise,
+				onFulfilled, this.value);
 
-	if (typeof(onRejected) === 'function') {
-	    if (this.onRejected !== undefined)
-		throw "Promise.onRejected handler already set."
+	if (typeof(onRejected) !== 'function')
+	    onRejected = undefined;
+	else if (this.reason)
+	    this._exec_callback(promise,
+				onRejected, this.reason);
 
-	    this.onRejected = onRejected;
-	}
-
-	this.chain_promise = new wise.Promise();
-	return this.chain_promise;
+	var cb = {'promise': promise,
+		  'onFulfilled': onFulfilled,
+		  'onRejected': onRejected};
+	this.callbacks.push(cb);
+	return promise;
     },
 
     "catch": function(onRejected) {
@@ -915,45 +909,49 @@ Promise: Class.extend({
     },
 
     check_resolved: function() {
-	if (this.resolved) {
+	if (this.value !== null || this.reason !== null)
 	    throw new Error("Promise already resolved/rejected" + this);
-	}
     },
 
-    resolve: function(retval) {
+    resolve: function(value) {
 	this.check_resolved();
-	this.resolved = true;
+	this.value = value;
 
 	var self = this;
-	setTimeout(function() {
-	    if (self.onFulfilled === undefined)
-		return self.chain_resolve(retval);
-
-	    bind(self, self._exec_callback)(self.onFulfilled, retval);
-	}, 0);
+	this.callbacks.map(function(cb) {
+	    self.outctx(cb.promise, cb.promise.resolve,
+			cb.onFulfilled, value);
+	});
     },
 
     reject: function(reason) {
 	this.check_resolved();
-	this.resolved = true;
+	this.reason = reason;
 
 	var self = this;
-	setTimeout(function() {
-	    if (self.onRejected === undefined)
-		return self.chain_reject(reason);
+	this.callbacks.map(function(cb) {
+	    self.outctx(cb.promise, cb.promise.reject,
+			cb.onRejected, reason);
+	});
+    },
 
-	    bind(self, self._exec_callback)(self.onRejected, reason);
+    outctx: function(promise, method, cb, value) {
+	var self = this;
+	setTimeout(function() {
+	    if (cb === undefined)
+		return bind(promise, method)(value);
+
+	    bind(self, self._exec_callback)(promise, cb, value);
 	}, 0);
     },
 
-    _exec_callback: function(func, value) {
+    _exec_callback: function(promise, func, value) {
 	try {
 	    var x = func(value);
-	    if (x !== undefined)
-		this._PRP(this.chain_promise, x);
+	    this._PRP(promise, x);
 	} catch (e) {
-	    log.error("Exception in promise callback: " + e.stack);
-	    this.chain_reject(e);
+	    console.error("Exception in promise callback: " + e.stack);
+	    promise.reject(e);
 	}
     },
 
@@ -1062,7 +1060,7 @@ window.onload = function() {
 
 	// no log created yet, so try to say something
 	if (typeof console != "undefined") {
-	    console.error("'wise_application' is not defined, nothing to do");
+	    console.warn("'wise_application' is not defined, nothing to do");
 	}
 
 	return;
