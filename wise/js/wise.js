@@ -333,13 +333,11 @@ Transceiver: Class.extend({
     _unmarshall_typecode: function(value) {
 	var typecode = wise._get_typecode(value)
 
-	if (typecode  === undefined) {
+	if (typecode  === undefined)
 	    return value;
-	}
 
-	if (typecode === "Proxy") {
+	if (typecode === "Proxy")
 	    return this._communicator.stringToProxy(value["repr"]);
-	}
     },
 
     _process_incoming_invocation: function(message) {
