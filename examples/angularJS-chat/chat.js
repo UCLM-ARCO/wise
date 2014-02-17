@@ -1,8 +1,8 @@
 // -*- mode: js; coding: utf-8 -*-
 
 members = {};
-
-var chatApp = angular.module('chatApp', []);
+//
+var chatApp = angular.module('chatApp', ['ui.bootstrap']);
 
 //AngularJS
 //Controllers
