@@ -1,3 +1,4 @@
+====
 wise
 ====
 
@@ -41,8 +42,8 @@ JavaScript code running in the browser:
 
 
 
-Invoking a object at the broser
--------------------------------
+Invoking a object at the browser
+--------------------------------
 
 JavaScript code running in the browser:
 
