@@ -20,7 +20,7 @@ Python code in the server:
     class Server:
         def __init__(self):
             broker = wise.initialize()
-            adapter = broker.createObjectAdapter("adapter1", "ws1")
+            adapter = broker.createObjectAdapter("adapter1", "-w ws1")
             adapter.add(Printer(), "printer1")
             broker.register_StaticFS('/static', wise.dirname(__file__))
             broker.waitForShutdown()
