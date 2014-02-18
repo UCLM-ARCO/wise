@@ -1,46 +1,63 @@
 describe("A promise", function() {
     var promise;
-    var fullfill;
+    var fulfill;
     var reject;
 
     beforeEach(function() {
 	promise = new wise.Promise();
-	fullfill = jasmine.createSpy();
+	fulfill = jasmine.createSpy();
 	reject = jasmine.createSpy();
     });
 
-    it("(only with onFullfilled) should call resolved", function() {
-	promise.then(fullfill);
+    it("(only with onFulfilled) should call resolved", function() {
+	promise.then(fulfill);
 
 	runs(function() {
 	    promise.resolve(4);
 	});
 
 	waitsFor(function() {
-	    return fullfill.calls.length > 0;
+	    return fulfill.calls.length > 0;
 	}, "function to be called", 100);
 
 	runs(function() {
-	    expect(fullfill).toHaveBeenCalledWith(4);
+	    expect(fulfill).toHaveBeenCalledWith(4);
 	});
+    });
+
+    it("resolve(undefined) resolve chain promise", function() {
+	promise.then(fulfill);
+
+	runs(function() {
+	    promise.resolve();
+	});
+
+	waitsFor(function() {
+	    return fulfill.calls.length > 0;
+	}, "function to be called", 100);
+
+	runs(function() {
+	    expect(fulfill).toHaveBeenCalledWith(undefined);
+	});
+
     });
 
     it("resolve without then()", function() {
 	promise.resolve();
     });
 
-    it("should call fullfill if resolved before call then()", function() {
+    it("should call fulfill if resolved before call then()", function() {
 	runs(function() {
 	    promise.resolve(4);
-	    promise.then(fullfill);
+	    promise.then(fulfill);
 	});
 
 	waitsFor(function() {
-	    return fullfill.calls.length > 0;
+	    return fulfill.calls.length > 0;
 	}, "function to be called", 100);
 
 	runs(function() {
-	    expect(fullfill).toHaveBeenCalledWith(4);
+	    expect(fulfill).toHaveBeenCalledWith(4);
 	});
     });
 
@@ -62,47 +79,104 @@ describe("A promise", function() {
 
     it("(chained) should resolve second promise", function() {
 	promise2 = promise.then();
-	promise2.then(fullfill);
+	promise2.then(fulfill);
 
 	runs(function() {
 	    promise.resolve(4);
 	});
 
 	waitsFor(function() {
-	    return fullfill.calls.length > 0;
+	    return fulfill.calls.length > 0;
 	}, "function to be called", 100);
 
 	runs(function() {
-	    expect(fullfill).toHaveBeenCalledWith(4);
+	    expect(fulfill).toHaveBeenCalledWith(4);
 	});
     });
 
-    it("(chained) add 2 numbers", function() {
+    it("(chained) resolved with first fulfill retval", function() {
 	var just_return_5 = jasmine.createSpy().andReturn(5);
 
 	promise2 = promise.then(just_return_5);
-	promise2.then(fullfill);
+	promise2.then(fulfill);
 
 	runs(function() {
 	    promise.resolve(1);
 	});
 
 	waitsFor(function() {
-	    return fullfill.calls.length > 0;
+	    return fulfill.calls.length > 0;
 	}, "function to be called", 100);
 
 	runs(function() {
-	    expect(fullfill).toHaveBeenCalledWith(5);
+	    expect(fulfill).toHaveBeenCalledWith(5);
+	});
+    });
+
+    it("should raise error on twice resolve", function() {
+	var a = function() {
+	    promise.resolve();
+	    promise.resolve();
+	};
+
+	runs(function() {
+	    expect(a).toThrow();
+	});
+    });
+
+    it("should raise error on twice reject", function() {
+	var a = function() {
+	    promise.reject();
+	    promise.reject();
+	};
+
+	runs(function() {
+	    expect(a).toThrow();
+	});
+    });
+
+    it("should raise error on resolve and reject", function() {
+	var f = function() {
+	    promise.resolve();
+	    promise.reject();
+	};
+
+	runs(function() {
+	    expect(f).toThrow();
+	});
+    });
+
+    it("should support 2 then", function() {
+	var fulfill0 = jasmine.createSpy();
+	var fulfill1 = jasmine.createSpy();
+
+	p0 = promise.then();
+	p0.then(fulfill0);
+
+	p1 = promise.then();
+	p1.then(fulfill1);
+
+	runs(function() {
+	    promise.resolve();
+	});
+
+	waitsFor(function() {
+	    return fulfill0.calls.length > 0;
+	}, "function to be called", 100);
+
+	runs(function() {
+	    expect(fulfill0).toHaveBeenCalled();
+	    expect(fulfill1).toHaveBeenCalled();
 	});
     });
 });
 
 
 describe("map", function() {
-    var fullfill;
+    var fulfill;
 
     beforeEach(function() {
-	fullfill = jasmine.createSpy();
+	fulfill = jasmine.createSpy();
     });
 
     it("should accept 2 promises", function() {
@@ -118,7 +192,7 @@ describe("map", function() {
 	    return v + 2;
 	}
 
-	wise.map(promise_vector, add2).then(fullfill);
+	wise.map(promise_vector, add2).then(fulfill);
 
 	runs(function() {
 	    p0.resolve();
@@ -126,11 +200,11 @@ describe("map", function() {
 	});
 
 	waitsFor(function() {
-	    return fullfill.calls.length > 0;
+	    return fulfill.calls.length > 0;
 	}, "function to be called", 100);
 
 	runs(function() {
-	    expect(fullfill).toHaveBeenCalledWith([4, 5]);
+	    expect(fulfill).toHaveBeenCalledWith([4, 5]);
 	});
     });
 
@@ -148,7 +222,7 @@ describe("map", function() {
 	    return v + 2;
 	}
 
-	wise.map(array, add2).then(fullfill);
+	wise.map(array, add2).then(fulfill);
 
 	runs(function() {
 	    p0.resolve();
@@ -156,20 +230,20 @@ describe("map", function() {
 	});
 
 	waitsFor(function() {
-	    return fullfill.calls.length > 0;
+	    return fulfill.calls.length > 0;
 	}, "function to be called", 100);
 
 	runs(function() {
-	    expect(fullfill).toHaveBeenCalledWith([4, 5, 8]);
+	    expect(fulfill).toHaveBeenCalledWith([4, 5, 8]);
 	});
     });
 });
 
 describe("all", function() {
-    var fullfill;
+    var fulfill;
 
     beforeEach(function() {
-	fullfill = jasmine.createSpy();
+	fulfill = jasmine.createSpy();
     });
 
     it("should accept 2 promises", function() {
@@ -177,7 +251,7 @@ describe("all", function() {
 	var p1 = new wise.Promise();
 	var promise_vector = [p0, p1];
 
-	wise.all(promise_vector).then(fullfill);
+	wise.all(promise_vector).then(fulfill);
 
 	runs(function() {
 	    p0.resolve(0);
@@ -185,11 +259,11 @@ describe("all", function() {
 	});
 
 	waitsFor(function() {
-	    return fullfill.calls.length > 0;
+	    return fulfill.calls.length > 0;
 	}, "function to be called", 100);
 
 	runs(function() {
-	    expect(fullfill).toHaveBeenCalled();
+	    expect(fulfill).toHaveBeenCalled();
 	});
     });
 
@@ -198,7 +272,7 @@ describe("all", function() {
 	var p1 = new wise.Promise();
 	var promise_vector = [p0, p1, 1];
 
-	wise.all(promise_vector).then(fullfill);
+	wise.all(promise_vector).then(fulfill);
 
 	runs(function() {
 	    p0.resolve(0);
@@ -206,15 +280,33 @@ describe("all", function() {
 	});
 
 	waitsFor(function() {
-	    return fullfill.calls.length > 0;
+	    return fulfill.calls.length > 0;
 	}, "function to be called", 100);
 
 	runs(function() {
-	    expect(fullfill).toHaveBeenCalled();
+	    expect(fulfill).toHaveBeenCalled();
 	});
     });
 
-    // promise.resolve(undefined)
+    it("should activated with resolve()", function() {
+	var p0 = new wise.Promise();
+	var p1 = new wise.Promise();
+
+	wise.all([p0, p1]).then(fulfill);
+
+	runs(function() {
+	    p0.resolve();
+	    p1.resolve();
+	});
+
+	waitsFor(function() {
+	    return fulfill.calls.length > 0;
+	}, "function to be called", 100);
+
+	runs(function() {
+	    expect(fulfill).toHaveBeenCalled();
+	});
+    });
 
     // promise without then
 });

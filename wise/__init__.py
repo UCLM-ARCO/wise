@@ -12,7 +12,6 @@ from .WebApplication import WebApplication
 from .StaticFSApplication import StaticFSApplication
 from .Object import Observable
 
-
 __ic = None
 
 
@@ -29,7 +28,7 @@ def initialize(host="127.0.0.1", port=8080, properties=None):
     __ice = Communicator(host=host, port=port, properties=properties)
     __ice.is_ready.wait()
 
-    admin_adapter = __ice.createObjectAdapter("WiseAdmin", "wise")
+    admin_adapter = __ice.createObjectAdapter("WiseAdmin", "-w wise")
     servant = WiseAdmin(__ice)
     admin_adapter.add(servant, "WiseAdmin")
 
@@ -55,6 +54,6 @@ def add_placeholder(method):
 
 
 class proxy_as_servant(object):
-    def __init__(self, instance):
-        for name in instance.wise_getMethodNames():
-            setattr(self, name, add_placeholder(getattr(instance, name)))
+    def __init__(self, proxy):
+        for name in proxy.wise_getMethodNames():
+            setattr(self, name, add_placeholder(getattr(proxy, name)))

@@ -6,9 +6,12 @@ import cPickle as pickle
 import os
 import time
 
+from commodity.type_ import checked_type
+
 from .Transceiver import TransceiverFactory
 from .Exceptions import ProtocolException
 from . import Logging as logging
+from endpoint import Endpoint
 
 
 class ResponseMessage:
@@ -36,7 +39,7 @@ class ActiveHandler(websocket.WebSocketHandler):
         logging.info("ActiveHandler: new handler for '{}' endpoint".format(self._endpoint))
 
     def on_close(self):
-        if not self._endpoint is None:
+        if self._endpoint is not None:
             TransceiverFactory.unregister_handler(self._endpoint)
 
     def set_response_callback(self, callback):
@@ -62,7 +65,12 @@ class WiseAdmin:
 
         self._restore_from_db()
 
+    # remote
     def create_socket(self, endpoint, current=None):
+        endpoint = Endpoint(endpoint['ws_name'],
+                            endpoint.get('host'),
+                            endpoint.get('port'))
+
         self._do_create_socket(endpoint)
         self._save_on_db(endpoint)
 
@@ -77,7 +85,7 @@ class WiseAdmin:
 
     def _save_on_db(self, endpoint):
         now = int(time.time() / 60)  # stored in minutes
-        self._endpoints.append((now, endpoint))
+        self._endpoints.append((now, checked_type(Endpoint, endpoint)))
 
         # remove oldest endpoints
         endpoints = []
@@ -90,16 +98,16 @@ class WiseAdmin:
             pickle.dump(endpoints, dst)
 
     def _do_create_socket(self, endpoint):
-        locator = "^/{}$".format(endpoint['ws_name'])
+        locator = "^/{}$".format(endpoint.ws_name)
         if locator in self._already_registered:
             logging.info("WiseAdmin: already registered handler for '{}', "
                          "nothing done".format(locator))
             return
 
         self._already_registered.append(locator)
-        logging.info("WiseAdmin: create socket for '-w {} -h {} -p {}' endpoint".format(
-                     endpoint['ws_name'], endpoint['host'], endpoint['port']))
+        logging.info("WiseAdmin: create socket for '{}' endpoint".format(
+                     endpoint))
 
-        handler = ("^/{}$".format(endpoint['ws_name']), ActiveHandler, {})
+        handler = ("^/{}$".format(endpoint.ws_name), ActiveHandler, {})
         self._ic.registerHandlers([handler])
         logging.info("WiseAdmin: handler registered, {}".format(handler))

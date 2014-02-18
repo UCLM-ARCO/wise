@@ -9,7 +9,7 @@ from .Exceptions import AlreadyRegisteredException
 from .StaticFSApplication import StaticFSApplication
 from .ProxyFactory import ProxyFactory
 from . import Logging as logging
-
+from endpoint import Endpoint
 
 PROJECT_DIR = path.find_in_ancestors('project.mk', __file__)
 WISE_JS_DIR = path.resolve_path('wise', [PROJECT_DIR or "", '/usr/share/pyshared'])[0]
@@ -123,6 +123,9 @@ class Communicator(Thread):
     def createObjectAdapter(self, name, endpoint):
         if name in self._adapters:
             raise AlreadyRegisteredException()
+
+        if isinstance(endpoint, (str, unicode)):
+            endpoint = Endpoint.from_string(endpoint)
 
         adapter = ObjectAdapter(self, name, endpoint)
         self._adapters[name] = adapter

@@ -113,8 +113,10 @@ class TransceiverFactory:
 
 class RequestMessage:
     def __init__(self, message, communicator):
-        data = jsonpickle.decode(message)
         self.communicator = communicator
+
+        # FIXME: JSON unmarshalling process
+        data = jsonpickle.decode(message)
 
         try:
             self.request_id = data['request_id']
@@ -126,6 +128,7 @@ class RequestMessage:
                 "Invalid message format: missing {}, received: '{}'"
                 .format(e, message))
 
+    # FIXME: JSON unmarshalling process
     def _convert_params(self, data):
         if not 'params' in data:
             return {}
@@ -141,12 +144,11 @@ class RequestMessage:
         return params
 
     def __str__(self):
-        return (
-            "request_id: {}\n"
-            "identity: {}\n"
-            "method: {}\n"
-            "params: {}\n"
-            .format(self.request_id, self.identity, self.method, self.params))
+        return ("request_id: {.request_id}\n"
+                "identity: {.identity}\n"
+                "method: {.method}\n"
+                "params: {.params}\n"
+                .format(self))
 
 
 class MessageHandler(websocket.WebSocketHandler):

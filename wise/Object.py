@@ -43,10 +43,7 @@ class Observable:
             method_name = "notify"
 
         for observer in self.observers[:]:
-            fields = observer.endpoint.split()
-            wsid = fields[fields.index("-w") + 1]
-
-            worker = self.group.get_worker(hash(wsid))
+            worker = self.group.get_worker(observer.endpoint.ws_name)
             worker.add(self._notify_observer, (observer, method_name,) + args)
 
     def _notify_observer(self, observer, method_name, *args):
@@ -67,4 +64,3 @@ class PersistentObservable(Observable):
         # db.get_observers(namespace)
         # db.add_observer(namespace, observer)
         pass
-

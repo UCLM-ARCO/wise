@@ -1,5 +1,12 @@
 // -*- mode: js; coding: utf-8 -*-
 
+if (typeof String.prototype.render != 'function') {
+    String.prototype.render = function() {
+	var text = this.format.apply(this, arguments);
+	return $('<div></div>').append(text).children().unwrap();
+    };
+}
+
 function template(name) {
     return $('#TEMPLATES > .' + name).clone().wrap('<p>').parent().html();
 }
@@ -81,7 +88,7 @@ function login() {
 	.then(login_success, login_fail)
 
     function login_success() {
-	chatroom.subscribe(mynickname, room_listener)
+	chatroom.subscribe(mynickname, room_listener);
 
 	$('#login').hide();
 	$('#chat').show();

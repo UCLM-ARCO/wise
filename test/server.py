@@ -30,7 +30,7 @@ class Server:
                                   properties = {"TornadoApp.debug": True})
         servant = servant or Servant()
 
-        adapter = self.ws.createObjectAdapter("ServerAdapter", "ws")
+        adapter = self.ws.createObjectAdapter("ServerAdapter", "-w ws")
         adapter.add(servant, "Server")
 
         self.ws.register_StaticFS('/static', wise.dirname(__file__) + '/static')
