@@ -4,10 +4,10 @@ wise
 Object-oriented web communication framework.
 
 
-Invoking a server object
-------------------------
+Invoking a object at the web server
+-----------------------------------
 
-Python code in the server:
+Python code running in the web server:
 
 .. sourcecode:: python
 
@@ -26,7 +26,7 @@ Python code in the server:
             broker.waitForShutdown()
 
 
-JavaScript code in the browser:
+JavaScript code running in the browser:
 
 .. sourcecode:: javascript
 
@@ -41,10 +41,10 @@ JavaScript code in the browser:
 
 
 
-Invoking a browser object
--------------------------
+Invoking a object at the broser
+-------------------------------
 
-JavaScript code in the browser:
+JavaScript code running in the browser:
 
 .. sourcecode:: javascript
 
@@ -63,7 +63,7 @@ JavaScript code in the browser:
 	}
     }
 
-Python code in the server:
+Python code running in the web server:
 
 .. sourcecode:: python
 
