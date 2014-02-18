@@ -20,12 +20,14 @@
 	   overflow: auto;
 	}
 
+	#private {
+	   height: 200px;
+	   overflow: auto;
+	}
+
  	#members {
  	   height: 212px;
  	}
-
-	.jumbotron {
-	}
       </style>
   </head>
   <body>
@@ -78,9 +80,15 @@
 
 	    <b> Destination: {{destination}}      </b>
 
-	    <form id="incoming" name="chatBox">
-	      <b ng-repeat="message in messages track by $index"> {{message}} <br /></b>
 
+	    <div id="incoming" ng-hide="private">
+	      <b ng-repeat="message in messages track by $index"> {{message}} <br /></b>
+	    </div>
+
+	    <div id="private" ng-show="private">
+	      <b ng-repeat="message in messages track by $index"> {{message}} <br /></b>
+	    </div>
+	    <form name="chatBox">
 	      <div class="panel-footer">
 		<div class="input-group">
 		  <input class="form-control" ng-model="message" autofocus required/>
@@ -90,7 +98,6 @@
 		    </span>
 		</div>
 	      </div>
-
 	    </form>
 
 	  </div>

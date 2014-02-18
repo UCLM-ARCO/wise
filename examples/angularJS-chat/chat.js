@@ -1,12 +1,12 @@
 // -*- mode: js; coding: utf-8 -*-
 
 members = {};
-//
+
 var chatApp = angular.module('chatApp', ['ui.bootstrap']);
 
 //AngularJS
 //Controllers
-function loginCtrl($rootScope, $scope, loginInfo) {
+function loginCtrl($scope, loginInfo) {
     $scope.login = function() {
 	loginInfo.login($scope.nickname);
     };
@@ -22,6 +22,7 @@ function loginCtrl($rootScope, $scope, loginInfo) {
     });
 };
 
+
 function chatCtrl($scope, $window, Servant, loginInfo, Member) {
     $scope.$on('loginSucess', function(event, nickname){
 	$scope.logged = true;
@@ -31,8 +32,6 @@ function chatCtrl($scope, $window, Servant, loginInfo, Member) {
     });
 
     $scope.send = function() {
-	$scope.messages = $window.members[$scope.destination].messages;
-
 	var send_info = {source: $scope.nickname,
 			destination: $scope.destination}
 	var message  = $scope.nickname + ": " + $scope.message;
@@ -40,17 +39,19 @@ function chatCtrl($scope, $window, Servant, loginInfo, Member) {
 	$scope.members[send_info.destination].proxy
 	    .send(send_info, message)
 	    .then(function() {
-		$scope.message = '';
-		$scope.$apply();
+		$scope.$apply(function (){
+		    $scope.messages = $window.members[$scope.destination].private_messages;
+		    $scope.message = '';
+		});
 	    });
     };
 
     $scope.select = function (member) {
-	if(member.nick !== $scope.nickname){
-	    $scope.destination = member.nick;
-	    member.new_messages = 0;
-	    $scope.$apply();
-	}
+	if(member.nick == $scope.nickname)
+	    return;
+	$scope.destination = member.nick;
+	member.new_messages = 0;
+	$scope.private = ($scope.destination !== 'Channel');
     };
 };
 
@@ -63,31 +64,34 @@ chatApp.service('loginInfo', function($rootScope, $window) {
 		.then(login_sucess, login_fail);
 
 	    function login_sucess() {
-		$window.chatroom.subscribe(_nickname, $window.room_listener);
-		$rootScope.$broadcast('loginSucess', _nickname);
-		$rootScope.$apply();
+		$rootScope.$apply(function() {
+		    $window.chatroom.subscribe(_nickname, $window.room_listener);
+		    $rootScope.$broadcast('loginSucess', _nickname);
+		});
 	    };
 
 	    function login_fail(error){
-		$rootScope.$broadcast('loginFailed', error);
-		$rootScope.$apply();
+		$rootScope.$apply(function() {
+		    $rootScope.$broadcast('loginFailed', error);
+		});
 	    }
 	}
     };
 });
 
-chatApp.factory('Member', function($rootScope){
+chatApp.factory('Member', function(){
     function Member(nick, proxy) {
 	this.nick = nick;
 	this.proxy = proxy;
-	this.messages = [];
+	this.private_messages = [];
 	this.new_messages = 0;
     }
 
     Member.prototype = {
 	append: function(message) {
-	    this.new_messages++;
-	    this.messages.push(message);
+		this.new_messages++;
+		this.private_messages.push(message);
+// angular.element("private o incoming").$compile(<b> </b>)
 	},
     }
 
@@ -101,30 +105,32 @@ chatApp.factory("Servant", function($rootScope, $window, Member) {
 
     Servant.prototype = {
 	send: function(send_info, message) {
-	    var private = (send_info.destination !== 'Channel');
-	    if(private){
-		var my_self = (send_info.source == _nickname);
-		var member = my_self ? send_info.destination :
-		    send_info.source;
-		$window.members[member].append(message);
-	    }
-	    else{
-		$window.members[send_info.destination].append(message);
-	    }
-	    $rootScope.$apply();
+	    $rootScope.$apply(function(){
+		var private = (send_info.destination !== 'Channel');
+		if(private){
+			var my_self = (send_info.source == _nickname);
+			var member = my_self ? send_info.destination :
+			    send_info.source;
+			$window.members[member].append(message);
+		}
+		else{
+		    $window.members[send_info.destination].append(message);
+		}
+	    });
 	},
 
 	notify_added_member: function(nick) {
-	    if (nick in $window.members)
-		return;
-	    $window.members[nick] = new Member(nick, $window.chatroom);
-	    $rootScope.$apply();
+	    $rootScope.$apply(function() {
+		if (nick in $window.members)
+		    return;
+		$window.members[nick] = new Member(nick, $window.chatroom);
+	    });
 	},
 
 	notify_removed_member: function(nick) {
-	    delete $window.members[nick];
-	    $rootScope.$apply();
-
+	    $rootScope.$apply(function() {
+		delete $window.members[nick];
+	    });
 	},
     };
 
