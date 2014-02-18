@@ -1,13 +1,14 @@
+====
 wise
 ====
 
 Object-oriented web communication framework.
 
 
-Invoking a server object
-------------------------
+Invoking a object at the web server
+-----------------------------------
 
-Python code in the server:
+Python code running in the web server:
 
 .. sourcecode:: python
 
@@ -20,31 +21,31 @@ Python code in the server:
     class Server:
         def __init__(self):
             broker = wise.initialize()
-            adapter = broker.createObjectAdapter("adapter1", "ws1")
+            adapter = broker.createObjectAdapter("adapter1", "-w ws1")
             adapter.add(Printer(), "printer1")
             broker.register_StaticFS('/static', wise.dirname(__file__))
             broker.waitForShutdown()
 
 
-JavaScript code in the browser:
+JavaScript code running in the browser:
 
 .. sourcecode:: javascript
 
     function wise_application(broker) {
         broker.stringToProxy("printer1 -w ws1 -h 127.0.0.1 -p 8080")
-            .then(on_stringToProxy_response);
+            .then(on_stringToProxy_reply);
 
-        function on_stringToProxy_response(proxy) {
+        function on_stringToProxy_reply(proxy) {
             proxy.write("hello world from the browser!");
         }
     }
 
 
 
-Invoking a browser object
--------------------------
+Invoking a object at the browser
+--------------------------------
 
-JavaScript code in the browser:
+JavaScript code running in the browser:
 
 .. sourcecode:: javascript
 
@@ -63,7 +64,7 @@ JavaScript code in the browser:
 	}
     }
 
-Python code in the server:
+Python code running in the web server:
 
 .. sourcecode:: python
 

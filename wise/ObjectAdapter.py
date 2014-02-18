@@ -2,9 +2,12 @@
 
 import uuid
 
+from commodity.type_ import checked_type
+
 from .Transceiver import TransceiverApp
 from .Exceptions import AlreadyRegisteredException
 from .ObjectPrx import ObjectPrx
+from .endpoint import Endpoint
 
 
 class WiseServant(object):
@@ -24,14 +27,15 @@ class ObjectAdapter:
     def __init__(self, communicator, name, endpoint):
         self._communicator = communicator
         self._name = name
-        self._endpoint = endpoint
+        self._endpoint = checked_type(Endpoint, endpoint)
 
         self._asm = {}
 
+        # FIXME: websocket transport specific
         # register transceiver (to handle JSON requests)
         transceiver = TransceiverApp(
             communicator=self._communicator,
-            url="^/{}$".format(endpoint),
+            url="^/{}$".format(endpoint.ws_name),
             adapter=self)
         self._communicator.registerApplication(transceiver)
 
@@ -49,8 +53,7 @@ class ObjectAdapter:
             raise AlreadyRegisteredException("Object: " + identity)
         self._asm[identity] = WiseServant(servant)
 
-        return ObjectPrx(identity, self._endpoint,
-                         self._communicator.host, self._communicator.port, self)
+        return ObjectPrx(identity, self._endpoint, self)
 
     def addWithUUID(self, servant):
         identity = str(uuid.uuid1())

@@ -15,7 +15,7 @@ class Instance(Thread):
         Thread.__init__(self)
         self.ws = wise.initialize(host="127.0.0.1", port=8888)
 
-        adapter = self.ws.createObjectAdapter("ServerAdapter", "ws")
+        adapter = self.ws.createObjectAdapter("ServerAdapter", "-w ws")
         adapter.add(servant, "Server")
 
         self.ws.register_StaticFS('/static', wise.dirname(__file__) + '/static')

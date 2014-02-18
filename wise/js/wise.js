@@ -97,15 +97,6 @@ if (typeof String.prototype.format != 'function') {
     };
 }
 
-// FIXME: this is using jquery!!!
-if (typeof String.prototype.render != 'function') {
-    String.prototype.render = function() {
-	var text = this.format.apply(this, arguments);
-	return $('<div></div>').append(text).children().unwrap();
-    };
-}
-
-
 // from: http://goo.gl/rw1ku7
 if (typeof String.prototype.startsWith != 'function') {
     String.prototype.startsWith = function(str) {
@@ -154,6 +145,14 @@ wise = {
 
 no_reconnect: false,
 
+_get_typecode: function(value) {
+    if (value === undefined || value === null)
+	return undefined;
+
+    return value && value["wise_typecode"];
+},
+
+
 Transceiver: Class.extend({
     _reconnect_retries: 15,
 
@@ -162,27 +161,33 @@ Transceiver: Class.extend({
     	this._response_callbacks = {};
     	this._request_id = 0;
 	this._endpoint_info = endpoint;
-	this._waiting_callbacks = [bind(promise, promise.resolve)];
-	this._is_ready = false;
 
+	// FIXME: this attribute may be replaced with a promise that support several
+	// fulfill callbacks
+	this._waiting_callbacks = [promise];
+
+	this._is_ready = false;
 	this._socket_url = "ws://" + endpoint.host +
-	    ":" +  endpoint.port + "/" +
-	    endpoint.ws_name;
+	    ":" +  endpoint.port + "/" + endpoint.ws_name;
 
 	log.debug("new WebSocket: " + this._socket_url);
-	this._create_socket(bind(this, this._notify_waiting_callbacks));
+
+	this._create_socket()
+            .then(bind(this, this._notify_waiting_callbacks));
 
 	log.debug("Transceiver created");
     },
 
-    _create_socket: function(on_ready) {
+    // FIXME: transport specific
+    _create_socket: function() {
 	var self = this;
+	var promise = new wise.Promise();
     	var websocket = new WebSocket(this._socket_url);
     	websocket.onopen = function(event) {
 	    self._websocket = this;
 
 	    log.debug("Socket opened (" + self._socket_url + "),", event);
-	    on_ready();
+	    promise.resolve();
 
 	    websocket.onclose = function(event) {
 		log.debug("Socket closed:", event);
@@ -197,6 +202,8 @@ Transceiver: Class.extend({
 	websocket.onerror = function(event) {
 	    log.debug("Socket error:", event);
 	};
+
+	return promise;
     },
 
     // FIXME: notify of connection lost
@@ -212,10 +219,11 @@ Transceiver: Class.extend({
 	    self._is_ready = false;
 	    delete self._websocket;
 
-	    self._create_socket(function() {
-		clearInterval(timer);
-		self._notify_waiting_callbacks();
-	    });
+	    self._create_socket()
+		.then(function() {
+		    clearInterval(timer);
+		    self._notify_waiting_callbacks();
+		});
 
 	    connect_count++;
 	    if (connect_count > self._reconnect_retries) {
@@ -240,6 +248,7 @@ Transceiver: Class.extend({
     	    return;
     	}
 
+	// FIXME: transport specific: masrshalling
 	this._prepare_params(args.request.params);
     	this._websocket.send(JSON.stringify(args.request));
     	this._request_id++;
@@ -258,64 +267,53 @@ Transceiver: Class.extend({
     _notify_waiting_callbacks: function() {
 	this._is_ready = true;
 	for (var i=0; i<this._waiting_callbacks.length; i++) {
-	    this._waiting_callbacks[i](this);
+	    this._waiting_callbacks[i].resolve(this);
 	}
 
 	this._waiting_callbacks = [];
     },
 
-    notify_when_ready: function(response) {
+    notify_when_ready: function(promise) {
 	if (this._is_ready) {
-	    response(this);
+	    promise.resolve(this);
 	    return;
 	}
 
-	this._waiting_callbacks.push(response);
+	this._waiting_callbacks.push(promise);
     },
 
+    // FIXME: rename: marshall_typecode_seq
     _prepare_params: function(params) {
 	if (params == undefined)
 	    return;
 
-	for (var i in params) {
-	    var p = params[i];
-	    if (p instanceof wise.ObjectPrx)
-		params[i] = {"wise_typecode": "Proxy", "repr": p.wise_toString()};
-	}
+	for (var i in params)
+	    params[i] = this._marshall_typecode(params[i]);
+    },
+
+    _marshall_typecode: function(value) {
+	if (value instanceof wise.ObjectPrx)
+	    return {"wise_typecode": "Proxy",
+		    "repr": value.wise_toString()};
+
+	return value;
     },
 
     _on_ws_message: function(message) {
-	var self = this;
 	log.debug("Transceiver Incomming message:", message);
 
-    	// request of method invocation
     	if (message.method !== undefined) {
-	    if (message.params) {
-		self._unmarshall_params(message.params)
-		    .then(function(params) {
-			message.params = params;
-    			self._parse_request(message);
-		    });
-		return;
-	    }
-
-    	    this._parse_request(message);
+	    this._process_incoming_invocation(message);
 	    return;
 	}
 
-    	// correct response from previous request
     	if (message.result !== undefined) {
-	    self._unmarshall_params(message.result)
-		.then(function(result) {
-		    message.result = result;
-		    self._parse_response(message);
-		});
+	    this._process_incoming_success_reply(message);
 	    return;
 	}
 
-    	// error response from previous request
     	if (message.error !== undefined) {
-    	    this._parse_error(message);
+            this._process_incoming_error_reply(message);
 	    return;
 	}
 
@@ -323,26 +321,50 @@ Transceiver: Class.extend({
     	this._report_invalid_message(message);
     },
 
+    // FIXME: rename to "_unmarshall_typecode_seq"
     _unmarshall_params: function(params) {
-	var promise = new wise.Promise();
+	var promises = [];
+	for (var i in params)
+	    promises.push(this._unmarshall_typecode(params[i]))
 
-	// FIXME: this _unmarshall will return a promise, need all() for this..
-	// for (var i in params)
-	//     params[i] = _unmarshall(params[i]);
-
-	promise.resolve(params);
-	return promise;
+	return wise.all(promises);
     },
 
-    _parse_request: function(message) {
+    _unmarshall_typecode: function(value) {
+	var typecode = wise._get_typecode(value)
+
+	if (typecode  === undefined)
+	    return value;
+
+	if (typecode === "Proxy")
+	    return this._communicator.stringToProxy(value["repr"]);
+    },
+
+    _process_incoming_invocation: function(message) {
+	var self = this;
+	if (message.params.length == 0) {
+    	    this._perform_request(message);
+	    return;
+	}
+
+	this._unmarshall_params(message.params)
+	    .then(function(params) {
+		message.params = params;
+    		self._perform_request(message);
+	    });
+    },
+
+    _perform_request: function(message) {
 	log.debug("parse request (", message, ") using:", this._object_adapter);
 
     	if (! this._object_adapter) {
+	    // FIXME: what is that case?
     	    return;
     	}
 
 	try {
     	    var result = this._object_adapter.process_request(message);
+	    // FIXME: must marshall result!
 	    this._send_response({
 		request_id: message.request_id,
 		result: result
@@ -359,17 +381,31 @@ Transceiver: Class.extend({
     // args: request_id, result, exception
     _send_response: function(args) {
     	if (this._websocket.readyState != WebSocket.OPEN) {
-    	    log.error("socket not ready, state: " +
-		      this._websocket.readyState);
+    	    log.error("socket not ready, state: " + this._websocket.readyState);
     	    return;
     	}
 
     	this._websocket.send(JSON.stringify(args));
     },
 
-    _parse_response: function(message) {
+    _process_incoming_success_reply: function(message) {
+	if (wise._get_typecode(message.result) === undefined) {
+	    this._perform_response(message);
+	    return;
+	}
+
+	var self = this;
+	self._unmarshall_typecode(message.result)
+	    .then(function(result) {
+		message.result = result;
+		self._perform_response(message);
+	    });
+    },
+
+    _perform_response: function(message) {
     	var callback = this._response_callbacks[message.request_id];
     	if (! callback) {
+	    // FIXME: callback never deleted!
     	    return;
     	}
 
@@ -377,9 +413,10 @@ Transceiver: Class.extend({
     	delete this._response_callbacks[message.request_id];
     },
 
-    _parse_error: function(message) {
+    _process_incoming_error_reply: function(message) {
     	var callback = this._response_callbacks[message.request_id];
     	if (! callback) {
+	    // FIXME: callback never deleted
     	    return;
     	}
 
@@ -411,7 +448,7 @@ TransceiverFactory: Class.extend({
 	var promise = new wise.Promise();
 
 	if (transceiver) {
-	    transceiver.notify_when_ready(bind(promise, promise.resolve));
+	    transceiver.notify_when_ready(promise);
 	    return promise;
 	}
 
@@ -658,7 +695,7 @@ Logger: Class.extend({
 	if (this._level > 2)
 	    return;
 
-	this._notify(arguments, 'error');
+	this._notify(arguments, 'warn');
     },
 
     error: function() {
@@ -710,7 +747,6 @@ Communicator: Class.extend({
     stringToProxy: function(str_proxy) {
 	log.debug("stringToProxy: '{0}'".format(str_proxy));
 	var fields = this._get_proxy_fields(str_proxy);
-
 
 	this._transceiverFactory.get_transceiver(fields.endpoint)
 	    .then(bind(this, on_get_transceiver_response));
@@ -785,7 +821,7 @@ initialize: function(host, port) {
 
     // create root logger for Wise
     log = new wise.Logger();
-//    log.set_level(0);
+    log.set_level(0);
     if (typeof console != "undefined") {
 	log.attach(console);
     }
@@ -815,9 +851,8 @@ newDerivedProxy: function(args) {
     var methods = {};
 
     function new_method(name) {
-
-	var promise = new wise.Promise();
 	return function() {
+	    var promise = new wise.Promise();
 	    this.wise_invoke({
 		request: {
 		    method: name,
@@ -839,69 +874,91 @@ newDerivedProxy: function(args) {
 
 
 Promise: Class.extend({
-    // lazy attribute (memoized?)
-    _chain_promise: function() {
-	if (this._the_chain_promise === undefined)
-	    this._the_chain_promise = new wise.Promise();
-
-	return this._the_chain_promise;
+    init: function() {
+	this.value = null;
+	this.reason = null;
+	this.callbacks = [];
     },
 
     then: function(onFulfilled, onRejected) {
-	if (typeof(onFulfilled) === 'function') {
-	    if (this.onFulfilled != undefined)
-		throw "Promise.onFullfilled handler already set."
+	var promise = new wise.Promise();
 
-	    this.onFulfilled = onFulfilled;
-	}
+	if (typeof(onFulfilled) !== 'function')
+	    onFulfilled = undefined;
+	else if (this.value)
+	    this._exec_callback(promise,
+				onFulfilled, this.value);
 
-	if (typeof(onRejected) === 'function') {
-	    if (this.onRejected != undefined)
-		throw "Promise.onRejected handler already set."
+	if (typeof(onRejected) !== 'function')
+	    onRejected = undefined;
+	else if (this.reason)
+	    this._exec_callback(promise,
+				onRejected, this.reason);
 
-	    this.onRejected = onRejected;
-	}
-
-	return this._chain_promise();
+	var cb = {'promise': promise,
+		  'onFulfilled': onFulfilled,
+		  'onRejected': onRejected};
+	this.callbacks.push(cb);
+	return promise;
     },
 
     "catch": function(onRejected) {
 	return this.then(undefined, onRejected);
     },
 
-    resolve: function(retval) {
+    check_resolved: function() {
+	if (this.value !== null || this.reason !== null)
+	    throw new Error("Promise already resolved/rejected" + this);
+    },
+
+    resolve: function(value) {
+	this.check_resolved();
+	this.value = value;
+
+	var self = this;
+	this.callbacks.map(function(cb) {
+	    self.outctx(cb.promise, cb.promise.resolve,
+			cb.onFulfilled, value);
+	});
+    },
+
+    reject: function(reason) {
+	this.check_resolved();
+	this.reason = reason;
+
+	var self = this;
+	this.callbacks.map(function(cb) {
+	    self.outctx(cb.promise, cb.promise.reject,
+			cb.onRejected, reason);
+	});
+    },
+
+    outctx: function(promise, method, cb, value) {
 	var self = this;
 	setTimeout(function() {
-	    if (self.onFulfilled === undefined)
-		return self._chain_promise().resolve(retval);
+	    if (cb === undefined)
+		return bind(promise, method)(value);
 
-	    bind(self, self._exec_callback)(self.onFulfilled, retval);
+	    bind(self, self._exec_callback)(promise, cb, value);
 	}, 0);
     },
 
-    reject: function(error) {
-	var self = this;
-	setTimeout(function() {
-	    if (self.onRejected === undefined)
-		return self._chain_promise().reject(error);
-
-	    bind(self, self._exec_callback)(self.onRejected, error);
-	}, 0);
-    },
-
-    _exec_callback: function(func, value) {
+    _exec_callback: function(promise, func, value) {
 	try {
 	    var x = func(value);
-	    if (x != undefined)
-		this._PRP(this._chain_promise(), x);
+	    this._PRP(promise, x);
 	} catch (e) {
-	    this._chain_promise().reject(e);
+	    console.error("Exception in promise callback: " + e.stack);
+	    promise.reject(e);
 	}
     },
 
     _PRP: function(promise, x) {
+	if (promise === undefined)
+	    return;
+
 	if (promise === x) {
-	    promise.reject("TypeError");
+	    promise.reject(new TypeError());
 	    return;
 	}
 
@@ -1001,7 +1058,7 @@ window.onload = function() {
 
 	// no log created yet, so try to say something
 	if (typeof console != "undefined") {
-	    console.error("'wise_application' is not defined, nothing to do");
+	    console.warn("'wise_application' is not defined, nothing to do");
 	}
 
 	return;
