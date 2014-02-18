@@ -32,9 +32,9 @@ JavaScript code running in the browser:
 
     function wise_application(broker) {
         broker.stringToProxy("printer1 -w ws1 -h 127.0.0.1 -p 8080")
-            .then(on_stringToProxy_response);
+            .then(on_stringToProxy_reply);
 
-        function on_stringToProxy_response(proxy) {
+        function on_stringToProxy_reply(proxy) {
             proxy.write("hello world from the browser!");
         }
     }
