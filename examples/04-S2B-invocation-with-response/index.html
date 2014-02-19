@@ -34,14 +34,13 @@
 
     function wise_application(ws) {
 	ws.createObjectAdapter("WebAdapter", "-w browser")
-	    .then(on_adapter_ready);
+	    .then(on_adapter_ready)
+	    .then(wise.ready);
 
 	function on_adapter_ready(adapter) {
 	    adapter.add(new Servant(), "obj1");
-	    ws.ready();
 	}
     }
     </script>
-
   </body>
 </html>

@@ -7,23 +7,29 @@ import wise
 
 class Server:
     def __init__(self):
-        broker = wise.initialize()
-        broker.register_StaticFS('/static', wise.dirname(__file__))
-        print("Open: {}".format(broker.get_url('static/index.html')))
+        self.broker = wise.initialize()
+        self.broker.register_StaticFS('/static', wise.dirname(__file__))
+        print("Open: {}".format(self.broker.get_url('static/index.html')))
         time.sleep(5)
-        self.send_messages(broker)
+        self.send_messages()
 
-    def send_messages(self, broker):
-        for i in range(12):
+    def get_proxy(self):
+        while 1:
+            retval = self.broker.stringToProxy("obj1 -w browser")
+            if retval:
+                return retval
+
+            print("Browser is not ready...")
             time.sleep(1)
 
-            remote = broker.stringToProxy("obj1 -w browser")
-            if remote is None:
-                print "Browser is not ready..."
-                continue
+        return self.broker.stringToProxy_wait
 
-            response = remote.upper("Hello, World! ({})".format(i))
+    def send_messages(self):
+        proxy = self.get_proxy()
+        for i in range(12):
+            response = proxy.upper("Hello, World! ({})".format(i))
             print("browser said: {}".format(response))
+            time.sleep(1)
 
 
 if __name__ == "__main__":

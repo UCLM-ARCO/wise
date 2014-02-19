@@ -14,7 +14,7 @@ from server import Server
 
 
 class TestServerToBrowser(TestCase):
-    url = "http://127.0.0.1:8080/static/invocation_from_server_to_browser_test.html"
+    url = "http://127.0.0.1:8080/static/server_to_browser_test.html"
 
     @classmethod
     def setUpClass(cls):

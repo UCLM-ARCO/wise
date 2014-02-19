@@ -47,7 +47,7 @@ class TestBrowserToServer(TestCase):
 
     def test_browser_to_server_no_response(self):
         # open server url
-        url = self.base_url + "invocation_from_browser_to_server_test.html"
+        url = self.base_url + "browser_to_server_test.html"
         self.browser.open(url)
 
         message = 'the message'
@@ -63,7 +63,7 @@ class TestBrowserToServer(TestCase):
 
     def test_browser_to_server_with_response(self):
         # open server url
-        url = self.base_url + "invocation_from_browser_to_server_test.html"
+        url = self.base_url + "browser_to_server_test.html"
         self.browser.open(url)
 
         # click on button
@@ -79,7 +79,7 @@ class TestBrowserToServer(TestCase):
 
     def test_browser_to_server_with_exception(self):
         # open server url
-        url = self.base_url + "invocation_from_browser_to_server_test.html"
+        url = self.base_url + "browser_to_server_test.html"
         self.browser.open(url)
 
         # click on button
