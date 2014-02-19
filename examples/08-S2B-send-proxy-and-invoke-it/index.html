@@ -18,22 +18,22 @@
 
     <script type="text/javascript">
 
+    function prepend(id, text) {
+	div = document.getElementById(id);
+	div.innerHTML = text + div.innerHTML;
+    }
+
     Servant = Class.extend({
 	receive_object: function(proxy) {
 	    _("Using remote proxy:", proxy);
 	    _("PROXY:", proxy);
 	    _(proxy.wise_toString());
-	    // console.log("Using remote proxy: '{0}'".format(proxy.wise_toString()));
-	    // proxy.upper("example message")
-	     	// .then(function(reply) {
-		//     prepend('responses', 'response: ' + reply + '<br/>');
-		// });
-	},
+	    proxy.upper("example message")
+		.then( function(reply) {
+		    prepend('responses', 'response: ' + reply + '<br/>');
+		});
+        },
 
-	prepend: function(id, text) {
-	    div = document.getElementById(id);
-	    div.innerHTML = text + div.innerHTML;
-	},
     });
 
     function wise_application(ws) {

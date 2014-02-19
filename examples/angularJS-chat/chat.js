@@ -55,6 +55,15 @@ function chatCtrl($scope, $window, Servant, loginInfo, Member) {
     };
 };
 
+//Directives
+chatApp.directive('scrollChat', function() {
+    return{
+	link: function () {
+	    angular.element.animate({ scrollTop: element.prop('scrollHeight')}, 1000);
+	}
+    };
+});
+
 //Services
 chatApp.service('loginInfo', function($rootScope, $window) {
     return {

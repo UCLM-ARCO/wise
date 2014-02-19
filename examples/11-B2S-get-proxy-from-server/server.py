@@ -19,7 +19,7 @@ class Server:
         broker = wise.initialize()
         servant = Servant()
 
-        adapter = broker.createObjectAdapter("ServerAdapter", "ws1")
+        adapter = broker.createObjectAdapter("ServerAdapter", "-w ws1")
         proxy = adapter.add(servant, "Server")
         servant.proxy = proxy
 

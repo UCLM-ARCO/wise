@@ -15,16 +15,14 @@ class Server:
 
         for i in range(10):
             time.sleep(1)
-            remote = broker.stringToProxy("obj1 -w browser")
+            remote = broker.stringToProxy("obj1 -w browser -h 127.0.0.1 -p 8080")
 
             if remote is not None:
                 break
             print ("Browser is not ready...{}".format(i))
 
-        string_proxy = remote.get_proxy()
-        print("proxy: {}".format(string_proxy))
-
-        proxy = broker.stringToProxy(string_proxy)
+        proxy = remote.get_proxy()
+        print("PROXY: {}".format(proxy))
 
         proxy.set_message("example message")
 

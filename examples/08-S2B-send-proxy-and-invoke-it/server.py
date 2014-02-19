@@ -16,7 +16,7 @@ class Server:
     def __init__(self):
         broker = wise.initialize()
 
-        adapter = broker.createObjectAdapter("ServerAdapter", "ws1")
+        adapter = broker.createObjectAdapter("ServerAdapter", "-w ws1")
         proxy = adapter.add(Servant(), "Server")
         broker.register_StaticFS('/static', wise.dirname(__file__))
         print("Open: {}".format(broker.get_url('static/index.html')))
@@ -26,9 +26,10 @@ class Server:
     def send_proxy(self, broker, proxy):
         for i in range(10):
             time.sleep(1)
-            remote = broker.stringToProxy("obj1 -w browser")
+            remote = broker.stringToProxy("obj1 -w browser -h 127.0.0.1 -p 8080")
 
             if remote is not None:
+                print("REMOTE: ", remote)
                 break
 
             print ("Browser is not ready...{}".format(i))

@@ -2,10 +2,10 @@
   <body style="font-family:helvetica; width:600px">
     <script src="/wise/js/wise.js"></script>
 
-    <h3>02: Browser to Server, return proxy and invoke it</h3>
+    <h3>11: Browser to Server, return proxy and invoke it</h3>
 
     <p>
-    This example will send an invocation from server to browser. Browser will return a proxy to server  and then server will send back a invocation.
+    This example will send an invocation from server to browser. Browser will return a proxy to server and then server will send back a invocation.
     </p>
 
     <h4>Server replies</h4>
@@ -23,9 +23,8 @@
             prepend('messages', message + '<br/>');
 	},
 	get_proxy: function() {
-
-	    browser_proxy = browser_adapter.add(new Servant(), "obj2");
 	    return browser_proxy;
+<!-- browser_adapter.add(new Servant(), "obj2"); -->
 	}
     });
 
