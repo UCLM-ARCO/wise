@@ -2,7 +2,7 @@
   <body style="font-family:helvetica; width:600px">
     <script src="/wise/js/wise.js"></script>
 
-    <h3>11: Browser to Server, return proxy and invoke it</h3>
+    <h3>12: Browser to Server, return proxy and invoke it</h3>
 
     <p>
     This example will send an invocation from server to browser. Browser will return a proxy to server and then server will send back a invocation.
@@ -13,32 +13,34 @@
     <div id="messages" style="border: 1px solid #CCC; padding: 5px"></div>
 
     <script type="text/javascript">
-    function prepend(id, text) {
-        div = document.getElementById(id);
-        div.innerHTML = text + div.innerHTML;
-    }
+      function wise_application(ws) {
+	  ws.createObjectAdapter("WebAdapter", "-w browser")
+	      .then(on_adapter_ready);
 
-    Servant = Class.extend({
-	set_message: function(message) {
-            prepend('messages', message + '<br/>');
-	},
-	get_proxy: function() {
-	    _("GET PROXY")
-	    return browser_adapter.add(new Servant(), "obj2");
-	}
-    });
+	  function on_adapter_ready(adapter) {
+	      browser_adapter = adapter;
+	      browser_proxy = browser_adapter.add(new Servant(), "obj1");
+	      ws.ready();
+	      _("wise ready!");
+	  }
+      }
 
-    function wise_application(ws) {
-	ws.createObjectAdapter("WebAdapter", "-w browser")
-	    .then(on_adapter_ready);
+      function prepend(id, text) {
+          div = document.getElementById(id);
+          div.innerHTML = text + div.innerHTML;
+      }
 
-	function on_adapter_ready(adapter) {
-	    browser_adapter = adapter;
-	    browser_proxy = adapter.add(new Servant(), "obj1");
-	    ws.ready();
-	    _("wise ready!");
-	}
-    }
+      Servant = Class.extend({
+   	  set_message: function(message) {
+              prepend('messages', message + '<br/>');
+   	  },
+
+	  get_proxy: function() {
+   	      _("GET PROXY: ", browser_proxy)
+	      proxy = browser_adapter.add(new Servant(), "obj2");
+   	      return proxy;
+   	  }
+      });
     </script>
 
   </body>

@@ -56,12 +56,19 @@ function chatCtrl($scope, $window, Servant, loginInfo, Member) {
 };
 
 //Directives
-chatApp.directive('scrollChat', function() {
-    return{
-	link: function () {
-	    angular.element.animate({ scrollTop: element.prop('scrollHeight')}, 1000);
-	}
-    };
+chatApp.directive('scrollChat', function () {
+  return {
+    link: function postLink(scope, element, attrs) {
+      scope.$watch(
+        function () {
+          return element.children().length;
+        },
+        function () {
+          element.animate({ scrollTop: element.prop('scrollHeight')}, 1000);
+        }
+      );
+    }
+  };
 });
 
 //Services

@@ -1,5 +1,3 @@
-# -*- mode: python; coding: utf-8 -*-
-
 import sys
 import os
 from unittest import TestCase
@@ -19,7 +17,6 @@ class TestBrowserToServer(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        print("Setup")
         cls.expected_message = "example message"
 
         with Spy() as servant:
@@ -28,20 +25,19 @@ class TestBrowserToServer(TestCase):
         cls.servant = servant
         cls.server = Server(cls.servant)
         cls.browser = PhantomJS()
+
         wait_that(localhost, listen_port(8080))
 
     @classmethod
     def tearDownClass(cls):
         cls.browser.quit()
-        cls.server.broker.shutdown()
+        cls.server.stop()
 
     def test_browser_send_proxy_to_server(self):
-        url = self.base_url + "index.html"
+        url = self.base_url + "B2S_proxy_marshalling.html"
         self.browser.open(url)
-        print("test. Browser: ", self.browser)
 
         button = self.browser.find_element("#send-proxy-button")
         button.click()
 
-        proxy = self.server.ws.stringToProxy("Message -w browser")
-        wait_that(self.servant.send_proxy, called().with_args(proxy))
+        wait_that(self.servant.send_proxy, called())

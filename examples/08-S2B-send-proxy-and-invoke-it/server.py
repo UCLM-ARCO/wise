@@ -22,9 +22,10 @@ class Server:
         print("Open: {}".format(broker.get_url('static/index.html')))
 
         self.send_proxy(broker, proxy)
+        broker.waitForShutdown()
 
     def send_proxy(self, broker, proxy):
-        for i in range(10):
+        for i in range(100):
             time.sleep(1)
             remote = broker.stringToProxy("obj1 -w browser")
 
@@ -35,9 +36,8 @@ class Server:
             print ("Browser is not ready...{}".format(i))
             print proxy
 
-        remote.invoke_it()
+        remote.receive_object(proxy)
         print "tras la invocacion"
-        broker.waitForShutdown()
 
 
 if __name__ == "__main__":
