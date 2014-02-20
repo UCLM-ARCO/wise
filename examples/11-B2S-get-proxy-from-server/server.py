@@ -15,12 +15,14 @@ class Servant:
 
 
 class Server:
-    def __init__(self):
+    def __init__(self, servant=None):
         broker = wise.initialize()
-        servant = Servant()
+        servant = servant or Servant()
 
         adapter = broker.createObjectAdapter("ServerAdapter", "-w ws1")
-        proxy = adapter.add(servant, "Server")
+        adapter.add(servant, "Server")
+
+        proxy = adapter.add(servant, "Server2")
         servant.proxy = proxy
 
         broker.register_StaticFS('/static', wise.dirname(__file__))

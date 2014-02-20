@@ -24,5 +24,5 @@ karma:
 
 .PHONY: clean
 clean:
-	$(call rm-r, *.pyc *~ *.log wise.db)
+	$(call rm-r,*.pyc *~ *.log wise.db)
 	$(RM) -rv dist MANIFEST

@@ -11,17 +11,17 @@ class Servant:
 
 
 class Server:
-    def __init__(self):
-        broker = wise.initialize()
-        servant = Servant()
+    def __init__(self, servant=None):
+        self.broker = wise.initialize()
+        servant = servant or Servant()
 
-        adapter = broker.createObjectAdapter("ServerAdapter", "-w ws1 -h 127.0.0.1 -p 8080")
+        adapter = self.broker.createObjectAdapter("ServerAdapter", "-w ws1 -h 127.0.0.1 -p 8080")
         adapter.add(servant, "Server")
 
-        broker.register_StaticFS('/static', wise.dirname(__file__))
-        print("Open: {}".format(broker.get_url('static/index.html')))
+        self.broker.register_StaticFS('/static', wise.dirname(__file__))
+        print("Open: {}".format(self.broker.get_url('static/index.html')))
 
-        broker.waitForShutdown()
+        self.broker.waitForShutdown()
 
 
 if __name__ == "__main__":
