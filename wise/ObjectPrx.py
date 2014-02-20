@@ -50,11 +50,23 @@ class MethodHandler(object):
         self._method_name = method_name
 
     def __call__(self, *args):
+        args = self.marshall_typecodes(args)
         params = [any_to_json(value) for value in args]
         return self._transceiver.send_request(
             {'identity': self._identity,
              'method': self._method_name,
              'params': params})
+
+    def marshall_typecodes(self, args):
+        retval = []
+        for i in args:
+            if isinstance(i, ObjectPrx):
+                retval.append(i._to_json())
+            else:
+                retval.append(i)
+
+        print retval
+        return tuple(retval)
 
 
 class ObjectPrx(object):
@@ -66,6 +78,7 @@ class ObjectPrx(object):
     def wise_getIdentity(self):
         return self.identity
 
+    # FIXME: rename to marshall()
     def _to_json(self):
         return dict(wise_typecode="Proxy", repr=repr(self))
 

@@ -589,8 +589,7 @@ ObjectAdapter: Class.extend({
 
     process_request: function(request) {
     	log.debug("request received: " + request.identity + "."
-    		  + request.method + "(" +
-		  JSON.stringify(request.params) + ")");
+    		  + request.method, request.params);
 
 	var obj = this._find_object(request.identity);
 
