@@ -2,7 +2,7 @@
   <body style="font-family: helvetica">
     <script src="/wise/js/wise.js"></script>
 
-    <h3>10: Server to Browser, send proxt and invoke it</h3>
+    <h3>10: Browser to Server, send proxy and invoke it</h3>
 
     <p>
     In this example, the browser will create a proxy, send it to server and then server will
@@ -16,7 +16,7 @@
        (Control-F5 forces page refresh)
     </p>
 
-    <button onClick="send_proxy()">invoke!</button>
+    <button id="send-proxy-button" onClick="send_proxy()">invoke!</button>
 
     <script type="text/javascript">
     function prepend(id, text) {
@@ -31,7 +31,7 @@
     });
 
     function wise_application(ws) {
-	ws.stringToProxy("Server -w ws1 -h 127.0.0.1 -p 8080")
+	ws.stringToProxy("Server -w ws1")
 	    .then(on_stringToProxy_response);
 
 	function on_stringToProxy_response(proxy) {
@@ -43,6 +43,7 @@
 
 	function on_adapter_ready(adapter) {
 	    browser_proxy = adapter.add(new Servant(), "obj1");
+	    _("wise ready!");
 	    ws.ready();
 	}
     }

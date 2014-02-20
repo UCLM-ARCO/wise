@@ -15,7 +15,7 @@ class Server:
 
         for i in range(10):
             time.sleep(1)
-            remote = broker.stringToProxy("obj1 -w browser -h 127.0.0.1 -p 8080")
+            remote = broker.stringToProxy("obj1 -w browser")
 
             if remote is not None:
                 break

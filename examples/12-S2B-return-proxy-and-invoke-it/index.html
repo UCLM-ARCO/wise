@@ -23,13 +23,12 @@
             prepend('messages', message + '<br/>');
 	},
 	get_proxy: function() {
-	    return browser_proxy;
-<!-- browser_adapter.add(new Servant(), "obj2"); -->
+	    _("GET PROXY")
+	    return browser_adapter.add(new Servant(), "obj2");
 	}
     });
 
     function wise_application(ws) {
-	broker = ws;
 	ws.createObjectAdapter("WebAdapter", "-w browser")
 	    .then(on_adapter_ready);
 
@@ -37,6 +36,7 @@
 	    browser_adapter = adapter;
 	    browser_proxy = adapter.add(new Servant(), "obj1");
 	    ws.ready();
+	    _("wise ready!");
 	}
     }
     </script>

@@ -15,7 +15,7 @@ class Server:
         broker = wise.initialize()
         servant = Servant()
 
-        adapter = broker.createObjectAdapter("ServerAdapter", "-w ws1")
+        adapter = broker.createObjectAdapter("ServerAdapter", "-w ws1 -h 127.0.0.1 -p 8080")
         adapter.add(servant, "Server")
 
         broker.register_StaticFS('/static', wise.dirname(__file__))

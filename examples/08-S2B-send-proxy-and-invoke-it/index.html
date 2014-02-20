@@ -26,24 +26,25 @@
     Servant = Class.extend({
 	receive_object: function(proxy) {
 	    _("Using remote proxy:", proxy);
-	    _("PROXY:", proxy);
 	    _(proxy.wise_toString());
 	    proxy.upper("example message")
 		.then( function(reply) {
 		    prepend('responses', 'response: ' + reply + '<br/>');
 		});
         },
-
+	invoke_it: function() {
+	    _("WORKS: ");
+	}
     });
 
     function wise_application(ws) {
-     	ws.createObjectAdapter("Adapter", "-w browser")
+     	ws.createObjectAdapter("WebAdapter", "-w browser")
 	    .then(on_adapter_ready);
 
 	function on_adapter_ready(adapter) {
 	    adapter.add(new Servant(), "obj1");
-	    console.log("wise ready!");
 	    ws.ready();
+	    _("wise ready!");
 	}
     }
     </script>

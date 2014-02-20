@@ -26,7 +26,7 @@ class Server:
     def send_proxy(self, broker, proxy):
         for i in range(10):
             time.sleep(1)
-            remote = broker.stringToProxy("obj1 -w browser -h 127.0.0.1 -p 8080")
+            remote = broker.stringToProxy("obj1 -w browser")
 
             if remote is not None:
                 print("REMOTE: ", remote)
@@ -35,7 +35,8 @@ class Server:
             print ("Browser is not ready...{}".format(i))
             print proxy
 
-        remote.receive_object(proxy)
+        remote.invoke_it()
+        print "tras la invocacion"
         broker.waitForShutdown()
 
 
