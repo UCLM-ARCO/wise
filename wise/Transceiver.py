@@ -195,7 +195,7 @@ class MessageHandler(websocket.WebSocketHandler):
 
         except ProtocolException as e:
             logging.warning(str(e))
-            self._notify_error(-1, e)
+            self._raise_remote_exception(-1, e)
 
         except Exception as e:
             fd = FuncAsFile(logging.info, "exc:| ")
@@ -204,35 +204,36 @@ class MessageHandler(websocket.WebSocketHandler):
             message = ("Error while calling method '{}.{}': '{}'".
                        format(request.identity, request.method, e))
             logging.warning(message)
-            self._notify_error(request.request_id, e)
+            self._raise_remote_exception(request.request_id, e)
 
     def _get_object_method(self, request):
-        obj = self._find_object(request)
+        obj = self._find_servant(request)
         if not obj:
             return
 
         method = getattr(obj, request.method, None)
         if not method:
-            self._notify_error(
-                request.request_id, "Unknown method, name: '{}'"
-                .format(request.method))
+            self._raise_remote_exception(
+                request.request_id,
+                "OperationNotExistException", request.method)
         return method
 
-    def _find_object(self, request):
-        obj = self._adapter.find(request.identity)
-        if not obj:
-            self._notify_error(
-                request.request_id, "Unknown Object, ID: '{}'"
-                .format(request.identity))
-        return obj
+    def _find_servant(self, request):
+        servant = self._adapter.find(request.identity)
+        if not servant:
+            self._raise_remote_exception(
+                request.request_id,
+                "ObjectNotExistException", request.identity)
+        return servant
 
-    def _notify_error(self, request_id, error):
-        if isinstance(error, Exception):
-            error = [error.__class__.__name__, error.message]
+    def _raise_remote_exception(self, request_id, exc, args=()):
+        if isinstance(exc, Exception):
+            args = exc.message
+            exc = exc.__class__.__name__
 
         response = {
             'request_id': request_id,
-            'error': error
+            'error': [exc, args]
         }
         self.write_message(jsonpickle.encode(response))
 

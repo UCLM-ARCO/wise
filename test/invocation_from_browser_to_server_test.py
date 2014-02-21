@@ -90,5 +90,5 @@ class TestBrowserToServer(TestCase):
         wait_that(self.servant.get_error, called())
 
         message = self.browser.find_element('#error')
-        assert_that(message.get_value,
-                    call_with().returns("CustomException,An error message"))
+        wait_that(message.get_value,
+                  call_with().returns("CustomException: An error message"))

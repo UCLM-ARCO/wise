@@ -300,7 +300,9 @@ Transceiver: Class.extend({
     },
 
     _on_ws_message: function(message) {
-	log.debug("Transceiver Incomming message:", message);
+	log.debug("%cTransceiver Incomming message:",
+		  "color:green; font-weight:bold",
+		  message);
 
     	if (message.method !== undefined) {
 	    this._process_incoming_invocation(message);
@@ -388,44 +390,51 @@ Transceiver: Class.extend({
     	this._websocket.send(JSON.stringify(args));
     },
 
-    _process_incoming_success_reply: function(message) {
-	if (wise._get_typecode(message.result) === undefined) {
-	    this._perform_response(message);
+    _process_incoming_success_reply: function(reply) {
+	if (wise._get_typecode(reply.result) === undefined) {
+	    this._perform_response(reply);
 	    return;
 	}
 
 	var self = this;
-	self._unmarshall_typecode(message.result)
+	self._unmarshall_typecode(reply.result)
 	    .then(function(result) {
-		message.result = result;
-		self._perform_response(message);
+		reply.result = result;
+		self._perform_response(reply);
 	    });
     },
 
-    _perform_response: function(message) {
-    	var callback = this._response_callbacks[message.request_id];
+    _perform_response: function(reply) {
+    	var callback = this._response_callbacks[reply.request_id];
     	if (! callback) {
 	    // FIXME: callback never deleted!
     	    return;
     	}
 
-	callback.resolve(message.result);
-    	delete this._response_callbacks[message.request_id];
+	callback.resolve(reply.result);
+    	delete this._response_callbacks[reply.request_id];
     },
 
-    _process_incoming_error_reply: function(message) {
-    	var callback = this._response_callbacks[message.request_id];
+    _process_incoming_error_reply: function(reply) {
+    	var callback = this._response_callbacks[reply.request_id];
     	if (! callback) {
 	    // FIXME: callback never deleted
     	    return;
     	}
 
+	var exception = this._unmarshall_exception(reply.error);
+
 	if (callback.onRejected === undefined) {
-	    log.error("Error received, no callback to handle it:", message.error);
+	    log.error("Error received, but no callback defined:",
+		      exception);
 	}
 
-	callback.reject(message.error);
-    	delete this._response_callbacks[message.request_id];
+	callback.reject(exception);
+    	delete this._response_callbacks[reply.request_id];
+    },
+
+    _unmarshall_exception: function(error) {
+	return new wise.WiseException(error[0], error[1]);
     },
 
     _report_invalid_message: function(message) {
@@ -1049,8 +1058,14 @@ identity: function(x) {
     return x;
 },
 
+WiseException: function(name, message) {
+    this.name = name;
+    this.message = message;
+},
 }; // wise namespace
 
+wise.WiseException.prototype = new Error();
+wise.WiseException.prototype.constructor = wise.WiseException;
 
 window.onload = function() {
     if (typeof wise_application == "undefined") {
