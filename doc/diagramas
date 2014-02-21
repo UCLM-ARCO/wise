@@ -1,0 +1,42 @@
+title creación de un proxy en el navegador
+
+participant client
+participant Communicator
+participant TransceiverFactory
+participant Transceiver
+participant WisePrx
+participant WebSocket
+
+
+note over client, WebSocket
+  Petición desde el navegador
+end note
+
+client -> Communicator: -- crea un proxy -- \n stringToProxy("obj -w ws1")
+  Communicator -> +TransceiverFactory: -- crea u obtiene el transceiver -- \n get_transceiver(endpoint)
+    TransceiverFactory -> +Transceiver: -- crea el transceiver -- \n create()
+      Transceiver -> +WebSocket: -- crea el websocket -- \n create()
+      WebSocket --> -Transceiver:
+    Transceiver --> -TransceiverFactory:
+  TransceiverFactory -> -Communicator:
+
+Communicator -> +WisePrx: -- crea un proxy al objeto para solicitar sus métodos -- \n create()
+WisePrx -> -Communicator:
+
+Communicator -> WisePrx: -- obtiene la lista de métodos del objeto -- \n wise_getMethodNames()
+  WisePrx -> WisePrx: wise_invoke()
+  WisePrx -> Transceiver: -- envía la petición al transceiver -- \n send_request()
+    Transceiver -> Transceiver: -- serializa los parámetros -- \n _prepare_params()
+       Transceiver -> WebSocket: -- manda la invocación por el socket -- \n send()
+
+note over client, WebSocket
+  Respuesta desde el servidor
+end note
+
+WebSocket -> Transceiver: -- mensaje de entrada -- \n _on_ws_message()
+Transceiver -> Transceiver: -- es una respuesta, procesar -- \n _process_incoming_success_reply()
+Transceiver -> Transceiver: -- deserializar los parámetros, \n invocar callback de respuesta -- \n _perform_response()
+Transceiver -> Communicator: on_getMethodNames_response()
+Communicator -> +WisePrx: -- crear el proxy solicitado, con los métodos del objeto -- \n create()
+WisePrx -> -Communicator:
+Communicator -> client: -- retorna el proxy solicitado -- \n promise.resolve()
