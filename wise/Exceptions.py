@@ -26,3 +26,10 @@ class UnknownLocalException(Exception):
             return "{}, {}".format(str(type(self)), self.message)
         return str(type(self))
 
+
+class OperationNotExistException(Exception):
+    pass
+
+
+class ObjectNotExistException(Exception):
+    pass

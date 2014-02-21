@@ -8,11 +8,12 @@ from commodity.thread_ import SimpleThreadPool
 from commodity.os_ import FuncAsFile
 
 from .WebApplication import WebApplication
-from .Exceptions import ProtocolException, UnknownLocalException
+from .Exceptions import (ProtocolException, UnknownLocalException,
+                         OperationNotExistException, ObjectNotExistException)
 from .Current import Current
 from . import Logging as logging
 
-from .ObjectPrx import ObjectPrx
+from .basic_stream import get_typecode, any_to_marshable, exception_to_marshable
 
 
 class TransceiverApp(WebApplication):
@@ -44,6 +45,7 @@ class Transceiver:
         request['request_id'] = request_id
         request = jsonpickle.encode(request)
 
+        # FIXME: this depends on oneway|twoway invocation
         barrier = Event()
         self._pending_responses[request_id] = [barrier, None]
         self.send(request)
@@ -58,6 +60,7 @@ class Transceiver:
 
         return response.result
 
+    # FIXME: only called for twoway invocations
     def on_response(self, response):
         self._pending_responses[response.request_id][1] = response
         barrier = self._pending_responses[response.request_id][0]
@@ -115,7 +118,9 @@ class RequestMessage:
     def __init__(self, message, communicator):
         self.communicator = communicator
 
-        # FIXME: JSON unmarshalling process
+        # FIXME: JSON encoding process specific
+        # perhaps something like:
+        # data = communicator.encoding.decode(message)
         data = jsonpickle.decode(message)
 
         try:
@@ -123,12 +128,13 @@ class RequestMessage:
             self.identity = data['identity']
             self.method = data['method']
             self.params = self._convert_params(data)
+
         except KeyError as e:
             raise ProtocolException(
                 "Invalid message format: missing {}, received: '{}'"
                 .format(e, message))
 
-    # FIXME: JSON unmarshalling process
+    # FIXME: mixed JSON unmarshalling process and typecoding
     def _convert_params(self, data):
         if not 'params' in data:
             return {}
@@ -138,7 +144,9 @@ class RequestMessage:
             raise ValueError("Invalid params: '{}'".format(params))
 
         for i, param in enumerate(params):
-            if isinstance(param, dict) and param.get("wise_typecode") == "Proxy":
+            typecode = get_typecode(param)
+
+            if typecode == "Proxy":
                 params[i] = self.communicator.stringToProxy(param["repr"])
 
         return params
@@ -215,7 +223,7 @@ class MessageHandler(websocket.WebSocketHandler):
         if not method:
             self._raise_remote_exception(
                 request.request_id,
-                "OperationNotExistException", request.method)
+                OperationNotExistException(request.method))
         return method
 
     def _find_servant(self, request):
@@ -223,28 +231,18 @@ class MessageHandler(websocket.WebSocketHandler):
         if not servant:
             self._raise_remote_exception(
                 request.request_id,
-                "ObjectNotExistException", request.identity)
+                ObjectNotExistException(request.identity))
         return servant
 
-    def _raise_remote_exception(self, request_id, exc, args=()):
-        if isinstance(exc, Exception):
-            args = exc.message
-            exc = exc.__class__.__name__
+    def _raise_remote_exception(self, request_id, exc):
+        response = dict(request_id=request_id,
+                        error=exception_to_marshable(exc))
 
-        response = {
-            'request_id': request_id,
-            'error': [exc, args]
-        }
         self.write_message(jsonpickle.encode(response))
 
     def _response(self, request_id, result):
-        if isinstance(result, ObjectPrx):
-            result = result._to_json()
-
-        response = {
-            'request_id': request_id,
-            'result': result
-        }
+        response = dict(request_id=request_id,
+                        result=any_to_marshable(result))
 
         self.write_message(jsonpickle.encode(response))
 

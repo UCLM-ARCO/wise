@@ -3,44 +3,7 @@
 from commodity.type_ import checked_type
 
 from endpoint import Endpoint
-
-
-# FIXME: move to json_marshalling.py?
-def any_to_json(value):
-    if isinstance(value, str):
-        return unicode(value)
-
-    if isinstance(value, (unicode, int, bool, float, long)):
-        return value
-
-    if value is None:
-        return value
-
-    if isinstance(value, (list, tuple)):
-        return [any_to_json(x) for x in value]
-
-    if isinstance(value, dict):
-        fields = {}
-        for k, v in value.items():
-            fields[k] = any_to_json(v)
-        return fields
-
-    if isinstance(value, ObjectPrx):
-        return value._to_json()
-
-    # NOTE: let this be the last resort (structures)
-    attrs = {}
-    for name in dir(value):
-        if name.startswith("_"):
-            continue
-
-        attr = getattr(value, name)
-        if callable(attr):
-            continue
-
-        attrs[name] = any_to_json(attr)
-
-    return attrs
+from basic_stream import any_to_marshable
 
 
 class MethodHandler(object):
@@ -50,23 +13,10 @@ class MethodHandler(object):
         self._method_name = method_name
 
     def __call__(self, *args):
-        args = self.marshall_typecodes(args)
-        params = [any_to_json(value) for value in args]
         return self._transceiver.send_request(
             {'identity': self._identity,
              'method': self._method_name,
-             'params': params})
-
-    def marshall_typecodes(self, args):
-        retval = []
-        for i in args:
-            if isinstance(i, ObjectPrx):
-                retval.append(i._to_json())
-            else:
-                retval.append(i)
-
-        print retval
-        return tuple(retval)
+             'params': any_to_marshable(args)})
 
 
 class ObjectPrx(object):
@@ -78,8 +28,7 @@ class ObjectPrx(object):
     def wise_getIdentity(self):
         return self.identity
 
-    # FIXME: rename to marshall()
-    def _to_json(self):
+    def to_marshable(self):
         return dict(wise_typecode="Proxy", repr=repr(self))
 
     def __getattr__(self, name):
