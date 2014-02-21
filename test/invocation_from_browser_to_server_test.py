@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from server import Server
 
 
-class TestBrowserToServer(TestCase):
+class BrowserToServerTests(TestCase):
     base_url = "http://127.0.0.1:8080/static/"
 
     @classmethod
@@ -74,12 +74,13 @@ class TestBrowserToServer(TestCase):
         wait_that(self.servant.get_message, called())
 
         message = self.browser.find_element('#message')
-        assert_that(message.get_value,
-                    call_with().returns(self.expected_message))
+        wait_that(message.get_value,
+                  call_with().returns(self.expected_message))
 
     def test_browser_to_server_with_exception(self):
         # open server url
         url = self.base_url + "browser_to_server_test.html"
+        print("Openning ", url)
         self.browser.open(url)
 
         # click on button

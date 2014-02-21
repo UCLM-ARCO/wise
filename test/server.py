@@ -21,7 +21,8 @@ class Servant:
         return self.message
 
     def get_error(self, current=None):
-        raise CustomException("There were some kind of error")
+        # Do no change that message
+        raise CustomException("An error message")
 
 
 class Server:
