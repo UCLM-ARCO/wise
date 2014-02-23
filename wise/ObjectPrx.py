@@ -41,7 +41,8 @@ class ObjectPrx(object):
         return self.identity is not None and self._transceiver is not None
 
     def __eq__(self, other):
-        return (self.identity, self.endpoint) == (other.identity, other.endpoint)
+        return isinstance(other, ObjectPrx) and \
+            (self.identity, self.endpoint) == (other.identity, other.endpoint)
 
     def __repr__(self):
         return "{} {}".format(self.identity, self.endpoint)

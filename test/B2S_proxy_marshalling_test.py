@@ -1,3 +1,5 @@
+# -*- mode:python; coding:utf-8; tab-width:4 -*-
+
 import sys
 import os
 from unittest import TestCase

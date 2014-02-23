@@ -160,6 +160,8 @@ class RequestMessage:
 
 
 class MessageHandler(websocket.WebSocketHandler):
+    async = True
+
     def initialize(self, adapter, thread_pool):
         self._adapter = adapter
         self._is_closed = False
@@ -179,8 +181,11 @@ class MessageHandler(websocket.WebSocketHandler):
         return self._is_closed
 
     def on_message(self, message):
-        logging.info("MessageHandler: async dispatching for {}".format(repr(message)))
-        self._thread_pool.add(self.on_message_async, (message,))
+        if self.async:
+            logging.info("MessageHandler: async dispatching for {}".format(repr(message)))
+            self._thread_pool.add(self.on_message_async, (message,))
+        else:
+            self.on_message_async(message)
 
     def on_message_async(self, message):
         try:
