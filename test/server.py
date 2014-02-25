@@ -29,10 +29,10 @@ class Server:
     def __init__(self, servant=None):
         self.ws = wise.initialize(host="127.0.0.1",
                                   properties = {"TornadoApp.debug": True})
-        servant = servant or Servant()
+        self.servant = servant or Servant()
 
-        adapter = self.ws.createObjectAdapter("ServerAdapter", "-w ws")
-        adapter.add(servant, "Server")
+        self.adapter = self.ws.createObjectAdapter("ServerAdapter", "-w ws")
+        self.adapter.add(servant, "Server")
 
         self.ws.register_StaticFS('/static', wise.dirname(__file__) + '/static')
 

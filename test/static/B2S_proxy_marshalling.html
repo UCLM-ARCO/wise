@@ -2,21 +2,23 @@
   <body style="font-family: helvetica">
     <script src="/wise/js/wise.js"></script>
 
-    <h3>10: Browser to Server, send proxy and invoke it</h3>
-
-    <p>
-    In this example, the browser will create a proxy, send it to server and then server will
-    invoke that proxy.
-    </p>
+    <h3>Test: Browser to Server</h3>
 
     <h4>Server Messages</h4>
     <div id="messages" style="border: 1px solid #CCC; padding: 5px"></div>
 
     <p>
+    If click on "send a proxy!" button, browser will send a proxy to server and  invoke proxy server.
+    If click on "get and invoke proxy"
+    </p>
+
+
+    <p>
        (Control-F5 forces page refresh)
     </p>
 
-    <button id="send-proxy-button" onClick="send_proxy()">invoke!</button>
+    <button id="send-proxy-button" onClick="send_proxy()">send a proxy!</button>
+    <button id="get-proxy-button" onClick="submit_message()">get and invoke proxy</button>
 
     <script type="text/javascript">
     function prepend(id, text) {
@@ -49,6 +51,20 @@
 
     function send_proxy() {
 	remote.send_proxy(browser_proxy);
+    }
+
+    function submit_message() {
+	remote.get_proxy()
+	    .then(invoke_proxy);
+
+	function invoke_proxy(proxy) {
+
+	    proxy.upper("example message")
+		.then(function(reply) {
+
+		    prepend('messages', 'response: ' + reply + '<br/>');
+		});
+	}
     }
     </script>
 
