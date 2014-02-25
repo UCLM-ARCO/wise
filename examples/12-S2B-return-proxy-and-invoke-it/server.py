@@ -21,7 +21,6 @@ class Server:
                 break
             print ("Browser is not ready...{}".format(i))
 
-        remote.set_message("prueba")
         proxy = remote.get_proxy()
         print("PROXY: {}".format(proxy))
 

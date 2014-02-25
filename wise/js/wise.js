@@ -1,4 +1,4 @@
-// -*- mode: js; coding: utf-8 -*-
+1// -*- mode: js; coding: utf-8 -*-
 
 _ = bind(console, console.info);
 
@@ -387,6 +387,7 @@ Transceiver: Class.extend({
     	    return;
     	}
 
+	this._prepare_params(args);
     	this._websocket.send(JSON.stringify(args));
     },
 

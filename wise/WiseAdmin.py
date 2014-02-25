@@ -13,23 +13,35 @@ from .Exceptions import ProtocolException
 from . import Logging as logging
 from endpoint import Endpoint
 
+from .basic_stream import get_typecode
+
 
 class ResponseMessage:
-    def __init__(self, message):
+    def __init__(self, message, broker):
+        self.broker = broker
         data = json.loads(message)
 
         try:
             self.request_id = data['request_id']
-            self.result = data.get('result', None)
+            self.result = self._convert_result(data.get('result', None))
             self.exception = data.get('exception', None)
         except KeyError as e:
             raise ProtocolException(
-                "Invalid message format: missing {}, received: '{}'"
-                .format(e, message))
+                "Invalid data format: missing {}, received: '{}'"
+                .format(e, data))
+
+    def _convert_result(self, value):
+        typecode = get_typecode(value)
+
+        if typecode == "Proxy":
+            return self.broker.stringToProxy(value["repr"])
+
+        return value
 
 
 class ActiveHandler(websocket.WebSocketHandler):
-    def initialize(self):
+    def initialize(self, broker):
+        self.broker = broker
         self._endpoint = None
 
     def open(self):
@@ -46,7 +58,7 @@ class ActiveHandler(websocket.WebSocketHandler):
         self._response_callback = callback
 
     def on_message(self, message):
-        response = ResponseMessage(message)
+        response = ResponseMessage(message, self.broker)
         self._response_callback(response)
 
     def allow_draft76(self):
@@ -108,6 +120,6 @@ class WiseAdmin:
         logging.info("WiseAdmin: create socket for '{}' endpoint".format(
                      endpoint))
 
-        handler = ("^/{}$".format(endpoint.ws_name), ActiveHandler, {})
+        handler = ("^/{}$".format(endpoint.ws_name), ActiveHandler, dict(broker=self._ic))
         self._ic.registerHandlers([handler])
         logging.info("WiseAdmin: handler registered, {}".format(handler))
