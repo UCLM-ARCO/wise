@@ -5,7 +5,7 @@
     <h3>Test: Browser to Server</h3>
 
     <h4>Server Messages</h4>
-    <div id="messages" style="border: 1px solid #CCC; padding: 5px"></div>
+    <input id="response" value="initial value" style="border: 1px solid #CCC; padding: 5px"></div>
 
     <p>
     If click on "send a proxy!" button, browser will send a proxy to server and  invoke proxy server.
@@ -22,14 +22,23 @@
 
     <script type="text/javascript">
     function prepend(id, text) {
-        div = document.getElementById(id);
-        div.innerHTML = text + div.innerHTML;
+        element = document.getElementById(id);
+        element.value = text;
     }
 
     Servant = Class.extend({
 	set_message: function(message) {
-            prepend('messages', message + '<br/>');
+            prepend('response', message);
 	},
+	set_proxy: function(proxy) {
+	    proxy.upper("example message")
+		.then( function(reply) {
+		    prepend('response', reply);
+		});
+        },
+	get_proxy: function() {
+     	   return browser_adapter.add(new Servant(), "obj2");
+   	}
     });
 
     function wise_application(ws) {
@@ -44,6 +53,7 @@
 	    .then(on_adapter_ready);
 
 	function on_adapter_ready(adapter) {
+	    browser_adapter = adapter;
 	    browser_proxy = adapter.add(new Servant(), "obj1");
 	    ws.ready();
 	}
@@ -61,8 +71,7 @@
 
 	    proxy.upper("example message")
 		.then(function(reply) {
-
-		    prepend('messages', 'response: ' + reply + '<br/>');
+		    prepend('response', reply);
 		});
 	}
     }

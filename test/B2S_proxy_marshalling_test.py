@@ -5,18 +5,17 @@ import os
 
 from unittest import TestCase
 from doublex import Spy, called, ANY_ARG
-from hamcrest import anything
 from commodity.testing import wait_that, assert_that, call_with
 from commodity.net import localhost, listen_port
 
-from brimstone import PhantomJS, Chrome
+from brimstone import PhantomJS
 
 sys.path.insert(0, os.path.dirname(__file__))
 from server import Server
 
 
 class TestCheckInvocations(TestCase):
-    base_url = "http://127.0.0.1:8080/static/"
+    url = "http://127.0.0.1:8080/static/proxy_marshalling.html"
 
     @classmethod
     def setUpClass(cls):
@@ -38,8 +37,7 @@ class TestCheckInvocations(TestCase):
         cls.server.stop()
 
     def setUp(self):
-        url = self.base_url + "B2S_proxy_marshalling.html"
-        self.browser.open(url)
+        self.browser.open(self.url)
 
     def test_send_proxy_method_is_called(self):
         button = self.browser.find_element("#send-proxy-button")
@@ -65,7 +63,7 @@ class Servant:
 
 
 class TestCheckProxy(TestCase):
-    base_url = "http://127.0.0.1:8080/static/"
+    url = "http://127.0.0.1:8080/static/proxy_marshalling.html"
 
     @classmethod
     def setUpClass(cls):
@@ -83,14 +81,13 @@ class TestCheckProxy(TestCase):
         cls.server.stop()
 
     def setUp(self):
-        url = self.base_url + "B2S_proxy_marshalling.html"
-        self.browser.open(url)
+        self.browser.open(self.url)
 
     def test_send_and_invoke_proxy(self):
         button = self.browser.find_element("#send-proxy-button")
         button.click()
 
-        element = self.browser.find_element("#messages")
+        element = self.browser.find_element("#response")
         wait_that(element.get_attribute,
                   call_with("value").returns(self.expected_message))
 
@@ -101,8 +98,8 @@ class TestCheckProxy(TestCase):
         button = self.browser.find_element("#get-proxy-button")
         button.click()
 
-        element = self.browser.find_element("#messages")
+        element = self.browser.find_element("#response")
 
         wait_that(element.get_attribute,
-                  call_with().returns(self.expected_message))
+                  call_with("value").returns(self.expected_message))
 
