@@ -439,6 +439,9 @@ Transceiver: Class.extend({
     },
 
     _report_invalid_message: function(message) {
+	throw new wise.WiseException("invalid message recived! ("
+    				     + JSON.stringify(message) + ")")
+
     	log.error("invalid message recived! ("
     		  + JSON.stringify(message) + ")");
     },
@@ -604,10 +607,11 @@ ObjectAdapter: Class.extend({
 	var obj = this._find_object(request.identity);
 
 	if (! request.method in obj) {
-	    // FIXME: raise an exception and serialize it to client
-	    log.error("Unknown method: '" + request.method + "'");
-	    return;
+	    msg = "Unknown method: '" + request.method + "'";
+	    log.error(msg);
+	    throw new wise.WiseException("OperationNotExistException", msg);
 	}
+
 
 	return obj[request.method].apply(obj, request.params);
     },
@@ -615,8 +619,9 @@ ObjectAdapter: Class.extend({
     _find_object: function(identity) {
     	var object = this._asm[identity];
     	if (! object) {
-	    // FIXME: raise an exception and serialize it to client
-    	    log.error("Unknown object: '" + identity + "'");
+    	    msg = "Unknown object: '" + identity + "'";
+    	    log.error(msg);
+	    throw new wise.WiseException("ObjectNotExistException", msg);
     	}
     	return object;
     },

@@ -45,10 +45,12 @@ class BrowserToServerTests(TestCase):
         cls.browser.quit()
         cls.server.stop()
 
-    def test_browser_to_server_no_response(self):
+    def setUp(self):
         # open server url
-        url = self.base_url + "browser_to_server_test.html"
-        self.browser.open(url)
+        self.url = self.base_url + "browser_to_server_test.html"
+
+    def test_browser_to_server_no_response(self):
+        self.browser.open(self.url)
 
         message = 'the message'
         self.browser.find_element("#message").set_value(message)
@@ -62,9 +64,7 @@ class BrowserToServerTests(TestCase):
                   called().with_args(message, anything()))
 
     def test_browser_to_server_with_response(self):
-        # open server url
-        url = self.base_url + "browser_to_server_test.html"
-        self.browser.open(url)
+        self.browser.open(self.url)
 
         # click on button
         button = self.browser.find_element('#get-button')

@@ -16,7 +16,7 @@ from server import Server
 
 
 class TestCheckProxyInvocations(TestCase):
-    base_url = "http://127.0.0.1:8080/static/"
+    url = "http://127.0.0.1:8080/static/proxy_marshalling.html"
 
     @classmethod
     def setUpClass(cls):
@@ -38,7 +38,7 @@ class TestCheckProxyInvocations(TestCase):
         cls.server.stop()
 
     def setUp(self):
-        self.browser.open(self.base_url + "proxy_marshalling.html")
+        self.browser.open(self.url)
         self.browserPrx = self.server.ws.stringToProxy("obj1 -w browser")
 
     def test_upper_method_is_called(self):
