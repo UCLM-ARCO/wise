@@ -1,4 +1,4 @@
-1// -*- mode: js; coding: utf-8 -*-
+// -*- mode: js; coding: utf-8 -*-
 
 _ = bind(console, console.info);
 
@@ -606,12 +606,11 @@ ObjectAdapter: Class.extend({
 
 	var obj = this._find_object(request.identity);
 
-	if (! request.method in obj) {
+	if (!(request.method in obj)) {
 	    msg = "Unknown method: '" + request.method + "'";
 	    log.error(msg);
 	    throw new wise.WiseException("OperationNotExistException", msg);
 	}
-
 
 	return obj[request.method].apply(obj, request.params);
     },
@@ -623,6 +622,7 @@ ObjectAdapter: Class.extend({
     	    log.error(msg);
 	    throw new wise.WiseException("ObjectNotExistException", msg);
     	}
+	_("FIND OBJECT: ", object);
     	return object;
     },
 }),

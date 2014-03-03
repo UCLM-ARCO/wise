@@ -6,7 +6,7 @@ from unittest import TestCase
 from commodity.testing import wait_that, call_with
 from commodity.net import localhost, listen_port
 
-from brimstone import PhantomJS
+from brimstone import PhantomJS, Chrome
 
 from wise.Exceptions import ObjectNotExistException, OperationNotExistException
 sys.path.insert(0, os.path.dirname(__file__))
@@ -19,12 +19,12 @@ class TestServerToBrowser(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.server = Server()
-        cls.browser = PhantomJS(left_open=False)
+        cls.browser = Chrome(left_open=True)
         wait_that(localhost, listen_port(8080))
 
     @classmethod
     def tearDownClass(cls):
-        cls.browser.quit()
+        # cls.browser.quit()
         cls.server.stop()
 
     def setUp(self):
@@ -48,6 +48,6 @@ class TestServerToBrowser(TestCase):
                 browserPrx.not_existing_method()
                 return False
             except OperationNotExistException:
-               return True
+                return True
 
         wait_that(object_throws_exception, call_with().returns(True))

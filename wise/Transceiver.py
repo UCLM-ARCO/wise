@@ -56,9 +56,10 @@ class Transceiver:
             raise RuntimeError("Remote object did not response in time!")
 
         if response.exception:
-            print(response.exception['name'])
             if(response.exception['name'] == "ObjectNotExistException"):
                 raise ObjectNotExistException()
+            if(response.exception['name'] == "OperationNotExistException"):
+                raise OperationNotExistException()
 
             raise UnknownLocalException(**response.exception)
 
