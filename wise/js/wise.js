@@ -428,10 +428,17 @@ Transceiver: Class.extend({
 	if (callback.onRejected === undefined) {
 	    log.error("Error received, but no callback defined:",
 		      exception);
+
 	}
 
 	callback.reject(exception);
     	delete this._response_callbacks[reply.request_id];
+	if(exception.name == "ObjectNotExistException"){
+	    throw new wise.WiseException("ObjectNotExistException", msg);
+	}
+	if(exception.name == "OperationNotExistException"){
+	    throw new wise.WiseException("OperationNotExistException", msg);
+	}
     },
 
     _unmarshall_exception: function(error) {

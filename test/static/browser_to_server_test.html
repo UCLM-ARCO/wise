@@ -15,11 +15,15 @@
     <input id="error" type="text" value="Hello, World!"/>
     <button id="error-button" onClick="get_error()">get error</button>
 
+    <button id="object-exception-button" onClick="throw_object_exception()">ObjectNotExistException</button>
+    <button id="operation-exception-button" onClick="throw_operation_exception()">OperationNotExistException</button>
+
     <script type="text/javascript">
     // create the entry point which will be called automatically
     function wise_application(ws) {
+	broker = ws
 	// create a proxy to object in server
-	ws.stringToProxy("Server -w ws -h 127.0.0.1 -p 8080")
+	broker.stringToProxy("Server -w ws -h 127.0.0.1 -p 8080")
 	    .then(on_stringToProxy_response)
             .then(ws.ready);
 
@@ -46,6 +50,27 @@
 	    .catch(function(error) {
 		$('#error').val(error);
 	    });
+    }
+
+    function throw_operation_exception() {
+	try{
+	    remote.not_existing_method()
+	}
+	catch(exception){
+		_("Excepcion: ", exception);
+		$('#error').val("OperationNotExistException");
+	};
+    }
+
+    function throw_object_exception() {
+	try{
+	    serverPrx = broker.stringToProxy("notExistingID -w ws -h 127.0.0.1 -p 8080");
+	    serverPrx.get_message();
+	}
+	catch(exception){
+		_("Excepcion: ", exception);
+		$('#error').val("ObjectNotExistException");
+	};
     }
     </script>
 
