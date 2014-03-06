@@ -41,6 +41,7 @@ function chatCtrl($scope, $window, $location, $anchorScroll, Servant, loginInfo,
 	    .send(send_info, message)
 	    .then(function() {
 		$scope.$apply(function (){
+		    $scope.messages = $window.members[$scope.destination].private_messages;
 		    $location.hash(index);
 		    $anchorScroll();
 		    $scope.message = '';
@@ -56,16 +57,6 @@ function chatCtrl($scope, $window, $location, $anchorScroll, Servant, loginInfo,
 	$scope.private = ($scope.destination !== 'Channel');
     };
 };
-
-//Directives
-chatApp.directive('scrollChat', function ($location, $anchorScroll) {
-  return {
-      restrict: 'E',
-      link: function postLink(scope, element, attrs) {
-
-      }
-  }
-});
 
 
 //Services
@@ -104,7 +95,6 @@ chatApp.factory('Member', function(){
 	append: function(message) {
 		this.new_messages++;
 		this.private_messages.push(message);
-// angular.element("private o incoming").$compile(<b> </b>)
 	},
     }
 
