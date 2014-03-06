@@ -24,7 +24,7 @@ function loginCtrl($scope, loginInfo) {
 };
 
 
-function chatCtrl($scope, $window, Servant, loginInfo, Member) {
+function chatCtrl($scope, $window, $location, $anchorScroll, Servant, loginInfo, Member) {
     $scope.$on('loginSucess', function(event, nickname){
 	$scope.logged = true;
 	$scope.nickname = nickname;
@@ -41,7 +41,8 @@ function chatCtrl($scope, $window, Servant, loginInfo, Member) {
 	    .send(send_info, message)
 	    .then(function() {
 		$scope.$apply(function (){
-		    $scope.messages = $window.members[$scope.destination].private_messages;
+		    $location.hash(index);
+		    $anchorScroll();
 		    $scope.message = '';
 		});
 	    });
@@ -57,21 +58,15 @@ function chatCtrl($scope, $window, Servant, loginInfo, Member) {
 };
 
 //Directives
-chatApp.directive('scrollChat', function () {
+chatApp.directive('scrollChat', function ($location, $anchorScroll) {
   return {
       restrict: 'E',
       link: function postLink(scope, element, attrs) {
-	  scope.$watch("scope.members",
-              function () {
-		  return $element.children().length;
-              },
-              function () {
-		  $element.animate({ scrollTop: element.prop('scrollHeight')}, 1000);
-              }
-	  );
+
       }
-  };
+  }
 });
+
 
 //Services
 chatApp.service('loginInfo', function($rootScope, $window) {
@@ -118,6 +113,7 @@ chatApp.factory('Member', function(){
 
 chatApp.factory("Servant", function($rootScope, $window, Member) {
     function Servant() {
+	index = 0;
 	$window.members['Channel'] = new Member("Channel", $window.chatroom);
     }
 
@@ -132,9 +128,9 @@ chatApp.factory("Servant", function($rootScope, $window, Member) {
 		    $window.members[member].append(message);
 		}
 		else{
-		    var html = "<b>"+ message + "</b> <br />";
+		    index++;
+		    var html = "<b id=" + index + ">"+ message + "</b> <br />";
 		    $("#incoming").append(html);
-		    // $window.members[send_info.destination].append(message);
 		}
 	    });
 	},

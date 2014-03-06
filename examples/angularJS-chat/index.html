@@ -72,7 +72,7 @@
 
     </div>
 
-    <div id="chat" class="container" ng-controller="chatCtrl" ng-show="logged">
+    <div  ng-controller="chatCtrl" id="chat" class="container" ng-show="logged">
 
       <div class="row">
 
@@ -82,7 +82,7 @@
 	    <b> Destination: {{destination}}      </b>
 
 
-	    <div id="incoming" ng-hide="private" scrollChat>
+	    <div id="incoming" ng-hide="private" scroll-chat>
 	    </div>
 
 	    <div id="private" ng-show="private">
