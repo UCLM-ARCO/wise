@@ -3,6 +3,7 @@
   <head>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.9/angular.js"></script>
     <script src="http://angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.10.0.js"></script>
+    <script src="https://code.jquery.com/jquery.js"></script>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
 
     <script src="/static/chat.js"></script>
@@ -82,11 +83,12 @@
 
 
 	    <div id="incoming" ng-hide="private" scrollChat>
-	      <b ng-repeat="message in messages track by $index"> {{message}} <br /></b>
 	    </div>
 
 	    <div id="private" ng-show="private">
-	      <b ng-repeat="message in messages track by $index"> {{message}} <br /></b>
+	      <div>
+		<b ng-repeat="message in messages track by $index"> {{message}} <br /></b>
+	      </div>
 	    </div>
 	    <form name="chatBox">
 	      <div class="panel-footer">
@@ -108,7 +110,7 @@
 
 	  <div id="members" class="list-group">
 	    <a class="list-group-item active" >Members:	    </a>
-	    <a class="list-group-item" ng-repeat="member in members" ng-click="select(member)">
+	    <a class="list-group-item" ng-repeat="member in members track by $index" ng-click="select(member)">
 	      <span >{{member.nick}} </span>
 	      <span class="badge pull-right"> {{member.new_messages}}</span>
 	    </a>

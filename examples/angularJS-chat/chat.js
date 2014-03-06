@@ -1,3 +1,4 @@
+
 // -*- mode: js; coding: utf-8 -*-
 
 members = {};
@@ -58,16 +59,17 @@ function chatCtrl($scope, $window, Servant, loginInfo, Member) {
 //Directives
 chatApp.directive('scrollChat', function () {
   return {
-    link: function postLink(scope, element, attrs) {
-      scope.$watch(
-        function () {
-          return element.children().length;
-        },
-        function () {
-          element.animate({ scrollTop: element.prop('scrollHeight')}, 1000);
-        }
-      );
-    }
+      restrict: 'E',
+      link: function postLink(scope, element, attrs) {
+	  scope.$watch("scope.members",
+              function () {
+		  return $element.children().length;
+              },
+              function () {
+		  $element.animate({ scrollTop: element.prop('scrollHeight')}, 1000);
+              }
+	  );
+      }
   };
 });
 
@@ -124,13 +126,15 @@ chatApp.factory("Servant", function($rootScope, $window, Member) {
 	    $rootScope.$apply(function(){
 		var private = (send_info.destination !== 'Channel');
 		if(private){
-			var my_self = (send_info.source == _nickname);
-			var member = my_self ? send_info.destination :
-			    send_info.source;
-			$window.members[member].append(message);
+		    var my_self = (send_info.source == _nickname);
+		    var member = my_self ? send_info.destination :
+			send_info.source;
+		    $window.members[member].append(message);
 		}
 		else{
-		    $window.members[send_info.destination].append(message);
+		    var html = "<b>"+ message + "</b> <br />";
+		    $("#incoming").append(html);
+		    // $window.members[send_info.destination].append(message);
 		}
 	    });
 	},
