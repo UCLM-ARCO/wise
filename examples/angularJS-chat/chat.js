@@ -1,9 +1,8 @@
-
 // -*- mode: js; coding: utf-8 -*-
 
 members = {};
 
-var chatApp = angular.module('chatApp', ['ui.bootstrap']);
+var chatApp = angular.module('chatApp', []);
 
 //AngularJS
 //Controllers
@@ -27,6 +26,7 @@ function loginCtrl($scope, loginInfo) {
 function chatCtrl($scope, $window, $location, $anchorScroll, Servant, loginInfo, Member) {
     $scope.$on('loginSucess', function(event, nickname){
 	$scope.logged = true;
+	$scope.private = false;
 	$scope.nickname = nickname;
 	$scope.members = $window.members;
 	$scope.destination = 'Channel';
@@ -85,6 +85,8 @@ chatApp.service('loginInfo', function($rootScope, $window) {
 
 chatApp.factory('Member', function(){
     function Member(nick, proxy) {
+	if(nick !== 'Channel' && nick === _nickname )
+	    nick = nick + ' <you>';
 	this.nick = nick;
 	this.proxy = proxy;
 	this.private_messages = [];
