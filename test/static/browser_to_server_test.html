@@ -15,8 +15,8 @@
     <input id="error" type="text" value="Hello, World!"/>
     <button id="error-button" onClick="get_error()">get error</button>
 
-    <button id="object-exception-button" onClick="throw_object_exception()">ObjectNotExistException</button>
-    <button id="operation-exception-button" onClick="throw_operation_exception()">OperationNotExistException</button>
+    <button id="operation-exception-button" onClick="invoke_missing_method()">OperationNotExistException</button>
+    <button id="object-exception-button" onClick="invoke_missing_object()">ObjectNotExistException</button>
 
     <script type="text/javascript">
     // create the entry point which will be called automatically
@@ -47,35 +47,38 @@
 
     function get_error() {
 	remote.get_error()
-	    .catch(function(error) {
-		$('#error').val(error);
+	    .catch(function(e) {
+                // e.message
+		$('#error').val(e.name + ': FIXME');
 	    });
     }
 
-    function throw_operation_exception() {
-	try{
+    function invoke_missing_method() {
+	try {
 	    remote.not_existing_method()
-	}
-	catch(exception){
-	    _("Excepcion: ", exception);
-	    if(exception.name == "OperationNotExistException"){
-		$('#error').val(exception.name);
+	} catch (e) {
+	    if (e instanceof TypeError) {
+		_("Excepcion: ", e);
+		$('#error').val("OperationNotExistException");
 	    }
-	};
+	}
     }
 
-    function throw_object_exception() {
-	// try{
-	    // serverPrx.get_message()
-	    serverPrx = broker.stringToProxy("notExistingID -w ws -h 127.0.0.1 -p 8080")
-	    .catch(function(exception){
-		_("Test Excepcion: ", exception);
+    function invoke_missing_object() {
+	broker.stringToProxy("notExistingID -w ws -h 127.0.0.1 -p 8080")
+	    .catch(function(exception) {
+		_("Test Exception: ", exception);
 		$('#error').val(exception.name);
-		// if(exception.name == "ObjectNotExistException"){
-		// }
 	    });
-    };
+    }
     </script>
 
   </body>
 </html>
+
+
+<!--
+:Local Variables:
+:mode: js
+:End:
+-->

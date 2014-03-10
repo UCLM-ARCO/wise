@@ -87,7 +87,7 @@ class TestCheckProxy(TestCase):
         button = self.browser.find_element("#send-proxy-button")
         button.click()
 
-        element = self.browser.find_element("#response")
+        element = self.browser.find_element("#message")
         wait_that(element.get_attribute,
                   call_with("value").returns(self.expected_message))
 
@@ -98,7 +98,7 @@ class TestCheckProxy(TestCase):
         button = self.browser.find_element("#get-proxy-button")
         button.click()
 
-        element = self.browser.find_element("#response")
+        element = self.browser.find_element("#message")
 
         wait_that(element.get_attribute,
                   call_with("value").returns(self.expected_message))

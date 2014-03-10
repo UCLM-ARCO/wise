@@ -3,6 +3,7 @@
 import sys
 import os
 from unittest import TestCase
+
 from commodity.testing import wait_that, call_with
 from commodity.net import localhost, listen_port
 
@@ -13,7 +14,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from server import Server
 
 
-class TestServerToBrowser(TestCase):
+class ServerToBrowserTests(TestCase):
     url = "http://127.0.0.1:8080/static/server_to_browser_test.html"
 
     @classmethod
@@ -53,7 +54,7 @@ class TestServerToBrowser(TestCase):
         wait_that(object_throws_exception, call_with().returns(True))
 
 
-class TestBrowserToServer(TestCase):
+class BrowserToServerTests(TestCase):
     url = "http://127.0.0.1:8080/static/browser_to_server_test.html"
 
     @classmethod
@@ -78,11 +79,10 @@ class TestBrowserToServer(TestCase):
         wait_that(message.get_value,
                   call_with().returns("ObjectNotExistException"))
 
-    # def test_operation_not_exist_exception(self):
-    #     button = self.browser.find_element('#operation-exception-button')
-    #     button.click()
+    def test_operation_not_exist_exception(self):
+        button = self.browser.find_element('#operation-exception-button')
+        button.click()
 
-    #     message = self.browser.find_element('#error')
-    #     wait_that(message.get_value,
-    #               call_with().returns("OperationNotExistException"))
-    #     #
+        message = self.browser.find_element('#error')
+        wait_that(message.get_value,
+                  call_with().returns("OperationNotExistException"))

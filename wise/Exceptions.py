@@ -27,6 +27,8 @@ class UnknownLocalException(Exception):
         return str(type(self))
 
 
+# Remote exceptions
+
 class OperationNotExistException(Exception):
     pass
 

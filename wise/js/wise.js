@@ -236,13 +236,9 @@ Transceiver: Class.extend({
 
     // args: request, callback
     send_request: function(args) {
-	log.debug("Transceiver send_request: ", args);
+	log.debug("Transceiver send_request: ", args.request);
 
-	if(!args.request.request_id)
-    	    args.request.request_id = this._request_id;
-	else
-	    this._request_id = args.request.request_id;
-
+    	args.request.request_id = this._request_id;
     	this._response_callbacks[this._request_id] = args.callback;
 
     	if (this._websocket.readyState != WebSocket.OPEN) {
@@ -435,8 +431,8 @@ Transceiver: Class.extend({
     	}
 
 	var exception = this._unmarshall_exception(reply.error);
-	if (callback.onRejected === undefined) {
-	    log.error("Error received, but no callback defined:",
+	if (callback.err_callbacks.length === 0) {
+	    log.error("Error received, but not Promise error callbacks defined:",
 		      exception);
 	}
 
@@ -444,7 +440,7 @@ Transceiver: Class.extend({
     	delete this._response_callbacks[reply.request_id];
 
 	// FIXME: is this required/convenient ??
-	throw exception;
+	// throw exception;
     },
 
     _unmarshall_exception: function(error) {
@@ -586,7 +582,9 @@ ObjectAdapter: Class.extend({
 	servant.wise_getMethodNames = function() {
 	    var res = [];
 	    for(var m in this)
-		if ((typeof this[m] == "function") && (m != "constructor"))
+		if ((typeof this[m] == "function")
+		    && (m != "constructor")
+		    && (m != "wise_getMethodNames"))
 		    res.push(m)
 	    return res;
 	};
@@ -789,7 +787,8 @@ Communicator: Class.extend({
 
 	    // build dynamic methods for remote object
 	    base.wise_getMethodNames()
-		.then(on_getMethodNames_response);
+		.then(on_getMethodNames_response,
+		      on_getMethodNames_error);
 
 	    function on_getMethodNames_response(result) {
 		result = result.concat(['wise_getMethodNames'])
@@ -802,6 +801,10 @@ Communicator: Class.extend({
 		});
 
 		promise.resolve(proxy);
+	    }
+
+	    function on_getMethodNames_error(e) {
+		promise.reject(e);
 	    }
 	}
 
@@ -902,11 +905,15 @@ Promise: Class.extend({
     init: function() {
 	this.value = null;
 	this.reason = null;
-	this.callbacks = [];
+	this.ok_callbacks = [];
+	this.err_callbacks = [];
     },
 
     then: function(onFulfilled, onRejected) {
 	var promise = new wise.Promise();
+
+	_("then", onFulfilled, onRejected);
+	_(promise);
 
 	if (typeof(onFulfilled) !== 'function')
 	    onFulfilled = undefined;
@@ -920,10 +927,19 @@ Promise: Class.extend({
 	    this._exec_callback(promise,
 				onRejected, this.reason);
 
-	var cb = {'promise': promise,
-		  'onFulfilled': onFulfilled,
-		  'onRejected': onRejected};
-	this.callbacks.push(cb);
+	if (onFulfilled !== undefined)
+	    this.ok_callbacks.push({'promise': promise, 'func': onFulfilled});
+
+	if (onRejected !== undefined)
+	    this.err_callbacks.push({'promise': promise, 'func': onRejected});
+
+	_("THEN", this.err_callbacks);
+
+	// var cb = {'promise': promise,
+	// 	  'onFulfilled': onFulfilled,
+	// 	  'onRejected': onRejected};
+	// this.callbacks.push(cb);
+
 	return promise;
     },
 
@@ -941,9 +957,8 @@ Promise: Class.extend({
 	this.value = value;
 
 	var self = this;
-	this.callbacks.map(function(cb) {
-	    self.outctx(cb.promise, cb.promise.resolve,
-			cb.onFulfilled, value);
+	this.ok_callbacks.map(function(cb) {
+	    self.outctx(cb.promise, cb.promise.resolve, cb.func, value);
 	});
     },
 
@@ -952,9 +967,8 @@ Promise: Class.extend({
 	this.reason = reason;
 
 	var self = this;
-	this.callbacks.map(function(cb) {
-	    self.outctx(cb.promise, cb.promise.reject,
-			cb.onRejected, reason);
+	this.err_callbacks.map(function(cb) {
+	    self.outctx(cb.promise, cb.promise.reject, cb.func, reason);
 	});
     },
 
@@ -1078,6 +1092,10 @@ identity: function(x) {
 WiseException: function(name, message) {
     this.name = name;
     this.message = message;
+
+    // this.toString = function() {
+    // 	return this.name + ': ' + this.message;
+    // }
 },
 }; // wise namespace
 

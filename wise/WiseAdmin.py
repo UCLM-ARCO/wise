@@ -66,12 +66,15 @@ class ActiveHandler(websocket.WebSocketHandler):
 
 
 class WiseAdmin:
-    def __init__(self, ic):
-        self._ic = ic
+    "A WebSocket factory for browser Object Adapters"
+    def __init__(self, broker):
+        self._broker = broker
         self._endpoints = []
-        self._already_registered = []
 
-        self._db_filename = self._ic.getProperty("Wise.DBFile")
+        # FIXME: is there something equivalent in the broker class? handlers?
+        self._locators = []
+
+        self._db_filename = self._broker.getProperty("Wise.DBFile")
         if self._db_filename is None:
             self._db_filename = "wise.db"
 
@@ -111,15 +114,16 @@ class WiseAdmin:
 
     def _do_create_socket(self, endpoint):
         locator = "^/{}$".format(endpoint.ws_name)
-        if locator in self._already_registered:
+        if locator in self._locators:
             logging.info("WiseAdmin: already registered handler for '{}', "
                          "nothing done".format(locator))
             return
 
-        self._already_registered.append(locator)
+        self._locators.append(locator)
         logging.info("WiseAdmin: create socket for '{}' endpoint".format(
                      endpoint))
 
-        handler = ("^/{}$".format(endpoint.ws_name), ActiveHandler, dict(broker=self._ic))
-        self._ic.registerHandlers([handler])
+        handler = ("^/{}$".format(endpoint.ws_name),
+                   ActiveHandler, dict(broker=self._broker))
+        self._broker.registerHandlers([handler])
         logging.info("WiseAdmin: handler registered, {}".format(handler))

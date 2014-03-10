@@ -14,7 +14,7 @@ class IntrospectionTests(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.server = Server()
-        cls.browser = PhantomJS(left_open=False)
+        cls.browser = PhantomJS()
 
     @classmethod
     def tearDownClass(cls):
@@ -37,4 +37,5 @@ class IntrospectionTests(TestCase):
     def test_browser_wise_getMethodNames(self):
         web_obj = self.server.ws.stringToProxy("obj1 -w browser")
         assert web_obj
-        assert_that(web_obj.wise_getMethodNames(), has_item("echo"))
+        methods = web_obj.wise_getMethodNames()
+        assert_that(methods, has_item("echo"))

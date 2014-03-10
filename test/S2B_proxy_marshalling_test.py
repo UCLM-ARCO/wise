@@ -27,9 +27,7 @@ class TestCheckProxyInvocations(TestCase):
 
         cls.servant = servant
         cls.server = Server(servant)
-        cls.serverPrx = cls.server.adapter.add(cls.servant, "example")
-
-        cls.browser = PhantomJS(left_open=False)
+        cls.browser = PhantomJS()
         wait_that(localhost, listen_port(8080))
 
     @classmethod
@@ -42,7 +40,7 @@ class TestCheckProxyInvocations(TestCase):
         self.browserPrx = self.server.ws.stringToProxy("obj1 -w browser")
 
     def test_upper_method_is_called(self):
-        self.browserPrx.set_proxy(self.serverPrx)
+        self.browserPrx.set_proxy(self.server.proxy)
         assert_that(self.servant.upper,
                     called().with_args("example message", anything()))
 
@@ -51,18 +49,17 @@ class TestCheckProxyInvocations(TestCase):
         # response with this string in uppercase and the reply
         # should update an input.
         # The test check if that input is updated.
-    def test_invocation_from_browser_to_server_update_DOM(self):
-        self.browserPrx.set_proxy(self.serverPrx)
+    def test_set_proxy_to_browser_to_invoke_it(self):
+        self.browserPrx.set_proxy(self.server.proxy)
 
-        div = self.browser.find_element("#response")
+        div = self.browser.find_element("#message")
         wait_that(div.get_attribute,
                   call_with("value").returns(self.expected_message))
 
-    def test_get_proxy_and_invoke_it(self):
+    def test_get_proxy_from_browser_and_invoke_it(self):
         remote = self.browserPrx.get_proxy()
-
         remote.set_message(self.expected_message)
 
-        div = self.browser.find_element("#response")
+        div = self.browser.find_element("#message")
         wait_that(div.get_attribute,
                   call_with("value").returns(self.expected_message))

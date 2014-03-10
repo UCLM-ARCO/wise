@@ -5,8 +5,7 @@ import wise
 
 
 class CustomException(Exception):
-    def __init__(self, message):
-        self.message = message
+    pass
 
 
 class Servant:
@@ -32,7 +31,7 @@ class Server:
         self.servant = servant or Servant()
 
         self.adapter = self.ws.createObjectAdapter("ServerAdapter", "-w ws")
-        self.adapter.add(servant, "Server")
+        self.proxy = self.adapter.add(self.servant, "Server")
 
         self.ws.register_StaticFS('/static', wise.dirname(__file__) + '/static')
 

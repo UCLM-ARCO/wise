@@ -1,14 +1,16 @@
 <html>
   <body style="font-family: helvetica">
+    <script src="/wise/js/jquery-1.9.1.min.js"></script>
     <script src="/wise/js/wise.js"></script>
 
     <h3>Test: Browser to Server</h3>
 
     <h4>Server Messages</h4>
-    <input id="response" value="initial value" style="border: 1px solid #CCC; padding: 5px"></div>
+    <input id="message" type="text" value="initial value"></input>
 
     <p>
-    If click on "send a proxy!" button, browser will send a proxy to server and  invoke proxy server.
+    If click on "send a proxy!" button, browser will send a proxy to server and invoke
+    proxy server.
     If click on "get and invoke proxy"
     </p>
 
@@ -21,46 +23,43 @@
     <button id="get-proxy-button" onClick="submit_message()">get and invoke proxy</button>
 
     <script type="text/javascript">
-    function prepend(id, text) {
-        element = document.getElementById(id);
-        element.value = text;
-    }
-
     Servant = Class.extend({
 	set_message: function(message) {
-            prepend('response', message);
+	    $('#message').val(message);
 	},
+
 	set_proxy: function(proxy) {
 	    proxy.upper("example message")
-		.then( function(reply) {
-		    prepend('response', reply);
+		.then(function(reply) {
+		    $('#message').val(reply);
 		});
         },
 	get_proxy: function() {
-     	   return browser_adapter.add(new Servant(), "obj2");
+     	   return browser_proxy2;
    	}
     });
 
     function wise_application(ws) {
-	ws.stringToProxy("Server -w ws -h 127.0.0.1 -p 8080")
+	var p1 = ws.stringToProxy("Server -w ws -h 127.0.0.1 -p 8080")
 	    .then(on_stringToProxy_response);
 
 	function on_stringToProxy_response(proxy) {
 	    remote = proxy;
 	}
 
-	ws.createObjectAdapter("WebAdapter", "-w browser")
+	var p2 = ws.createObjectAdapter("WebAdapter", "-w browser")
 	    .then(on_adapter_ready);
 
 	function on_adapter_ready(adapter) {
-	    browser_adapter = adapter;
-	    browser_proxy = adapter.add(new Servant(), "obj1");
-	    ws.ready();
+	    browser_proxy1 = adapter.add(new Servant(), "obj1");
+	    browser_proxy2 = adapter.add(new Servant(), "obj2");
 	}
+
+	wise.all([p1, p2]).then(ws.ready);
     }
 
     function send_proxy() {
-	remote.send_proxy(browser_proxy);
+	remote.send_proxy(browser_proxy1);
     }
 
     function submit_message() {
@@ -68,10 +67,9 @@
 	    .then(invoke_proxy);
 
 	function invoke_proxy(proxy) {
-
 	    proxy.upper("example message")
 		.then(function(reply) {
-		    prepend('response', reply);
+		    $('#message').val(reply);
 		});
 	}
     }

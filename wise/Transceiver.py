@@ -10,6 +10,7 @@ from commodity.os_ import FuncAsFile
 from .WebApplication import WebApplication
 from .Exceptions import (ProtocolException, UnknownLocalException,
                          OperationNotExistException, ObjectNotExistException)
+
 from .Current import Current
 from . import Logging as logging
 
@@ -55,15 +56,21 @@ class Transceiver:
         if not ok:
             raise RuntimeError("Remote object did not response in time!")
 
-        if response.exception:
-            if (response.exception['name'] == "ObjectNotExistException"):
-                raise ObjectNotExistException()
-            if (response.exception['name'] == "OperationNotExistException"):
-                raise OperationNotExistException()
-            else:
-                raise UnknownLocalException(**response.exception)
-
+        self.raise_exception_if_any(response.exception)
         return response.result
+
+    @staticmethod
+    def raise_exception_if_any(e):
+        if not e:
+            return
+
+        if e['name'] == "ObjectNotExistException":
+            raise ObjectNotExistException(e['message'])
+
+        if e['name'] == "OperationNotExistException":
+            raise OperationNotExistException(e['message'])
+
+        raise UnknownLocalException(**e)
 
     # FIXME: only called for twoway invocations
     def on_response(self, response):
