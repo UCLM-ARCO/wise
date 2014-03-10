@@ -55,10 +55,10 @@ class Servant:
         proxy.set_message("EXAMPLE MESSAGE")
 
     def upper(self, message, current=None):
-        retval = message.upper()
-        return retval
+        return message.upper()
 
     def get_proxy(self, current=None):
+        # FIXME: who set that proxy?
         return self.proxy
 
 
@@ -77,7 +77,7 @@ class TestCheckProxy(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        # cls.browser.quit()
+        cls.browser.quit()
         cls.server.stop()
 
     def setUp(self):
@@ -102,4 +102,3 @@ class TestCheckProxy(TestCase):
 
         wait_that(element.get_attribute,
                   call_with("value").returns(self.expected_message))
-

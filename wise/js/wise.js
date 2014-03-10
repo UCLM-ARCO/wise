@@ -912,9 +912,6 @@ Promise: Class.extend({
     then: function(onFulfilled, onRejected) {
 	var promise = new wise.Promise();
 
-	_("then", onFulfilled, onRejected);
-	_(promise);
-
 	if (typeof(onFulfilled) !== 'function')
 	    onFulfilled = undefined;
 	else if (this.value)
@@ -932,13 +929,6 @@ Promise: Class.extend({
 
 	if (onRejected !== undefined)
 	    this.err_callbacks.push({'promise': promise, 'func': onRejected});
-
-	_("THEN", this.err_callbacks);
-
-	// var cb = {'promise': promise,
-	// 	  'onFulfilled': onFulfilled,
-	// 	  'onRejected': onRejected};
-	// this.callbacks.push(cb);
 
 	return promise;
     },
