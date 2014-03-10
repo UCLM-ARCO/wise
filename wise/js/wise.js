@@ -379,7 +379,7 @@ Transceiver: Class.extend({
 	catch (exception) {
 	    this._send_response({
 		request_id: message.request_id,
-		exception: exception
+		exception: new wise.WiseException("UnknownLocalException", exception)
 	    });
     	}
     },
@@ -422,15 +422,12 @@ Transceiver: Class.extend({
 
     _process_incoming_error_reply: function(reply) {
     	var callback = this._response_callbacks[reply.request_id];
-	_("ERROR REPLY. reply: ", reply);
-	_("ERROR REPLY. _response_callbacks", callback);
     	if (! callback) {
 	    // FIXME: callback never deleted
     	    return;
     	}
 
 	var exception = this._unmarshall_exception(reply.error);
-	_("EXCEPTION: ", exception);
 	if (callback.onRejected === undefined) {
 	    log.error("Error received, but no callback defined:",
 		      exception);
@@ -449,8 +446,8 @@ Transceiver: Class.extend({
     },
 
     _report_invalid_message: function(message) {
-	throw new wise.WiseException("invalid message recived! ("
-    				     + JSON.stringify(message) + ")")
+	throw new wise.WiseException("ProtocolException",
+				     "invalid message recived! (" + JSON.stringify(message) + ")");
 
     	log.error("invalid message recived! ("
     		  + JSON.stringify(message) + ")");
@@ -632,7 +629,6 @@ ObjectAdapter: Class.extend({
     	    log.error(msg);
 	    throw new wise.WiseException("ObjectNotExistException", msg);
     	}
-	_("FIND OBJECT: ", object);
     	return object;
     },
 }),
@@ -905,7 +901,6 @@ Promise: Class.extend({
     },
 
     then: function(onFulfilled, onRejected) {
-	_("THEN: ", onRejected);
 	var promise = new wise.Promise();
 
 	if (typeof(onFulfilled) !== 'function')
@@ -924,12 +919,10 @@ Promise: Class.extend({
 		  'onFulfilled': onFulfilled,
 		  'onRejected': onRejected};
 	this.callbacks.push(cb);
-	_("callbacks: ", this.callbacks);
 	return promise;
     },
 
     "catch": function(onRejected) {
-	_("CATCH: ", this);
 	return this.then(undefined, onRejected);
     },
 
@@ -950,7 +943,6 @@ Promise: Class.extend({
     },
 
     reject: function(reason) {
-	_("REJECT: ", reason);
 	this.check_resolved();
 	this.reason = reason;
 

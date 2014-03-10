@@ -20,7 +20,7 @@ class TestServerToBrowser(TestCase):
     def setUpClass(cls):
         cls.expected_message = "some message"
         cls.server = Server()
-        cls.browser = PhantomJS(left_open=False)
+        cls.browser = PhantomJS()
         wait_that(localhost, listen_port(8080))
 
     @classmethod
@@ -55,11 +55,11 @@ class TestServerToBrowser(TestCase):
                   call_with().returns(self.expected_message))
 
     def test_server_to_browser_with_exception(self):
-        def object_throws_exception():
+        def arbitrary_remote_exception():
             try:
                 self.message.get_error()
                 return False
             except UnknownLocalException:
                 return True
 
-        wait_that(object_throws_exception, call_with().returns(True))
+        wait_that(arbitrary_remote_exception, call_with().returns(True))
