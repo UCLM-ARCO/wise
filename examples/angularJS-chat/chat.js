@@ -1,10 +1,20 @@
 // -*- mode: js; coding: utf-8 -*-
 
+//This is jquery way to proceed. There are good ways to do this using angular.
 members = {};
 
-var chatApp = angular.module('chatApp', ['ui.bootstrap']);
+function template(name) {
+    return $('#TEMPLATES > .' + name).clone().wrap('<p>').parent().html();
+}
+
+function widget_animate(widget) {
+    widget.stop().animate({ scrollTop: widget[0].scrollHeight }, 800);
+};
 
 //AngularJS
+//Module
+var chatApp = angular.module('chatApp', []);
+
 //Controllers
 function loginCtrl($scope, loginInfo) {
     $scope.login = function() {
@@ -22,10 +32,10 @@ function loginCtrl($scope, loginInfo) {
     });
 };
 
-
 function chatCtrl($scope, $window, Servant, loginInfo, Member) {
     $scope.$on('loginSucess', function(event, nickname){
 	$scope.logged = true;
+	$scope.private = false;
 	$scope.nickname = nickname;
 	$scope.members = $window.members;
 	$scope.destination = 'Channel';
@@ -47,7 +57,7 @@ function chatCtrl($scope, $window, Servant, loginInfo, Member) {
     };
 
     $scope.select = function (member) {
-	if(member.nick == $scope.nickname)
+	if(member.nick == $scope.nickname + '<you>')
 	    return;
 	$scope.destination = member.nick;
 	member.new_messages = 0;
@@ -55,21 +65,6 @@ function chatCtrl($scope, $window, Servant, loginInfo, Member) {
     };
 };
 
-//Directives
-chatApp.directive('scrollChat', function () {
-  return {
-    link: function postLink(scope, element, attrs) {
-      scope.$watch(
-        function () {
-          return element.children().length;
-        },
-        function () {
-          element.animate({ scrollTop: element.prop('scrollHeight')}, 1000);
-        }
-      );
-    }
-  };
-});
 
 //Services
 chatApp.service('loginInfo', function($rootScope, $window) {
@@ -97,7 +92,7 @@ chatApp.service('loginInfo', function($rootScope, $window) {
 
 chatApp.factory('Member', function(){
     function Member(nick, proxy) {
-	this.nick = nick;
+	this.nick = (nick !== 'Channel' && nick === _nickname) ? nick + '<you>': nick;
 	this.proxy = proxy;
 	this.private_messages = [];
 	this.new_messages = 0;
@@ -105,9 +100,8 @@ chatApp.factory('Member', function(){
 
     Member.prototype = {
 	append: function(message) {
-		this.new_messages++;
-		this.private_messages.push(message);
-// angular.element("private o incoming").$compile(<b> </b>)
+	    this.new_messages++;
+	    this.private_messages.push(message);
 	},
     }
 
@@ -116,6 +110,7 @@ chatApp.factory('Member', function(){
 
 chatApp.factory("Servant", function($rootScope, $window, Member) {
     function Servant() {
+	index = 0;
 	$window.members['Channel'] = new Member("Channel", $window.chatroom);
     }
 
@@ -124,13 +119,18 @@ chatApp.factory("Servant", function($rootScope, $window, Member) {
 	    $rootScope.$apply(function(){
 		var private = (send_info.destination !== 'Channel');
 		if(private){
-			var my_self = (send_info.source == _nickname);
-			var member = my_self ? send_info.destination :
-			    send_info.source;
-			$window.members[member].append(message);
+		    var my_self = (send_info.source == _nickname);
+		    var member = my_self ? send_info.destination :
+			send_info.source;
+		    $window.members[member].append(message);
 		}
 		else{
+		    index++;
 		    $window.members[send_info.destination].append(message);
+		    var html = "<b id=" + index + ">"+ message + "</b> <br />";
+		    $("#incoming").append(html);
+		    $window.widget_animate($("#incoming"));
+
 		}
 	    });
 	},
@@ -146,6 +146,7 @@ chatApp.factory("Servant", function($rootScope, $window, Member) {
 	notify_removed_member: function(nick) {
 	    $rootScope.$apply(function() {
 		delete $window.members[nick];
+		$('#member-' + nick).remove();
 	    });
 	},
     };
