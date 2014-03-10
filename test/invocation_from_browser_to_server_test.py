@@ -5,13 +5,13 @@ import os
 from unittest import TestCase
 from doublex import Spy, called, ANY_ARG
 from hamcrest import anything
-from commodity.testing import wait_that, call_with, assert_that
+from commodity.testing import wait_that, call_with
 from commodity.net import localhost, listen_port
 
-from brimstone import PhantomJS
+from brimstone import PhantomJS, Chrome
 
 sys.path.insert(0, os.path.dirname(__file__))
-from server import Server
+from server import Servertest.S2B_proxy_marshalling_test.TestCheckProxyInvocations
 
 
 class BrowserToServerTests(TestCase):
@@ -36,7 +36,7 @@ class BrowserToServerTests(TestCase):
         cls.servant = servant
 
         cls.server = Server(cls.servant)
-        cls.browser = PhantomJS()
+        cls.browser = Chrome()
 
         wait_that(localhost, listen_port(8080))
 

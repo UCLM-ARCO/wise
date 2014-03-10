@@ -236,9 +236,13 @@ Transceiver: Class.extend({
 
     // args: request, callback
     send_request: function(args) {
-	log.debug("Transceiver send_request: ", args.request);
+	log.debug("Transceiver send_request: ", args);
 
-    	args.request.request_id = this._request_id;
+	if(!args.request.request_id)
+    	    args.request.request_id = this._request_id;
+	else
+	    this._request_id = args.request.request_id;
+
     	this._response_callbacks[this._request_id] = args.callback;
 
     	if (this._websocket.readyState != WebSocket.OPEN) {
@@ -418,27 +422,26 @@ Transceiver: Class.extend({
 
     _process_incoming_error_reply: function(reply) {
     	var callback = this._response_callbacks[reply.request_id];
+	_("ERROR REPLY. reply: ", reply);
+	_("ERROR REPLY. _response_callbacks", callback);
     	if (! callback) {
 	    // FIXME: callback never deleted
     	    return;
     	}
 
 	var exception = this._unmarshall_exception(reply.error);
-
+	_("EXCEPTION: ", exception);
 	if (callback.onRejected === undefined) {
 	    log.error("Error received, but no callback defined:",
 		      exception);
 
 	}
 
+
 	callback.reject(exception);
     	delete this._response_callbacks[reply.request_id];
-	if(exception.name == "ObjectNotExistException"){
-	    throw new wise.WiseException("ObjectNotExistException", msg);
-	}
-	if(exception.name == "OperationNotExistException"){
-	    throw new wise.WiseException("OperationNotExistException", msg);
-	}
+
+	throw exception;
     },
 
     _unmarshall_exception: function(error) {
@@ -902,6 +905,7 @@ Promise: Class.extend({
     },
 
     then: function(onFulfilled, onRejected) {
+	_("THEN: ", onRejected);
 	var promise = new wise.Promise();
 
 	if (typeof(onFulfilled) !== 'function')
@@ -920,10 +924,12 @@ Promise: Class.extend({
 		  'onFulfilled': onFulfilled,
 		  'onRejected': onRejected};
 	this.callbacks.push(cb);
+	_("callbacks: ", this.callbacks);
 	return promise;
     },
 
     "catch": function(onRejected) {
+	_("CATCH: ", this);
 	return this.then(undefined, onRejected);
     },
 
@@ -944,6 +950,7 @@ Promise: Class.extend({
     },
 
     reject: function(reason) {
+	_("REJECT: ", reason);
 	this.check_resolved();
 	this.reason = reason;
 

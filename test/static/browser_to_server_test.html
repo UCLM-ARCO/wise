@@ -57,21 +57,24 @@
 	    remote.not_existing_method()
 	}
 	catch(exception){
-		_("Excepcion: ", exception);
-		$('#error').val("OperationNotExistException");
+	    _("Excepcion: ", exception);
+	    if(exception.name == "OperationNotExistException"){
+		$('#error').val(exception.name);
+	    }
 	};
     }
 
     function throw_object_exception() {
-	try{
-	    serverPrx = broker.stringToProxy("notExistingID -w ws -h 127.0.0.1 -p 8080");
-	    serverPrx.get_message();
-	}
-	catch(exception){
-		_("Excepcion: ", exception);
-		$('#error').val("ObjectNotExistException");
-	};
-    }
+	// try{
+	    // serverPrx.get_message()
+	    serverPrx = broker.stringToProxy("notExistingID -w ws -h 127.0.0.1 -p 8080")
+	    .catch(function(exception){
+		_("Test Excepcion: ", exception);
+		$('#error').val(exception.name);
+		// if(exception.name == "ObjectNotExistException"){
+		// }
+	    });
+    };
     </script>
 
   </body>

@@ -46,7 +46,12 @@ class TestCheckProxyInvocations(TestCase):
         assert_that(self.servant.upper,
                     called().with_args("example message", anything()))
 
-    def test_DOM_is_updated(self):
+        # This test invoke a browser proxy. The browser Proxy invoke
+        # a server proxy with and string and the server proxy
+        # response with this string in uppercase and the reply
+        # should update an input.
+        # The test check if that input is updated.
+    def test_invocation_from_browser_to_server_update_DOM(self):
         self.browserPrx.set_proxy(self.serverPrx)
 
         div = self.browser.find_element("#response")
