@@ -11,7 +11,7 @@ from commodity.net import localhost, listen_port
 from brimstone import PhantomJS, Chrome
 
 sys.path.insert(0, os.path.dirname(__file__))
-from server import Servertest.S2B_proxy_marshalling_test.TestCheckProxyInvocations
+from server import Server
 
 
 class BrowserToServerTests(TestCase):
@@ -36,7 +36,7 @@ class BrowserToServerTests(TestCase):
         cls.servant = servant
 
         cls.server = Server(cls.servant)
-        cls.browser = Chrome()
+        cls.browser = PhantomJS()
 
         wait_that(localhost, listen_port(8080))
 

@@ -379,9 +379,16 @@ Transceiver: Class.extend({
 	catch (exception) {
 	    this._send_response({
 		request_id: message.request_id,
-		exception: new wise.WiseException("UnknownLocalException", exception)
+		exception: this._to_wise_exception(exception)
 	    });
     	}
+    },
+
+    _to_wise_exception: function(exception) {
+	if (exception instanceof wise.WiseException)
+	    return exception;
+
+	return new wise.WiseException("UnknownLocalException", exception.message);
     },
 
     // args: request_id, result, exception
@@ -431,13 +438,12 @@ Transceiver: Class.extend({
 	if (callback.onRejected === undefined) {
 	    log.error("Error received, but no callback defined:",
 		      exception);
-
 	}
-
 
 	callback.reject(exception);
     	delete this._response_callbacks[reply.request_id];
 
+	// FIXME: is this required/convenient ??
 	throw exception;
     },
 
@@ -449,8 +455,7 @@ Transceiver: Class.extend({
 	throw new wise.WiseException("ProtocolException",
 				     "invalid message recived! (" + JSON.stringify(message) + ")");
 
-    	log.error("invalid message recived! ("
-    		  + JSON.stringify(message) + ")");
+    	log.error("invalid message recived! (" + JSON.stringify(message) + ")");
     },
 }),
 
