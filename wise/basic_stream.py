@@ -53,7 +53,7 @@ def class_to_marshable(value):
 
 def exception_to_marshable(exc):
     assert isinstance(exc, Exception)
-    return [exc.__class__.__name__, exc.message]
+    return [exc.__class__.__name__, str(exc)]
 
 
 def get_typecode(value):
