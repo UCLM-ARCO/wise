@@ -14,7 +14,7 @@ import settings
 logger = logging.getLogger("Wise")
 logger.setLevel(logging.DEBUG)
 
-pwd = os.path.abspath(os.path.dirname(__file__))
+pwd = os.path.abspath(os.path.dirname(settings.__file__))
 
 
 class MultiPathLoader(template.BaseLoader):
@@ -49,6 +49,9 @@ class ErrorHandler(web.RequestHandler):
         return os.path.join(pwd, "templates/")
 
     def prepare(self):
+        if not hasattr(self, "status_code"):
+            return
+
         if self.status_code == 404:
             return self.render("error404.html")
 
@@ -75,21 +78,23 @@ class AppServer(object):
     def register_apps(self):
         for app_name in settings.INSTALLED_APPS:
             if not self.app_is_healthy(app_name):
-                logger.warning("could no load '{}' app".format(app_name))
+                logger.warning("could not load '{}' app".format(app_name))
                 continue
 
             self.initialize_app(app_name)
             self.register_static_handler_for_app(app_name)
             self.register_views_for_app(app_name)
+            self.register_servants_for_app(app_name)
 
         self.register_common_static_handler()
         self.register_common_urls()
 
     def app_is_healthy(self, app_name):
         try:
-            urls = importlib.import_module(".{}.urls".format(app_name), self.name)
-        except ImportError:
-            logger.warning("app '{}' has not module called urls".format(app_name))
+            urls = importlib.import_module("{}.urls".format(app_name), self.name)
+        except ImportError as e:
+            logger.warning(str(e))
+            logger.warning("could not load urls from module '{}'".format(app_name))
             return False
 
         if not hasattr(urls, "urlpatterns"):
@@ -99,7 +104,7 @@ class AppServer(object):
         return True
 
     def initialize_app(self, name):
-        module = importlib.import_module(".{}".format(name), self.name)
+        module = importlib.import_module("{}".format(name), self.name)
         if hasattr(module, "init_app"):
             module.init_app(self.broker, self.wise_adapter)
 
@@ -122,12 +127,12 @@ class AppServer(object):
     def register_views_for_app(self, name):
         common_templates_path = os.path.join(pwd, "templates/")
 
-        urls = importlib.import_module(".{}.urls".format(name), self.name)
-        for locator, handler in urls.urlpatterns.items():
+        urls = importlib.import_module("{}.urls".format(name), self.name)
+        for locator, handler_ in urls.urlpatterns.items():
             url = "^/{}/{}".format(name, locator)
 
             class RequestHandler(web.RequestHandler):
-                _handler = handler
+                handler = handler_
 
                 def get(self):
                     context = {
@@ -153,8 +158,16 @@ class AppServer(object):
             app = RequestHandlerApp(self.ws, url)
             self.ws.registerApplication(app)
 
+    def register_servants_for_app(self, name):
+        try:
+            servants = importlib.import_module("{}.servants".format(name), self.name)
+            servants.register_servants(self.wise_adapter)
+        except Exception as e:
+            logger.warning(str(e))
+            logger.warning("could not load servants from module '{}'".format(name))
+            return
+
     def register_common_static_handler(self):
-        pwd = os.path.abspath(os.path.dirname(__file__))
         path = os.path.join(pwd, "static/")
         static_app = StaticFSApplication(self.ws, '/static/', path)
         self.ws.registerApplication(static_app)
@@ -162,12 +175,16 @@ class AppServer(object):
     def register_common_urls(self):
         common_templates_path = os.path.join(pwd, "templates/")
 
-        urls = importlib.import_module("urls", self.name)
-        for locator, handler in urls.urlpatterns.items():
+        try:
+            urls = importlib.import_module("urls", self.name)
+        except ImportError:
+            return
+
+        for locator, handler_ in urls.urlpatterns.items():
             url = "^/{}".format(locator)
 
             class RequestHandler(web.RequestHandler):
-                _handler = handler
+                handler = handler_
 
                 def get(self):
                     return self.handler({})
