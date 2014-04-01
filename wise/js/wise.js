@@ -997,8 +997,8 @@ Promise: Class.extend({
 	    return;
 	}
 
-	// If x is not an object or function, fulfill promise with x.
-	if (typeof(x) != 'function' && typeof(x) != 'object') {
+	// If x is not an object or function, or x is null, fulfill promise with x.
+	if (typeof(x) != 'function' && typeof(x) != 'object' || x === null) {
 	    promise.resolve(x);
 	    return;
 	}
@@ -1044,11 +1044,17 @@ map: function(array, callable) {
     // https://github.com/cujojs/when/blob/master/when.js
 
     function resolveOne(item, i) {
-	cast(item).then(callable).then(function(retval) {
-	    results[i] = retval;
-	    if (!--len)
-		promise.resolve(results);
-	});
+	cast(item).then(callable).then(
+	    function(retval) {
+		results[i] = retval;
+		if (!--len)
+		    promise.resolve(results);
+	    },
+
+	    function(error) {
+		log.error("error on wise.map:", error.message);
+	    }
+	);
     }
 
     function cast(x) {
