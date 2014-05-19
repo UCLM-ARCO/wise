@@ -39,7 +39,6 @@ Servant = Class.extend({
 });
 
 function wise_application(ws) {
-    broker = ws;
     members = {};
 
     // create an object adapter to register our servant

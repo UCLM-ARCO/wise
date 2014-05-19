@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html ng-app="chat">
+  <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.9/angular.js"></script>
+    <script src="http://angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.10.0.js"></script>
+    <script src="https://code.jquery.com/jquery.js"></script>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
+
+    <script src="/wise/js/wise.js"></script>
+    <script src="/static/chat.js"></script>
+
+      <style type="text/css" media="screen">
+	 body {
+           font-family: helvetica;
+        }
+	#login, #chat {
+	   margin-top: 50px;
+	}
+	#incoming {
+	   height: 200px;
+	   overflow: auto;
+	}
+
+	#private {
+	   height: 200px;
+	   overflow: auto;
+	}
+
+ 	#members {
+ 	   height: 212px;
+ 	}
+      </style>
+  </head>
+  <body>
+
+    <div ng-controller="loginCtrl" ng-hide="logged" class="container">
+      <div id="login" class="jumbotron">
+
+	<h2><b>AngularJS-wise</b> chat example</h2>
+
+	<p>
+	  In this example, the browser holds an object to receive incoming
+	  text messages. That object is registered in the chat server
+	  using the subscribe() method.
+	</p>
+
+	<p>
+	  The chat room or the other room members send messages to you
+	  using that proxy.  None of the invocations require replies.
+	</p>
+
+	<form name="loginBox">
+	  <div class="row">
+	    <div class="col-xs-6 col-xs-offset-3">
+
+	      <div class="input-group row">
+		<input type="text" ng-model="nickname" class="form-control"
+		  placeholder="nickname" autofocus required/>
+		  <span class="input-group-btn">
+		    <button class="btn btn-default" ng-click="login(nickname)"
+		      ng-disabled="loginBox.$invalid">Go!</button>
+		  </span>
+	      </div>
+
+	    </div>
+	  </div>
+	</form>
+	<div ng-show="login_failed">
+	  Try another nickname. {{error}}
+	</div>
+      </div>
+
+    </div>
+
+    <div ng-controller="chatCtrl" id="chat" class="container" ng-show="logged">
+
+      <div class="row">
+
+	<div class="col-xs-8">
+	  <div class="panel panel-default">
+
+	    <b> Destination: {{destination}}      </b>
+
+
+	    <div id="incoming" ng-hide="private">
+	    </div>
+
+	    <div id="private" ng-show="private">
+	      <div>
+		<b ng-repeat="message in messages track by $index"> {{message}} <br /></b>
+	      </div>
+	    </div>
+	    <form name="chatBox">
+	      <div class="panel-footer">
+		<div class="input-group">
+		  <input class="form-control" ng-model="message" autofocus required/>
+		    <span class="input-group-btn">
+		      <button class="btn btn-default" ng-click="send()"
+			ng-disabled="chatBox.$invalid">Send!</button>
+		    </span>
+		</div>
+	      </div>
+	    </form>
+
+	  </div>
+	  <p>(Control-F5 forces page refresh)</p>
+	</div>
+
+	<div class="col-xs-4">
+
+	  <div id="members" class="list-group">
+	    <a class="list-group-item active" >Members:	    </a>
+	    <a class="list-group-item" ng-repeat="member in members track by $index" ng-click="select(member)">
+	      <span >{{member.nick}}</span>
+	      <span class="badge pull-right"> {{member.new_messages}}</span>
+	    </a>
+	  </div>
+	</div>
+
+      </div>
+
+    </div>
+
+  </body>
+</html>

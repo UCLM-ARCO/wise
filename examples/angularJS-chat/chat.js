@@ -17,6 +17,8 @@ var chatApp = angular.module('chatApp', []);
 
 //Controllers
 function loginCtrl($scope, loginInfo) {
+    $scope.nickname = wise.Util.generate_UUID();
+
     $scope.login = function() {
 	loginInfo.login($scope.nickname);
     };
@@ -64,7 +66,6 @@ function chatCtrl($scope, $window, Servant, loginInfo, Member) {
 	$scope.private = ($scope.destination !== 'Channel');
     };
 };
-
 
 //Services
 chatApp.service('loginInfo', function($rootScope, $window) {
@@ -117,21 +118,24 @@ chatApp.factory("Servant", function($rootScope, $window, Member) {
     Servant.prototype = {
 	send: function(send_info, message) {
 	    $rootScope.$apply(function(){
-		var private = (send_info.destination !== 'Channel');
-		if(private){
-		    var my_self = (send_info.source == _nickname);
-		    var member = my_self ? send_info.destination :
-			send_info.source;
-		    $window.members[member].append(message);
-		}
-		else{
-		    index++;
-		    $window.members[send_info.destination].append(message);
-		    var html = "<b id=" + index + ">"+ message + "</b> <br />";
-		    $("#incoming").append(html);
-		    $window.widget_animate($("#incoming"));
+		_(send_info);
 
-		}
+		$window.members["Channel"].append(message);
+
+//		var private = (send_info.destination !== 'Channel');
+//		if(private){
+//		    var my_self = (send_info.source == _nickname);
+//		    var member = my_self ? send_info.destination : send_info.source;
+//		    $window.members[member].append(message);
+//		}
+//		else{
+//		    index++;
+//		    $window.members[send_info.destination].append(message);
+//		    var html = "<b id=" + index + ">"+ message + "</b> <br />";
+//		    $("#incoming").append(html);
+//		    $window.widget_animate($("#incoming"));
+//
+//		}
 	    });
 	},
 
