@@ -13,12 +13,17 @@ chat.factory("RoomListener", function($rootScope) {
 
 	notify_removed_member: function(nick) {
 	},
-    })();
+    });
+});
+
+Member = Class.extend({
+
 });
 
 function loginCtrl($rootScope, $scope) {
     $scope.nickname = wise.Util.generate_UUID();
     $rootScope.logged = false;
+    $rootScope.members = {};
 
     $scope.login = function(nick) {
 	$rootScope.my_nick = nick;
@@ -28,6 +33,10 @@ function loginCtrl($rootScope, $scope) {
 	    chatroom.subscribe(nick, room_listener);
 	    $scope.$apply(function () {
 		$rootScope.logged = true;
+
+		var channel_id = "Channel";
+		var channel = new Member(channel_id);
+		$rootScope.members[channel_id] = channel;
 	    });
 	};
 
@@ -46,12 +55,11 @@ function wise_application(ws) {
 	.then(on_adapter_ready);
 
     function on_adapter_ready(adapter) {
-	var injector = angular.injector(['ng']);
-	injector.get('RoomListener');
-	//injector.invoke(function(RoomListener) {
-	    // var servant = new RoomListener();
-	    // room_listener = adapter.addWithUUID(servant);
-	//});
+	var injector = angular.injector(['ng', 'chat']);
+	injector.invoke(function(RoomListener) {
+	    var servant = new RoomListener();
+	    room_listener = adapter.addWithUUID(servant);
+	});
     };
 
     ws.stringToProxy("chat1 -w ws1")
