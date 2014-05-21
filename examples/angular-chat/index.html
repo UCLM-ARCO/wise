@@ -2,6 +2,7 @@
 <html ng-app="chat">
   <head>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.9/angular.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.9/angular-animate.js"></script>
     <script src="http://angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.10.0.js"></script>
     <script src="https://code.jquery.com/jquery.js"></script>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
@@ -19,11 +20,6 @@
 	}
 
 	.incoming {
-	   height: 200px;
-	   overflow: auto;
-	}
-
-	#private {
 	   height: 200px;
 	   overflow: auto;
 	}
@@ -89,7 +85,7 @@
 		 ng-repeat="member in members"
 		 ng-show="member.selected">
 	      <b>Destination: {{member.nick}}</b>
-	      <div ng-repeat="message in member.messages">
+	      <div ng-repeat="message in member.messages" scroll-on-done="member">
 		<b>{{message.sender}}: </b>{{message.content}}
 	      </div>
 	    </div>

@@ -1,7 +1,7 @@
 // -*- mode: js; coding: utf-8 -*-
 
 var channel_id = "Channel";
-var chat = angular.module('chat', []);
+var chat = angular.module('chat', ['ngAnimate']);
 
 chat.factory("RoomListener", function($rootScope) {
     return Class.extend({
@@ -32,6 +32,15 @@ chat.factory("RoomListener", function($rootScope) {
 	    });
 	},
     });
+});
+
+
+chat.directive('scrollOnDone', function() {
+    return function(scope, elements, attrs) {
+	_("Scroll now!!");
+	var elem = $(elements[0]);
+	elem.stop().animate({scrollTop: elem[0].scrollHeight }, 800);
+    }
 });
 
 Member = Class.extend({
@@ -120,14 +129,20 @@ function chatCtrl($rootScope, $scope) {
     };
 
     $scope.send_message = function() {
-	var is_private = $rootScope.current_member.nick !== channel_id;
+	var dest = $rootScope.current_member;
+	var is_private = dest.nick !== channel_id;
 
-	$rootScope.current_member.proxy
-	    .send($rootScope.my_nick, $scope.message, is_private)
+	dest.proxy.send($rootScope.my_nick, $scope.message, is_private)
 	    .catch(function(error) {
-		log.error("sending message to '{0}'".format(
-		    $rootScope.current_member.nick));
+		var msg = "sending message to '{0}'".format(dest.nick);
+		$rootScope.error_log = msg;
+		log.error(msg, error);
 	    });
+
+	if (dest.nick !== channel_id)
+	    dest.new_message($rootScope.my_nick, $scope.message);
+
+	$scope.message = "";
     };
 };
 
