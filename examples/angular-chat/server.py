@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- mode:python; coding:utf-8; tab-width:4 -*-
 
+import sys
 import wise
 from commodity.pattern import memoized
 
@@ -56,8 +57,8 @@ class ChatManager(object):
 
 class Server(object):
     def __init__(self):
-        broker = wise.initialize(host="127.0.0.1",
-            properties = {"TornadoApp.debug": True})
+        host = sys.argv[1] if len(sys.argv) > 1 else "127.0.0.1"
+        broker = wise.initialize(host=host, properties = {"TornadoApp.debug": True})
         adapter = broker.createObjectAdapter("ServerAdapter", "-w ws1")
         adapter.add(ChatManager(), "chat1")
         broker.register_StaticFS('/static', wise.dirname(__file__))

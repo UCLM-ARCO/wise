@@ -1088,11 +1088,8 @@ identity: function(x) {
 WiseException: function(name, message) {
     this.name = name;
     this.message = message;
-
-    // this.toString = function() {
-    // 	return this.name + ': ' + this.message;
-    // }
 },
+
 }; // wise namespace
 
 wise.WiseException.prototype = new Error();

@@ -1,29 +1,84 @@
 // -*- mode: js; coding: utf-8 -*-
 
+var channel_id = "Channel";
 var chat = angular.module('chat', []);
 
 chat.factory("RoomListener", function($rootScope) {
     return Class.extend({
-	send: function(nick, message) {
-	    _(nick, message);
+	send: function(nick, message, is_private) {
+	    $rootScope.$apply(function() {
+		var member = is_private ? nick : channel_id;
+		$rootScope.members[member].new_message(nick, message);
+	    });
 	},
 
 	notify_added_member: function(nick) {
+	    $rootScope.$apply(function() {
+		if (! (nick in $rootScope.members)) {
+		    var member = new Member(nick);
+		    $rootScope.members[nick] = member;
+		    member.resolve_proxy();
+		}
+	    });
 	},
 
 	notify_removed_member: function(nick) {
+	    $rootScope.$apply(function() {
+		if (nick in $rootScope.members)
+		    delete $rootScope.members[nick]
+
+		if (nick == $rootScope.current_member.nick)
+		    $rootScope.select_member($rootScope.members[channel_id]);
+	    });
 	},
     });
 });
 
 Member = Class.extend({
+    init: function(nick) {
+	this.nick = nick;
+	this.messages = [];
+	this.selected = false;
+	this.proxy = chatroom;
+	this.new_message_count = 0;
+    },
 
+    select: function(selected) {
+	this.selected = selected;
+	if (selected)
+	    this.new_message_count = 0;
+    },
+
+    resolve_proxy: function() {
+	var self = this;
+	chatroom.get_member(this.nick).then(
+	    function(proxy) {
+		self.proxy = proxy;
+	    },
+
+	    function(error) {
+		// FIXME: issue a warning and remove member
+		log.error("resolving proxy of member {0}".format(self.nick));
+	    });
+    },
+
+    new_message: function(sender, message) {
+	this.messages.push({sender: sender, content: message});
+	if (!this.selected)
+	    this.new_message_count++;
+    },
 });
 
 function loginCtrl($rootScope, $scope) {
-    $scope.nickname = wise.Util.generate_UUID();
-    $rootScope.logged = false;
     $rootScope.members = {};
+
+    $rootScope.clear_error = function() { $rootScope.error_log = ""; }
+    $rootScope.clear_warning = function() { $rootScope.warning_log = ""; }
+
+    $rootScope.clear_log = function() {
+	this.clear_error();
+	this.clear_warning();
+    };
 
     $scope.login = function(nick) {
 	$rootScope.my_nick = nick;
@@ -32,30 +87,58 @@ function loginCtrl($rootScope, $scope) {
 	function on_login_success() {
 	    chatroom.subscribe(nick, room_listener);
 	    $scope.$apply(function () {
-		$rootScope.logged = true;
+	     	$rootScope.logged = true;
 
-		var channel_id = "Channel";
-		var channel = new Member(channel_id);
+	     	var channel = new Member(channel_id);
+		channel.select(true);
 		$rootScope.members[channel_id] = channel;
+		$rootScope.current_member = channel;
+		$rootScope.clear_log();
 	    });
 	};
 
-	function on_login_fail() {
-	    _("fail");
+	function on_login_fail(e) {
+	    $scope.$apply(function () {
+		var msg = "login failed for user '{0}': {1}".format(e.message, e.name);
+		$rootScope.error_log = msg;
+		log.error(msg);
+	    });
 	};
     }
 };
 
-function chatCtrl($scope) {
+function chatCtrl($rootScope, $scope) {
+    $rootScope.select_member = function(member) {
+	if (member.nick == $rootScope.my_nick) {
+	    $rootScope.warning_log = "internal dialog is not supported";
+	    return;
+	}
+
+	$rootScope.current_member.select(false);
+	$rootScope.current_member = member;
+	member.select(true);
+    };
+
+    $scope.send_message = function() {
+	var is_private = $rootScope.current_member.nick !== channel_id;
+
+	$rootScope.current_member.proxy
+	    .send($rootScope.my_nick, $scope.message, is_private)
+	    .catch(function(error) {
+		log.error("sending message to '{0}'".format(
+		    $rootScope.current_member.nick));
+	    });
+    };
 };
 
 function wise_application(ws) {
+    log.set_level(1);
 
     ws.createObjectAdapter("Adapter")
 	.then(on_adapter_ready);
 
     function on_adapter_ready(adapter) {
-	var injector = angular.injector(['ng', 'chat']);
+	var injector = angular.element(document).injector();
 	injector.invoke(function(RoomListener) {
 	    var servant = new RoomListener();
 	    room_listener = adapter.addWithUUID(servant);
@@ -67,214 +150,4 @@ function wise_application(ws) {
 	    chatroom = proxy;
 	});
 
-// 	    chatroom = proxy;
-// 	    servant = angular.injector(['ng', 'chatApp'])
-// 		.invoke(function(Servant) {
-// 		    return new Servant();
-// 		});
-// 	    room_listener = adapter.addWithUUID(servant);
-// 	    ws.ready();
-
-//     function on_adapter_ready(adapter) {
-// 	ws.stringToProxy("chat1 -w ws1")
-// 	    .then(on_stringToProxy_response);
-
-// 	function on_stringToProxy_response(proxy) {
-// 	    chatroom = proxy;
-// 	    servant = angular.injector(['ng', 'chatApp'])
-// 		.invoke(function(Servant) {
-// 		    return new Servant();
-// 		});
-// 	    room_listener = adapter.addWithUUID(servant);
-// 	    ws.ready();
-
-// 	    return;
-// 	}
-//     }
-}
-
-
-// //This is jquery way to proceed. There are good ways to do this using angular.
-// members = {};
-
-// function template(name) {
-//     return $('#TEMPLATES > .' + name).clone().wrap('<p>').parent().html();
-// }
-
-// function widget_animate(widget) {
-//     widget.stop().animate({ scrollTop: widget[0].scrollHeight }, 800);
-// };
-
-// //AngularJS
-// //Module
-// var chatApp = angular.module('chatApp', []);
-
-// //Controllers
-// function loginCtrl($scope, loginInfo) {
-//     $scope.nickname = wise.Util.generate_UUID();
-
-//     $scope.login = function() {
-// 	loginInfo.login($scope.nickname);
-//     };
-
-//     $scope.$on('loginSucess', function(event) {
-// 	$scope.logged = true;
-//     });
-
-//     $scope.$on('loginFailed', function(event, error) {
-// 	$scope.login_failed = true;
-// 	$scope.error = error[0];
-// 	$scope.nickname = '';
-//     });
-// };
-
-// function chatCtrl($scope, $window, Servant, loginInfo, Member) {
-//     $scope.$on('loginSucess', function(event, nickname){
-// 	$scope.logged = true;
-// 	$scope.private = false;
-// 	$scope.nickname = nickname;
-// 	$scope.members = $window.members;
-// 	$scope.destination = 'Channel';
-//     });
-
-//     $scope.send = function() {
-// 	var send_info = {source: $scope.nickname,
-// 			destination: $scope.destination}
-// 	var message  = $scope.nickname + ": " + $scope.message;
-
-// 	$scope.members[send_info.destination].proxy
-// 	    .send(send_info, message)
-// 	    .then(function() {
-// 		$scope.$apply(function (){
-// 		    $scope.messages = $window.members[$scope.destination].private_messages;
-// 		    $scope.message = '';
-// 		});
-// 	    });
-//     };
-
-//     $scope.select = function (member) {
-// 	if(member.nick == $scope.nickname + '<you>')
-// 	    return;
-// 	$scope.destination = member.nick;
-// 	member.new_messages = 0;
-// 	$scope.private = ($scope.destination !== 'Channel');
-//     };
-// };
-
-// //Services
-// chatApp.service('loginInfo', function($rootScope, $window) {
-//     return {
-// 	login: function(nickname) {
-// 	    _nickname = nickname;
-// 	    $window.chatroom.login(_nickname)
-// 		.then(login_sucess, login_fail);
-
-// 	    function login_sucess() {
-// 		$rootScope.$apply(function() {
-// 		    $window.chatroom.subscribe(_nickname, $window.room_listener);
-// 		    $rootScope.$broadcast('loginSucess', _nickname);
-// 		});
-// 	    };
-
-// 	    function login_fail(error){
-// 		$rootScope.$apply(function() {
-// 		    $rootScope.$broadcast('loginFailed', error);
-// 		});
-// 	    }
-// 	}
-//     };
-// });
-
-// chatApp.factory('Member', function(){
-//     function Member(nick, proxy) {
-// 	this.nick = (nick !== 'Channel' && nick === _nickname) ? nick + '<you>': nick;
-// 	this.proxy = proxy;
-// 	this.private_messages = [];
-// 	this.new_messages = 0;
-//     }
-
-//     Member.prototype = {
-// 	append: function(message) {
-// 	    this.new_messages++;
-// 	    this.private_messages.push(message);
-// 	},
-//     }
-
-//     return(Member);
-// });
-
-// chatApp.factory("Servant", function($rootScope, $window, Member) {
-//     function Servant() {
-// 	index = 0;
-// 	$window.members['Channel'] = new Member("Channel", $window.chatroom);
-//     }
-
-//     Servant.prototype = {
-// 	send: function(send_info, message) {
-// 	    $rootScope.$apply(function(){
-// 		_(send_info);
-
-// 		$window.members["Channel"].append(message);
-
-// //		var private = (send_info.destination !== 'Channel');
-// //		if(private){
-// //		    var my_self = (send_info.source == _nickname);
-// //		    var member = my_self ? send_info.destination : send_info.source;
-// //		    $window.members[member].append(message);
-// //		}
-// //		else{
-// //		    index++;
-// //		    $window.members[send_info.destination].append(message);
-// //		    var html = "<b id=" + index + ">"+ message + "</b> <br />";
-// //		    $("#incoming").append(html);
-// //		    $window.widget_animate($("#incoming"));
-// //
-// //		}
-// 	    });
-// 	},
-
-// 	notify_added_member: function(nick) {
-// 	    $rootScope.$apply(function() {
-// 		if (nick in $window.members)
-// 		    return;
-// 		$window.members[nick] = new Member(nick, $window.chatroom);
-// 	    });
-// 	},
-
-// 	notify_removed_member: function(nick) {
-// 	    $rootScope.$apply(function() {
-// 		delete $window.members[nick];
-// 		$('#member-' + nick).remove();
-// 	    });
-// 	},
-//     };
-
-//     return(Servant);
-// });
-
-
-// //non-angular javascript
-// function wise_application(ws) {
-//     broker = ws;
-
-//     // create an object adapter to register our servant
-//     ws.createObjectAdapter("WebAdapter")
-// 	.then(on_adapter_ready);
-
-//     function on_adapter_ready(adapter) {
-// 	ws.stringToProxy("chat1 -w ws1")
-// 	    .then(on_stringToProxy_response);
-
-// 	function on_stringToProxy_response(proxy) {
-// 	    chatroom = proxy;
-// 	    servant = angular.injector(['ng', 'chatApp'])
-// 		.invoke(function(Servant) {
-// 		    return new Servant();
-// 		});
-// 	    room_listener = adapter.addWithUUID(servant);
-// 	    ws.ready();
-
-// 	    return;
-// 	}
-//     }
-// }
+};

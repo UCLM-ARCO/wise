@@ -10,13 +10,15 @@
     <script src="/static/chat.js"></script>
 
       <style type="text/css" media="screen">
-	 body {
+	body {
            font-family: helvetica;
         }
+
 	#login, #chat {
 	   margin-top: 50px;
 	}
-	#incoming {
+
+	.incoming {
 	   height: 200px;
 	   overflow: auto;
 	}
@@ -36,7 +38,7 @@
     <div ng-controller="loginCtrl" ng-hide="logged" class="container">
       <div id="login" class="jumbotron">
 
-	<h2><b>AngularJS-wise</b> chat example</h2>
+	<h2><b>AngularJS & wise</b> chat example</h2>
 
 	<p>
 	  In this example, the browser holds an object to receive incoming
@@ -55,19 +57,23 @@
 
 	      <div class="input-group row">
 		<input type="text" ng-model="nickname" class="form-control"
-		  placeholder="nickname" autofocus required/>
-		  <span class="input-group-btn">
-		    <button class="btn btn-default" ng-click="login(nickname)"
-		      ng-disabled="loginBox.$invalid">Go!</button>
-		  </span>
+		       placeholder="nickname" autofocus required/>
+		<span class="input-group-btn">
+		  <button class="btn btn-default" ng-click="login(nickname)"
+			  ng-disabled="loginBox.$invalid">Go!</button>
+		</span>
 	      </div>
 
 	    </div>
 	  </div>
 	</form>
-	<div ng-show="login_failed">
-	  Try another nickname. {{error}}
-	</div>
+
+      </div>
+
+      <div class="alert alert-danger alert-dismissable" ng-show="error_log">
+	<button type="button" class="close" data-dismiss="alert"
+		ng-click="clear_error()" aria-hidden="true">&times;</button>
+	<strong>Error: </strong>{{error_log}}
       </div>
 
     </div>
@@ -79,25 +85,24 @@
 	<div class="col-xs-8">
 	  <div class="panel panel-default">
 
-	    <b> Destination: {{destination}}      </b>
-
-
-	    <div id="incoming" ng-hide="private">
-	    </div>
-
-	    <div id="private" ng-show="private">
-	      <div>
-		<b ng-repeat="message in messages track by $index"> {{message}} <br /></b>
+	    <div class="incoming"
+		 ng-repeat="member in members"
+		 ng-show="member.selected">
+	      <b>Destination: {{member.nick}}</b>
+	      <div ng-repeat="message in member.messages">
+		<b>{{message.sender}}: </b>{{message.content}}
 	      </div>
 	    </div>
+
 	    <form name="chatBox">
 	      <div class="panel-footer">
 		<div class="input-group">
 		  <input class="form-control" ng-model="message" autofocus required/>
-		    <span class="input-group-btn">
-		      <button class="btn btn-default" ng-click="send()"
-			ng-disabled="chatBox.$invalid">Send!</button>
-		    </span>
+		  <span class="input-group-btn">
+		    <button class="btn btn-default"
+			    ng-click="send_message()"
+			    ng-disabled="chatBox.$invalid">Send!</button>
+		  </span>
 		</div>
 	      </div>
 	    </form>
@@ -107,16 +112,31 @@
 	</div>
 
 	<div class="col-xs-4">
-
 	  <div id="members" class="list-group">
-	    <a class="list-group-item active" >Members:	    </a>
-	    <a class="list-group-item" ng-repeat="member in members track by $index" ng-click="select(member)">
-	      <span >{{member.nick}}</span>
-	      <span class="badge pull-right"> {{member.new_messages}}</span>
+	    <a class="list-group-item active">Members:</a>
+	    <a class="list-group-item"
+	       ng-repeat="member in members track by $index"
+	       ng-click="select_member(member)">
+	      <span>{{member.nick}}</span>
+	      <span class="badge pull-right" ng-show="member.new_message_count">
+		{{member.messages.length}}
+	      </span>
 	    </a>
 	  </div>
 	</div>
 
+      </div>
+
+      <div class="alert alert-danger alert-dismissable" ng-show="error_log">
+	<button type="button" class="close" data-dismiss="alert"
+		aria-hidden="true" ng-click="clear_error()">&times;</button>
+	<strong>Error: </strong>{{error_log}}
+      </div>
+
+      <div class="alert alert-warning alert-dismissable" ng-show="warning_log">
+	<button type="button" class="close" data-dismiss="alert"
+		aria-hidden="true" ng-click="clear_warning()">&times;</button>
+	<strong>Warning: </strong>{{warning_log}}
       </div>
 
     </div>
