@@ -1,7 +1,7 @@
 // -*- mode: js; coding: utf-8 -*-
 
 var channel_id = "Channel";
-var chat = angular.module('chat', []);
+var chat = angular.module('chat', ['ngAnimate']);
 
 chat.factory("RoomListener", function($rootScope) {
     return Class.extend({
@@ -95,6 +95,8 @@ function loginCtrl($rootScope, $scope) {
 	this.clear_warning();
     };
 
+
+
     $scope.login = function(nick) {
 	$rootScope.my_nick = nick;
 	chatroom.login(nick).then(on_login_success, on_login_fail);
@@ -143,6 +145,7 @@ function chatCtrl($rootScope, $scope) {
 		var msg = "sending message to '{0}'".format(dest.nick);
 		$rootScope.error_log = msg;
 		log.error(msg, error);
+		$rootScope.$digest();
 	    });
 
 	if (dest.nick !== channel_id)
@@ -171,3 +174,13 @@ function wise_application(ws) {
 	    chatroom = proxy;
 	});
 };
+
+
+
+
+    // $rootScope.error_log = "errororor";
+    // setTimeout(function() {
+    // 	$scope.$apply(function () {
+    //  	    $rootScope.error_log = "";
+    // 	});
+    // }, 1000);

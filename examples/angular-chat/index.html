@@ -2,6 +2,7 @@
 <html ng-app="chat">
   <head>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.9/angular.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.9/angular-animate.js"></script>
     <script src="http://angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.10.0.js"></script>
     <script src="https://code.jquery.com/jquery.js"></script>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
@@ -26,6 +27,21 @@
  	#members {
  	   height: 212px;
  	}
+
+	.animate-hide {
+	    -webkit-transition:all linear 1s;
+	    transition:all linear 1s;
+	    opacity:1;
+	}
+
+	.animate-hide.ng-hide-add,
+	.animate-hide.ng-hide-remove {
+	    display:block!important;
+	}
+
+	.animate-hide.ng-hide {
+	    opacity:0;
+	}
       </style>
   </head>
   <body>
@@ -65,7 +81,7 @@
 
       </div>
 
-      <div class="alert alert-danger alert-dismissable" ng-show="error_log">
+      <div class="alert alert-danger alert-dismissable animate-hide" ng-show="error_log">
 	<button type="button" class="close" data-dismiss="alert"
 		ng-click="clear_error()" aria-hidden="true">&times;</button>
 	<strong>Error: </strong>{{error_log}}
