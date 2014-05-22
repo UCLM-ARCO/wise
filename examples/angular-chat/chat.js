@@ -1,7 +1,7 @@
 // -*- mode: js; coding: utf-8 -*-
 
 var channel_id = "Channel";
-var chat = angular.module('chat', ['ngAnimate']);
+var chat = angular.module('chat', []);
 
 chat.factory("RoomListener", function($rootScope) {
     return Class.extend({
@@ -14,6 +14,9 @@ chat.factory("RoomListener", function($rootScope) {
 
 	notify_added_member: function(nick) {
 	    $rootScope.$apply(function() {
+		if (nick === $rootScope.my_nick)
+		    return;
+
 		if (! (nick in $rootScope.members)) {
 		    var member = new Member(nick);
 		    $rootScope.members[nick] = member;
@@ -35,13 +38,16 @@ chat.factory("RoomListener", function($rootScope) {
 });
 
 
+// NOTE: this is not part of the controlle, is a new directive added
+// here for simplicity
+
 chat.directive('scrollOnDone', function() {
     return function(scope, elements, attrs) {
-	_("Scroll now!!");
-	var elem = $(elements[0]);
-	elem.stop().animate({scrollTop: elem[0].scrollHeight }, 800);
+	widget = $(elements[0]).parent();
+	widget.stop().animate({ scrollTop: widget[0].scrollHeight }, 800);
     }
 });
+
 
 Member = Class.extend({
     init: function(nick) {
@@ -164,5 +170,4 @@ function wise_application(ws) {
 	.then(function(proxy) {
 	    chatroom = proxy;
 	});
-
 };
