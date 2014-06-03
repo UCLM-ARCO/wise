@@ -1,11 +1,13 @@
-# -*- mode:python; coding:utf-8; tab-width:4 -*-
-
-##-- WARNING: be ware no including here nothing about encoding: JSON, BSON, etc.
+# -*- mode: python; coding: utf-8 -*-
 
 
 def any_to_marshable(value):
     if isinstance(value, str):
-        return unicode(value)
+        try:
+            return unicode(value)
+        except UnicodeDecodeError:
+            print "UnicodeDecodeError: '{0}'".format(value)
+            raise
 
     if isinstance(value, (unicode, int, bool, float, long)):
         return value
@@ -15,6 +17,9 @@ def any_to_marshable(value):
 
     if hasattr(value, 'to_marshable'):
         return value.to_marshable()
+
+    if hasattr(value, 'to_json'):
+        return value.to_json()
 
     if isinstance(value, (list, tuple)):
         return [any_to_marshable(x) for x in value]
