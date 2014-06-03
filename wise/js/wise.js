@@ -511,8 +511,9 @@ TransceiverFactory: Class.extend({
     },
 }),
 
+// FIXME: improve this parser (and test this)
 EndpointInfo: Class.extend({
-    init: function(endpoint, defaults) {
+    init: function(endpoint, defaults, oaendpoint) {
 	if (endpoint == undefined)
 	    endpoint = "";
 
@@ -532,17 +533,25 @@ EndpointInfo: Class.extend({
 	// web service locator
 	this.ws_name = "";
 	index = items.indexOf("-w");
-	if (index != -1)
+	if (index != -1) {
 	    this.ws_name = items[index + 1];
+	    items.splice(index, 2);
+	}
 
-	if (this.ws_name == "")
-	    this.ws_name = this._get_random_ws_name();
+	if (this.ws_name == "") {
+	    if (oaendpoint)
+		this.ws_name = this._get_random_ws_name();
+	    else
+		throw "Invalid endpoint, no WS especified";
+	}
 
 	// hostname
 	this.host = "";
 	index = items.indexOf("-h");
-	if (index != -1)
+	if (index != -1) {
 	    this.host = items[index + 1];
+	    items.splice(index, 2);
+	}
 
 	if (this.host == "") {
 	    if (! defaults || ! defaults.host)
@@ -553,14 +562,19 @@ EndpointInfo: Class.extend({
 	// port
 	this.port = "";
 	index = items.indexOf("-p");
-	if (index != -1)
+	if (index != -1) {
 	    this.port = items[index + 1];
+	    items.splice(index, 2);
+	}
 
 	if (this.port == "") {
 	    if (! defaults || ! defaults.port)
 		throw "Invalid endpoint, no port especified";
 	    this.port = defaults.port;
 	}
+
+	if (items.length != 0)
+	    throw "Invalid endpoint, unknown params: " + items;
     },
 
     _get_random_ws_name: function() {
@@ -754,8 +768,9 @@ Communicator: Class.extend({
 	    throw "AlreadyRegisteredException"
 
 	var transceiver = this._transceiverFactory.create_transceiver(
-	    new wise.EndpointInfo(endpoint, {host: this._host, port: this._port}))
-	    .then(bind(this, on_create_transceiver_response));
+	    new wise.EndpointInfo(endpoint, {host: this._host, port: this._port}, true)
+		.then(bind(this, on_create_transceiver_response))
+	);
 
 	var promise = new wise.Promise();
 	function on_create_transceiver_response(transceiver) {
