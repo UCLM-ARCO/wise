@@ -88,6 +88,7 @@ class AppServer(object):
 
         self.register_common_static_handler()
         self.register_common_urls()
+        self.register_common_servants()
 
     def app_is_healthy(self, app_name):
         try:
@@ -199,6 +200,15 @@ class AppServer(object):
 
             app = RequestHandlerApp(self.ws, url)
             self.ws.registerApplication(app)
+
+    def register_common_servants(self):
+        try:
+            servants = importlib.import_module("servants")
+            servants.register_servants(self.wise_adapter)
+        except Exception as e:
+            logger.info(str(e))
+            logger.info("could not load common servants")
+            return
 
     def communicator(self):
         return self.ws
