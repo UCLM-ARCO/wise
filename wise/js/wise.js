@@ -767,10 +767,9 @@ Communicator: Class.extend({
 	if (name in this._adapters)
 	    throw "AlreadyRegisteredException"
 
-	var transceiver = this._transceiverFactory.create_transceiver(
+	this._transceiverFactory.create_transceiver(
 	    new wise.EndpointInfo(endpoint, {host: this._host, port: this._port}, true)
-		.then(bind(this, on_create_transceiver_response))
-	);
+	).then(bind(this, on_create_transceiver_response))
 
 	var promise = new wise.Promise();
 	function on_create_transceiver_response(transceiver) {
@@ -993,6 +992,7 @@ Promise: Class.extend({
 	    this._PRP(promise, x);
 	} catch (e) {
 	    console.error("Exception in promise callback: " + e.stack);
+	    console.error(e);
 	    promise.reject(e);
 	}
     },
