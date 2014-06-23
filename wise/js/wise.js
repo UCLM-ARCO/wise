@@ -573,8 +573,10 @@ EndpointInfo: Class.extend({
 	    this.port = defaults.port;
 	}
 
-	if (items.length != 0)
-	    throw "Invalid endpoint, unknown params: " + items;
+	for (var i in items) {
+	    if (items[i])
+		throw "Invalid endpoint, unknown params: " + items;
+	}
     },
 
     _get_random_ws_name: function() {
