@@ -12,7 +12,12 @@ from . import Logging as logging
 from endpoint import Endpoint
 
 PROJECT_DIR = path.find_in_ancestors('project.mk', __file__)
-WISE_JS_DIR = path.resolve_path('wise', [PROJECT_DIR or "", '/usr/share/pyshared'])[0]
+WISE_JS_DIR = path.resolve_path(
+    'wise', [
+        PROJECT_DIR or "",
+        '/usr/share/pyshared',
+        '/usr/lib/python2.7/dist-packages',
+    ])[0]
 
 
 # Tornado has not support to dynamically adding new handlers for
