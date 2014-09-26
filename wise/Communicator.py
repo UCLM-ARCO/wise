@@ -4,6 +4,7 @@ from threading import Thread, Event
 from tornado import web, ioloop, httpserver
 from commodity import path
 
+
 from .ObjectAdapter import ObjectAdapter
 from .Exceptions import AlreadyRegisteredException
 from .StaticFSApplication import StaticFSApplication
@@ -59,9 +60,14 @@ class TornadoApplication(web.Application):
             specs.append(spec)
 
 
-class Communicator(Thread):
-    def __init__(self, host, port, properties={}):
+class TornadoCommunicator(Thread):
+    def __init__(self, host, port, properties=None):
         Thread.__init__(self)
+
+        properties = properties or {}
+
+        if properties.get("TornadoApp.debug", False):
+            logging.warning("Wise: Debug Mode enabled, remove on production!!")
 
         self.port = port
         self.host = host
@@ -179,3 +185,13 @@ class Communicator(Thread):
         frontend = StaticFSApplication(self, locator, path, index)
         self.registerApplication(frontend)
         return frontend
+
+
+class GunicornCommunicator(object):
+    def __init__(self, properties=None):
+        properties = properties or {}
+
+
+
+# Default backend server is "tornado"
+Communicator = TornadoCommunicator

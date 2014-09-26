@@ -83,6 +83,16 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # Using gunicorn, files are served manually (see urls.py)
+from commodity import path
+
+PROJECT_DIR = path.find_in_ancestors('project.mk', __file__)
+WISE_JS_DIR = path.resolve_path(
+    'wise', [
+        PROJECT_DIR or "",
+        '/usr/share/pyshared',
+        '/usr/lib/python2.7/dist-packages',
+    ])[0]
+
 STATICFILES_DIRS = (
-    '/usr/share/pyshared/wise/js/',
+    os.path.join(PROJECT_DIR, "wise/js"),
 )

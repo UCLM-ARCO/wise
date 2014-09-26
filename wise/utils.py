@@ -2,32 +2,46 @@
 import os
 import socket
 
-from .Communicator import Communicator
+from .Communicator import TornadoCommunicator, GunicornCommunicator
 from .WiseAdmin import WiseAdmin
-import Logging as logger
 
 
 __ic = None
 
 
-def initialize(host="127.0.0.1", port=8080, properties=None):
-    global __ic
+def initialize(host="127.0.0.1", port=8080, properties=None, server="tornado"):
     assert __ic is None, "Only one communicator instance is supported"
 
     properties = properties or {}
 
-    if properties.get("TornadoApp.debug", False):
-        logger.warning("Wise: Debug Mode enabled, remove on production!!")
+    if server == "tornado":
+        return _initialize_for_tornado(host, port, properties)
+    if server == "gunicorn":
+        return _initialize_for_gunicorn(properties)
+
+    raise ValueError("Unknown backend server:", + server)
+
+
+def _initialize_for_tornado(host, port, properties):
+    global __ic
 
     host = host or socket.gethostbyname_ex(socket.gethostname())[0]
-    __ice = Communicator(host=host, port=port, properties=properties)
-    __ice.is_ready.wait()
+    __ic = TornadoCommunicator(host=host, port=port, properties=properties)
+    __ic.is_ready.wait()
 
-    admin_adapter = __ice.createObjectAdapter("WiseAdmin", "-w wise")
-    servant = WiseAdmin(__ice)
+    admin_adapter = __ic.createObjectAdapter("WiseAdmin", "-w wise")
+    servant = WiseAdmin(__ic)
     admin_adapter.add(servant, "WiseAdmin")
 
-    return __ice
+    return __ic
+
+
+def _initialize_for_gunicorn(properties):
+    global __ic
+
+    __ic = GunicornCommunicator(properties=properties)
+
+    return __ic
 
 
 def dirname(path):

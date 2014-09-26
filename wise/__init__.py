@@ -10,7 +10,7 @@ from .Object import Observable
 try:
     from .appserver import AppServer
 except ImportError as e:
-    print "Error:", e
+    print "[wise] Error: AppServer not available:", e
 
 from .utils import initialize, dirname, Application, proxy_as_servant
 

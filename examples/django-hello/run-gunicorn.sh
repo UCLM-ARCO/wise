@@ -4,6 +4,8 @@
 PROJECT_DIR=$(/usr/share/arco/get-project-dir.sh)
 export PYTHONPATH=$PROJECT_DIR
 
+WORKER_CLASS=wise.guworkers.GeventWebSocketWorker
+
 clear
 
 # sync db
@@ -18,5 +20,5 @@ gunicorn \
     --access-logfile - \
     --error-logfile - \
     --log-level info \
-    --worker-class "geventwebsocket.gunicorn.workers.GeventWebSocketWorker" \
+    --worker-class $WORKER_CLASS \
     django_hello.wsgi:application
