@@ -2,10 +2,13 @@
 
 import traceback
 import jsonpickle
+
 from threading import Event, Lock
 from tornado import websocket
 from commodity.thread_ import SimpleThreadPool
 from commodity.os_ import FuncAsFile
+from django.http import HttpResponse, HttpResponseForbidden
+from geventwebsocket.exceptions import WebSocketError
 
 from .WebApplication import WebApplication
 from .Exceptions import (ProtocolException, UnknownLocalException,
@@ -21,13 +24,23 @@ class TransceiverApp(WebApplication):
     def __init__(self, communicator, url, adapter):
         WebApplication.__init__(self, communicator, url)
         self._adapter = adapter
-        self._thread_pool = SimpleThreadPool(1)
+        self._framework = communicator.framework
+
+        if self._framework != "gunicorn":
+            self._thread_pool = SimpleThreadPool(1)
 
     def get_handler_class(self):
-        return MessageHandler
+        return {
+            'tornado': TornadoMessageHandler,
+            'gunicorn': DjangoMessageHandler(**self.get_handler_params()),
+        }[self._framework]
 
     def get_handler_params(self):
-        return dict(adapter=self._adapter, thread_pool=self._thread_pool)
+        retval = {'adapter': self._adapter}
+        if self._framework == "tornado":
+            retval['thread_pool'] = self._thread_pool
+
+        return retval
 
 
 class Transceiver:
@@ -108,7 +121,8 @@ class TransceiverFactory:
     def get(cls, wslocator):
         logging.info("TransceiverFactory: get for websocket '{}'".format(wslocator))
 
-        transceiver = cls._transceivers.get(wslocator, None)  # FIXME is the default value for get() (many times)
+        # FIXME is the default value for get() (many times)
+        transceiver = cls._transceivers.get(wslocator, None)
         if transceiver:
             return transceiver
 
@@ -171,35 +185,8 @@ class RequestMessage:
                 .format(self))
 
 
-class MessageHandler(websocket.WebSocketHandler):
-    async = True
-
-    def initialize(self, adapter, thread_pool):
-        self._adapter = adapter
-        self._is_closed = False
-        self._thread_pool = thread_pool
-
-    def open(self):
-        endpoint = self._adapter.getEndpoint()
-        TransceiverFactory.register_handler(endpoint, self)
-
-    def on_close(self):
-        endpoint = self._adapter.getEndpoint()
-        TransceiverFactory.unregister_handler(endpoint)
-        self._is_closed = True
-
-    @property
-    def is_closed(self):
-        return self._is_closed
-
-    def on_message(self, message):
-        if self.async:
-            logging.info("MessageHandler: async dispatching for {}".format(repr(message)))
-            self._thread_pool.add(self.on_message_async, (message,))
-        else:
-            self.on_message_async(message)
-
-    def on_message_async(self, message):
+class BaseMessageHandler(object):
+    def _handle_on_message(self, message):
         try:
             request = RequestMessage(message, self._adapter._communicator)
             method = self._get_object_method(request)
@@ -231,6 +218,12 @@ class MessageHandler(websocket.WebSocketHandler):
             logging.warning(message)
             self._raise_remote_exception(request.request_id, e)
 
+    def _response(self, request_id, result):
+        response = dict(request_id=request_id,
+                        result=any_to_marshable(result))
+
+        self.write_message(jsonpickle.encode(response))
+
     def _get_object_method(self, request):
         obj = self._find_servant(request)
         if not obj:
@@ -257,11 +250,57 @@ class MessageHandler(websocket.WebSocketHandler):
 
         self.write_message(jsonpickle.encode(response))
 
-    def _response(self, request_id, result):
-        response = dict(request_id=request_id,
-                        result=any_to_marshable(result))
 
-        self.write_message(jsonpickle.encode(response))
+class TornadoMessageHandler(websocket.WebSocketHandler, BaseMessageHandler):
+    async = True
+
+    def initialize(self, adapter, thread_pool):
+        self._adapter = adapter
+        self._is_closed = False
+        self._thread_pool = thread_pool
+
+    def open(self):
+        endpoint = self._adapter.getEndpoint()
+        TransceiverFactory.register_handler(endpoint, self)
+
+    def on_close(self):
+        endpoint = self._adapter.getEndpoint()
+        TransceiverFactory.unregister_handler(endpoint)
+        self._is_closed = True
+
+    @property
+    def is_closed(self):
+        return self._is_closed
+
+    def on_message(self, message):
+        if self.async:
+            logging.info("MessageHandler: async dispatching for {}".format(repr(message)))
+            self._thread_pool.add(self._handle_on_message, (message,))
+        else:
+            self._handle_on_message(message)
 
     def allow_draft76(self):
         return True
+
+
+class DjangoMessageHandler(BaseMessageHandler):
+    def __init__(self, adapter):
+        self._adapter = adapter
+
+    def __call__(self, request):
+        self.ws = request.META["wsgi.websocket"]
+
+        while True:
+            try:
+                message = self.ws.receive()
+                if message is None:
+                    break
+            except WebSocketError:
+                break
+
+            self._handle_on_message(message)
+
+        return HttpResponse()
+
+    def write_message(self, message):
+        self.ws.send(message)

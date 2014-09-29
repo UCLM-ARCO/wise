@@ -1,22 +1,29 @@
+# -*- mode: python: coding: utf-8 -*-
 
 import os
 import socket
 
 from .Communicator import TornadoCommunicator, GunicornCommunicator
 from .WiseAdmin import WiseAdmin
+from . import Logging as logging
 
 
 __ic = None
 
 
-def initialize(host="127.0.0.1", port=8080, properties=None, server="tornado"):
+def initialize(host=None, port=None, properties=None, server="tornado"):
     assert __ic is None, "Only one communicator instance is supported"
 
     properties = properties or {}
 
     if server == "tornado":
+        host = host or "127.0.0.1"
+        port = port if port is not None else "8080"
         return _initialize_for_tornado(host, port, properties)
+
     if server == "gunicorn":
+        if host is not None or port is not None:
+            logging.info("Wise: Using gunicorn, ignoring host and port properties")
         return _initialize_for_gunicorn(properties)
 
     raise ValueError("Unknown backend server:", + server)
@@ -39,7 +46,16 @@ def _initialize_for_tornado(host, port, properties):
 def _initialize_for_gunicorn(properties):
     global __ic
 
+    django_project = os.environ.get("PROJECT_NAME")
+    if not django_project:
+        raise ValueError("Please set 'PROJECT_NAME' environment var")
+
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", django_project + ".settings")
     __ic = GunicornCommunicator(properties=properties)
+
+    admin_adapter = __ic.createObjectAdapter("WiseAdmin", "-w wise")
+    servant = WiseAdmin(__ic)
+    admin_adapter.add(servant, "WiseAdmin")
 
     return __ic
 

@@ -1,9 +1,9 @@
 # -*- mode: python; coding: utf-8 -*-
 
+import sys
 from threading import Thread, Event
 from tornado import web, ioloop, httpserver
 from commodity import path
-
 
 from .ObjectAdapter import ObjectAdapter
 from .Exceptions import AlreadyRegisteredException
@@ -21,8 +21,12 @@ WISE_JS_DIR = path.resolve_path(
     ])[0]
 
 
-# Tornado has not support to dynamically adding new handlers for
-# existing hosts. This will do it.
+# FIXME: avoid importing not needed modules (i.e: 'tornado' when using
+# gunicorn framework).
+
+
+# Note: 'tornado' has not support to dynamically adding new handlers
+# for existing hosts. This will do it.
 class TornadoApplication(web.Application):
     def append_handlers(self, host_pattern, host_handlers):
         if not host_pattern.endswith("$"):
@@ -60,25 +64,22 @@ class TornadoApplication(web.Application):
             specs.append(spec)
 
 
-class TornadoCommunicator(Thread):
-    def __init__(self, host, port, properties=None):
-        Thread.__init__(self)
+class CommunicatorBase(object):
+    framework = "unknown"
 
-        properties = properties or {}
-
-        if properties.get("TornadoApp.debug", False):
-            logging.warning("Wise: Debug Mode enabled, remove on production!!")
-
-        self.port = port
-        self.host = host
-        self.url = "http://{}:{}".format(self.host, self.port)
+    def __init__(self, properties):
+        if properties is None:
+            properties = {}
         assert isinstance(properties, dict)
+
         self._properties = properties
         self._adapters = {}
 
-        self.is_ready = Event()
-        self.daemon = True
-        self.start()
+    def shutdown(self):
+        raise NotImplementedError()
+
+    def waitForShutdown(self):
+        raise NotImplementedError()
 
     def getPropertiesForPrefix(self, prefix, remove_prefix=False):
         retval = {}
@@ -98,6 +99,64 @@ class TornadoCommunicator(Thread):
             return self._properties[key]
         except KeyError:
             return default
+
+    def stringToProxy(self, stringfied_proxy):
+        return ProxyFactory.create(self, stringfied_proxy)
+
+    def proxyToString(self, proxy):
+        return repr(proxy)
+
+    def createObjectAdapter(self, name, endpoint):
+        if name in self._adapters:
+            raise AlreadyRegisteredException()
+
+        if isinstance(endpoint, (str, unicode)):
+            endpoint = Endpoint.from_string(endpoint)
+
+        adapter = ObjectAdapter(self, name, endpoint)
+        self._adapters[name] = adapter
+        return adapter
+
+    # return adapter name, find by its endpoint
+    def resolveAdapter(self, endpoint):
+        for name, adapter in self._adapters.items():
+            if adapter.getEndpoint() == endpoint:
+                return name
+
+    # return adapter name, find by its endpoint
+    def resolveEndpoint(self, adapter_name):
+        adapter = self._adapters.get(adapter_name, None)
+        if not adapter:
+            return None
+        return adapter.getEndpoint()
+
+    def registerApplication(self, application):
+        self.registerHandlers(application.get_handler_spec())
+
+    def registerHandlers(self, handlers, host):
+        raise NotImplementedError
+
+    def get_url(self, location):
+        raise NotImplementedError
+
+
+class TornadoCommunicator(Thread, CommunicatorBase):
+    framework = "tornado"
+
+    def __init__(self, host, port, properties=None):
+        Thread.__init__(self)
+        CommunicatorBase.__init__(self, properties)
+
+        if self._properties.get("TornadoApp.debug", False):
+            logging.warning("Wise: Debug Mode enabled, remove on production!!")
+
+        self.port = port
+        self.host = host
+        self.url = "http://{}:{}".format(self.host, self.port)
+
+        self.is_ready = Event()
+        self.daemon = True
+        self.start()
 
     def run(self):
         prefix = "TornadoApp."
@@ -125,42 +184,9 @@ class TornadoCommunicator(Thread):
         self._http_server.stop()
         ioloop.IOLoop.instance().stop()
 
-    def stringToProxy(self, stringfied_proxy):
-        return ProxyFactory.create(self, stringfied_proxy)
-
-    def proxyToString(self, proxy):
-        return repr(proxy)
-
-    def createObjectAdapter(self, name, endpoint):
-        if name in self._adapters:
-            raise AlreadyRegisteredException()
-
-        if isinstance(endpoint, (str, unicode)):
-            endpoint = Endpoint.from_string(endpoint)
-
-        adapter = ObjectAdapter(self, name, endpoint)
-        self._adapters[name] = adapter
-        return adapter
-
-    def registerApplication(self, application):
-        self.registerHandlers(application.get_handler_spec())
-
     # handlers is a list of (url, class, params)
     def registerHandlers(self, handlers, host=".*$"):
         self._tornado.append_handlers(host, handlers)
-
-    # return adapter name, find by its endpoint
-    def resolveAdapter(self, endpoint):
-        for name, adapter in self._adapters.items():
-            if adapter.getEndpoint() == endpoint:
-                return name
-
-    # return adapter name, find by its endpoint
-    def resolveEndpoint(self, adapter_name):
-        adapter = self._adapters.get(adapter_name, None)
-        if not adapter:
-            return None
-        return adapter.getEndpoint()
 
     def waitForShutdown(self):
         try:
@@ -187,10 +213,24 @@ class TornadoCommunicator(Thread):
         return frontend
 
 
-class GunicornCommunicator(object):
-    def __init__(self, properties=None):
-        properties = properties or {}
+class GunicornCommunicator(CommunicatorBase):
+    framework = "gunicorn"
 
+    def registerHandlers(self, handlers, host=""):
+
+        # Note: import here, only when needed
+        from django.conf import settings
+        from django.conf.urls import patterns, url
+        from django.utils.importlib import import_module
+
+        urls = sys.modules.get(settings.ROOT_URLCONF)
+        if urls is None:
+            urls = import_module(settings.ROOT_URLCONF)
+
+        for pattern, handler, context in handlers:
+            if pattern.startswith("^/"):
+                pattern = '^' + pattern[2:]
+            urls.urlpatterns += patterns(host, url(pattern, handler))
 
 
 # Default backend server is "tornado"

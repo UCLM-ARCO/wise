@@ -2,7 +2,9 @@
 # -*- mode: sh; coding: utf-8 -*-
 
 PROJECT_DIR=$(/usr/share/arco/get-project-dir.sh)
-export PYTHONPATH=$PROJECT_DIR
+
+export PROJECT_NAME="django_hello"
+export PYTHONPATH=$PROJECT_DIR:$(pwd)
 
 WORKER_CLASS=wise.guworkers.GeventWebSocketWorker
 

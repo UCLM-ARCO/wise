@@ -1,0 +1,2 @@
+deb: python-django
+deb: gunicorn

@@ -8,9 +8,4 @@ from utils import initialize
 
 class GeventWebSocketWorker(GeventPyWSGIWorker):
     wsgi_handler = WebSocketHandler
-
-
-def setup():
     broker = initialize(server="gunicorn")
-
-setup()
