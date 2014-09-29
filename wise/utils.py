@@ -57,6 +57,14 @@ def _initialize_for_gunicorn(properties):
     servant = WiseAdmin(__ic)
     admin_adapter.add(servant, "WiseAdmin")
 
+    from django.conf import settings
+    for app in settings.INSTALLED_APPS:
+        try:
+            module = __import__(app + ".servants")
+            module.servants.initialize(__ic)
+        except ImportError:
+            pass
+
     return __ic
 
 

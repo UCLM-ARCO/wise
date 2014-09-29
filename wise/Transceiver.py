@@ -288,11 +288,11 @@ class DjangoMessageHandler(BaseMessageHandler):
         self._adapter = adapter
 
     def __call__(self, request):
-        self.ws = request.META["wsgi.websocket"]
+        self._ws = request.META["wsgi.websocket"]
 
         while True:
             try:
-                message = self.ws.receive()
+                message = self._ws.receive()
                 if message is None:
                     break
             except WebSocketError:
@@ -300,7 +300,8 @@ class DjangoMessageHandler(BaseMessageHandler):
 
             self._handle_on_message(message)
 
+        del self._ws
         return HttpResponse()
 
     def write_message(self, message):
-        self.ws.send(message)
+        self._ws.send(message)
