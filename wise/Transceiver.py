@@ -30,10 +30,13 @@ class TransceiverApp(WebApplication):
             self._thread_pool = SimpleThreadPool(1)
 
     def get_handler_class(self):
-        return {
-            'tornado': TornadoMessageHandler,
-            'gunicorn': DjangoMessageHandler(**self.get_handler_params()),
-        }[self._framework]
+        if self._framework == "tornado":
+            return TornadoMessageHandler
+
+        if self._framework == "gunicorn":
+            return DjangoMessageHandler(**self.get_handler_params())
+
+        raise ValueError("Unknown Communicator framework: " + self._framework)
 
     def get_handler_params(self):
         retval = {'adapter': self._adapter}
