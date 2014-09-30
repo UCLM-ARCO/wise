@@ -49,8 +49,8 @@ def _initialize_for_gunicorn(properties):
     django_project = os.environ.get("PROJECT_NAME")
     if not django_project:
         raise ValueError("Please set 'PROJECT_NAME' environment var")
-
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", django_project + ".settings")
+
     __ic = GunicornCommunicator(properties=properties)
 
     admin_adapter = __ic.createObjectAdapter("WiseAdmin", "-w wise")
