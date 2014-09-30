@@ -1,5 +1,5 @@
 """
-Django settings for django_hello project.
+Django settings for django_auth project.
 
 For more information on this file, see
 https://docs.djangoproject.com/en/1.6/topics/settings/
@@ -17,7 +17,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'zg!wksxa)jw-cru6+$y=#ab36n86x+khox2t!a^1921yw645h0'
+SECRET_KEY = 'qw4bh=hgvd2o6omd&6o$2lv0x!!#z!+3d7(d2bmgkg$mmdc0p%'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -36,7 +36,6 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'hello',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -48,9 +47,9 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'django_hello.urls'
+ROOT_URLCONF = 'django_auth.urls'
 
-WSGI_APPLICATION = 'django_hello.wsgi.application'
+WSGI_APPLICATION = 'django_auth.wsgi.application'
 
 
 # Database
@@ -81,18 +80,3 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
 STATIC_URL = '/static/'
-
-# Using gunicorn, files are served manually (see urls.py)
-from commodity import path
-
-PROJECT_DIR = path.find_in_ancestors('project.mk', __file__)
-WISE_JS_DIR = path.resolve_path(
-    'wise', [
-        PROJECT_DIR or "",
-        '/usr/share/pyshared',
-        '/usr/lib/python2.7/dist-packages',
-    ])[0]
-
-STATICFILES_DIRS = (
-    os.path.join(PROJECT_DIR, "wise/js"),
-)

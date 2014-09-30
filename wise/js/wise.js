@@ -190,6 +190,11 @@ Transceiver: Class.extend({
 	    promise.resolve();
 
 	    websocket.onclose = function(event) {
+		if (event.code == 403){
+		    log.error("Error on socket:", event.reason);
+		    return;
+		}
+
 		log.debug("Socket closed:", event);
 		if (! wise.no_reconnect)
 		    self._try_reconnect();

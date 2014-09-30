@@ -31,6 +31,7 @@ class ObjectAdapter:
         self._endpoint = checked_type(Endpoint, endpoint)
 
         self._asm = {}
+        self._properties = {}
 
         # FIXME: websocket transport specific
         # register transceiver (to handle JSON requests)
@@ -48,6 +49,13 @@ class ObjectAdapter:
 
     def getEndpoint(self):
         return self._endpoint
+
+    def setProperty(self, name, value):
+        assert name in ['auth'], "Unknown property: " + name
+        self._properties[name] = value
+
+    def getProperty(self, name):
+        return self._properties.get(name)
 
     def add(self, servant, identity):
         if not self._asm.get(identity) is None:

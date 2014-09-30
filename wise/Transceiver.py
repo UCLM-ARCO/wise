@@ -287,8 +287,16 @@ class DjangoMessageHandler(BaseMessageHandler):
     def __init__(self, adapter):
         self._adapter = adapter
 
+    @property
+    def _require_auth(self):
+        return self._adapter.getProperty("auth")
+
     def __call__(self, request):
         self._ws = request.META["wsgi.websocket"]
+
+        if not self._check_auth(request):
+            self._ws.close(403, "Invalid user")
+            return
 
         while True:
             try:
@@ -302,6 +310,20 @@ class DjangoMessageHandler(BaseMessageHandler):
 
         del self._ws
         return HttpResponse()
+
+    def _check_auth(self, request):
+        return True
+
+        # from django.contrib.sessions.models import Session
+        # from django.contrib.auth.models import User
+
+        # try:
+        #     session_id = request.COOKIES['sessionid']
+        #     session = Session.objects.get(session_key=session_id)
+        #     uid = session.get_decoded().get('_auth_user_id')
+        #     user = User.objects.get(pk=uid)
+        # except Exception as e:
+        #     print e
 
     def write_message(self, message):
         self._ws.send(message)

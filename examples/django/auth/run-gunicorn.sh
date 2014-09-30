@@ -3,17 +3,12 @@
 
 PROJECT_DIR=$(/usr/share/arco/get-project-dir.sh)
 
-export PROJECT_NAME="django_hello"
+export PROJECT_NAME="django_auth"
 export PYTHONPATH=$PROJECT_DIR:$(pwd)
 
 WORKER_CLASS=wise.guworkers.GeventWebSocketWorker
 
 clear
-
-# sync db
-if ! [ -f db.sqlite3 ]; then
-    python manage.py syncdb --noinput
-fi
 
 # launch server
 gunicorn \
@@ -23,4 +18,4 @@ gunicorn \
     --error-logfile - \
     --log-level info \
     --worker-class $WORKER_CLASS \
-    django_hello.wsgi:application
+    $PROJECT_NAME.wsgi:application
