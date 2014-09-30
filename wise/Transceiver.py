@@ -295,8 +295,8 @@ class DjangoMessageHandler(BaseMessageHandler):
         self._ws = request.META["wsgi.websocket"]
 
         if not self._check_auth(request):
-            self._ws.close(403, "Invalid user")
-            return
+            self._ws.close(403, "Authentication Error")
+            return HttpResponseForbidden()
 
         while True:
             try:
@@ -312,18 +312,26 @@ class DjangoMessageHandler(BaseMessageHandler):
         return HttpResponse()
 
     def _check_auth(self, request):
-        return True
+        if not self._require_auth:
+            return True
 
-        # from django.contrib.sessions.models import Session
-        # from django.contrib.auth.models import User
+        sessionid = request.COOKIES.get('sessionid')
+        if not sessionid:
+            return False  # cookies disabled
 
-        # try:
-        #     session_id = request.COOKIES['sessionid']
-        #     session = Session.objects.get(session_key=session_id)
-        #     uid = session.get_decoded().get('_auth_user_id')
-        #     user = User.objects.get(pk=uid)
-        # except Exception as e:
-        #     print e
+        try:
+            # lazy import of this, to let django init settings
+            from mongoengine.django.sessions import MongoSession
+            from mongoengine.django.auth import User
+
+            session = MongoSession.objects.get(session_key=sessionid)
+            uid = session.get_decoded().get('_auth_user_id')
+            if not uid:
+                return False  # anonymous user
+
+            return User.objects.get(pk=uid).is_authenticated()
+        except Exception:
+            return False
 
     def write_message(self, message):
         self._ws.send(message)

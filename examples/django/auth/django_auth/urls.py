@@ -8,8 +8,8 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 urlpatterns = patterns(
     '',
 
-    url(r'^$', RedirectView.as_view(url="/auth")),
-    url(r'^auth/', include('django_auth.urls')),
+    url(r'^$', RedirectView.as_view(url="/hello")),
+    url(r'^hello/', include('hello.urls')),
 )
 
 # just for serving static files
