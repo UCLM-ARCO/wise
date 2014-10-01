@@ -4,4 +4,5 @@ deb: python-commodity
 deb: python-jsonpickle
 deb: python-hamcrest
 deb: python-gevent-websocket
-deb: python-mongoengine
+
+pip: mongoengine
