@@ -2,9 +2,9 @@
 
 import os
 import logging
-from tornado import web
 
 from .WebApplication import WebApplication
+from .frameworks import tornado
 
 
 class StaticFSApplication(WebApplication):
@@ -36,7 +36,7 @@ class StaticFSApplication(WebApplication):
         return self._locator + self._index
 
     def get_handler_class(self):
-        return web.StaticFileHandler
+        return tornado.StaticFileHandler
 
     def get_handler_params(self):
         return {'path': self._path}

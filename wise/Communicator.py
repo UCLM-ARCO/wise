@@ -2,15 +2,16 @@
 
 import sys
 from threading import Thread, Event
-from tornado import web, ioloop, httpserver
 from commodity import path
 
+from . import Logging as logging
 from .ObjectAdapter import ObjectAdapter
 from .Exceptions import AlreadyRegisteredException
 from .StaticFSApplication import StaticFSApplication
 from .ProxyFactory import ProxyFactory
-from . import Logging as logging
-from endpoint import Endpoint
+from .endpoint import Endpoint
+from .frameworks import tornado
+
 
 PROJECT_DIR = path.find_in_ancestors('project.mk', __file__)
 WISE_JS_DIR = path.resolve_path(
@@ -21,13 +22,9 @@ WISE_JS_DIR = path.resolve_path(
     ])[0]
 
 
-# FIXME: avoid importing not needed modules (i.e: 'tornado' when using
-# gunicorn framework).
-
-
 # Note: 'tornado' has not support to dynamically adding new handlers
 # for existing hosts. This will do it.
-class TornadoApplication(web.Application):
+class TornadoApplication(tornado.WebApplication):
     def append_handlers(self, host_pattern, host_handlers):
         if not host_pattern.endswith("$"):
             host_pattern += "$"
@@ -52,10 +49,10 @@ class TornadoApplication(web.Application):
                     kwargs = spec[2]
                 else:
                     kwargs = {}
-                spec = web.URLSpec(pattern, handler, kwargs)
+                spec = tornado.URLSpec(pattern, handler, kwargs)
 
             # replace old spec with new one
-            assert isinstance(spec, web.URLSpec)
+            assert isinstance(spec, tornado.URLSpec)
             for old in specs[:]:
                 if old._path == spec._path:
                     specs.remove(old)
@@ -168,21 +165,21 @@ class TornadoCommunicator(Thread, CommunicatorBase):
         # created again), an old client will be served using the old
         # handler (binded on HTTPConnection)
 
-        self._http_server = httpserver.HTTPServer(
+        self._http_server = tornado.HTTPServer(
             self._tornado, no_keep_alive=True)
         logging.info("Communicator: http server on {}:{}".format(self.host, self.port))
         self._http_server.listen(self.port, self.host)
 
         self._register_static_files_handler()
         self.is_ready.set()
-        ioloop.IOLoop.instance().start()
+        tornado.IOLoop.instance().start()
 
     def shutdown(self):
         if not hasattr(self, "_http_server"):
             return
 
         self._http_server.stop()
-        ioloop.IOLoop.instance().stop()
+        tornado.IOLoop.instance().stop()
 
     # handlers is a list of (url, class, params)
     def registerHandlers(self, handlers, host=".*$"):

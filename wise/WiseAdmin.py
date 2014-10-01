@@ -1,19 +1,17 @@
 # -*- mode: python; coding: utf-8 -*-
 
 import json
-from tornado import websocket
 import cPickle as pickle
 import os
 import time
-
 from commodity.type_ import checked_type
 
+from . import Logging as logging
 from .Transceiver import TransceiverFactory
 from .Exceptions import ProtocolException
-from . import Logging as logging
-from endpoint import Endpoint
-
+from .endpoint import Endpoint
 from .basic_stream import get_typecode
+from .frameworks import tornado
 
 
 class ResponseMessage:
@@ -39,7 +37,7 @@ class ResponseMessage:
         return value
 
 
-class ActiveHandler(websocket.WebSocketHandler):
+class ActiveHandler(tornado.WebSocketHandler):
     def initialize(self, broker):
         self.broker = broker
         self._endpoint = None

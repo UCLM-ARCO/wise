@@ -2,22 +2,21 @@
 
 import traceback
 import jsonpickle
-
 from threading import Event, Lock
-from tornado import websocket
 from commodity.thread_ import SimpleThreadPool
 from commodity.os_ import FuncAsFile
-from django.http import HttpResponse, HttpResponseForbidden
 from geventwebsocket.exceptions import WebSocketError
 
+from . import Logging as logging
 from .WebApplication import WebApplication
 from .Exceptions import (ProtocolException, UnknownLocalException,
                          OperationNotExistException, ObjectNotExistException)
-
 from .Current import Current
-from . import Logging as logging
-
 from .basic_stream import get_typecode, any_to_marshable, exception_to_marshable
+from .frameworks import tornado
+
+# FIXME: move this to .frameworks
+from django.http import HttpResponse, HttpResponseForbidden
 
 
 class TransceiverApp(WebApplication):
@@ -254,7 +253,7 @@ class BaseMessageHandler(object):
         self.write_message(jsonpickle.encode(response))
 
 
-class TornadoMessageHandler(websocket.WebSocketHandler, BaseMessageHandler):
+class TornadoMessageHandler(tornado.WebSocketHandler, BaseMessageHandler):
     async = True
 
     def initialize(self, adapter, thread_pool):
