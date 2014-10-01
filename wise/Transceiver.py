@@ -5,7 +5,6 @@ import jsonpickle
 from threading import Event, Lock
 from commodity.thread_ import SimpleThreadPool
 from commodity.os_ import FuncAsFile
-from geventwebsocket.exceptions import WebSocketError
 
 from . import Logging as logging
 from .WebApplication import WebApplication
@@ -13,10 +12,7 @@ from .Exceptions import (ProtocolException, UnknownLocalException,
                          OperationNotExistException, ObjectNotExistException)
 from .Current import Current
 from .basic_stream import get_typecode, any_to_marshable, exception_to_marshable
-from .frameworks import tornado
-
-# FIXME: move this to .frameworks
-from django.http import HttpResponse, HttpResponseForbidden
+from .frameworks import tornado, django
 
 
 class TransceiverApp(WebApplication):
@@ -298,20 +294,20 @@ class DjangoMessageHandler(BaseMessageHandler):
 
         if not self._check_auth(request):
             self._ws.close(403, "Authentication Error")
-            return HttpResponseForbidden()
+            return django.HttpResponseForbidden()
 
         while True:
             try:
                 message = self._ws.receive()
                 if message is None:
                     break
-            except WebSocketError:
+            except django.WebSocketError:
                 break
 
             self._handle_on_message(message)
 
         del self._ws
-        return HttpResponse()
+        return django.HttpResponse()
 
     def _check_auth(self, request):
         if not self._require_auth:
