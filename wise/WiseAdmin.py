@@ -11,7 +11,7 @@ from .Transceiver import TransceiverFactory
 from .Exceptions import ProtocolException
 from .endpoint import Endpoint
 from .basic_stream import get_typecode
-from .frameworks import tornado
+from .frameworks import tornado, django
 
 
 class ResponseMessage:
@@ -37,7 +37,7 @@ class ResponseMessage:
         return value
 
 
-class ActiveHandler(tornado.WebSocketHandler):
+class TornadoActiveHandler(tornado.WebSocketHandler):
     def initialize(self, broker):
         self.broker = broker
         self._endpoint = None
@@ -46,7 +46,8 @@ class ActiveHandler(tornado.WebSocketHandler):
         self._endpoint = self.request.uri.strip('/')
         TransceiverFactory.register_handler(self._endpoint, self)
 
-        logging.info("ActiveHandler: new handler for '{}' endpoint".format(self._endpoint))
+        logging.info("TornadoActiveHandler: new handler for '{}' endpoint"
+                     .format(self._endpoint))
 
     def on_close(self):
         if self._endpoint is not None:
@@ -61,6 +62,51 @@ class ActiveHandler(tornado.WebSocketHandler):
 
     def allow_draft76(self):
         return True
+
+
+class DjangoActiveHandler(object):
+    def __init__(self, broker):
+        self.broker = broker
+        self._endpoint = None
+
+    def open(self, request):
+        self._endpoint = request.path.strip('/')
+        TransceiverFactory.register_handler(self._endpoint, self)
+
+        logging.info("DjangoActiveHandler: new handler for '{}' endpoint"
+                     .format(self._endpoint))
+
+    def on_close(self):
+        if self._endpoint is not None:
+            TransceiverFactory.unregister_handler(self._endpoint)
+
+    def set_response_callback(self, callback):
+        self._response_callback = callback
+
+    def on_message(self, message):
+        response = ResponseMessage(message, self.broker)
+        self._response_callback(response)
+
+    def __call__(self, request):
+        self.open(request)
+        self._ws = request.META["wsgi.websocket"]
+
+        while True:
+            try:
+                message = self._ws.receive()
+                if message is None:
+                    break
+            except django.WebSocketError:
+                break
+
+            self.on_message(message)
+
+        self.on_close()
+        del self._ws
+        return django.HttpResponse()
+
+    def write_message(self, message):
+        self._ws.send(message)
 
 
 class WiseAdmin:
@@ -121,7 +167,19 @@ class WiseAdmin:
         logging.info("WiseAdmin: create socket for '{}' endpoint".format(
                      endpoint))
 
+        context = dict(broker=self._broker)
         handler = ("^/{}$".format(endpoint.ws_name),
-                   ActiveHandler, dict(broker=self._broker))
+                   self._get_handler(context), context)
         self._broker.registerHandlers([handler])
         logging.info("WiseAdmin: handler registered, {}".format(handler))
+
+    def _get_handler(self, context):
+        broker = context['broker']
+
+        if broker.framework == "tornado":
+            return TornadoActiveHandler
+
+        if broker.framework == "gunicorn":
+            return DjangoActiveHandler(**context)
+
+        raise ValueError("Unknown framework: " + broker.framework)

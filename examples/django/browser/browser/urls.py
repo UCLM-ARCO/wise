@@ -1,8 +1,15 @@
-from django.conf.urls import patterns, include, url
-from django.contrib import admin
+# -*- mode: python; coding: utf-8 -*-
 
-urlpatterns = patterns('',
-    # Examples:
-    # url(r'^$', 'browser.views.home', name='home'),
-    # url(r'^blog/', include('blog.urls')),
+from django.conf.urls import patterns, include, url
+from django.views.generic.base import RedirectView
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+
+urlpatterns = patterns(
+    '',
+
+    url(r'^$', RedirectView.as_view(url="/hello")),
+    url(r'^hello/', include('hello.urls')),
 )
+
+# just for serving static files
+urlpatterns += staticfiles_urlpatterns()

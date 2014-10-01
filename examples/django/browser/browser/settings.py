@@ -36,6 +36,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'hello',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -58,10 +59,16 @@ WSGI_APPLICATION = 'browser.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': '',
     }
 }
+
+SESSION_ENGINE = 'mongoengine.django.sessions'
+_MONGODB_NAME = "browser-test"
+
+import mongoengine
+mongoengine.connect(_MONGODB_NAME)
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
@@ -81,3 +88,17 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 
 STATIC_URL = '/static/'
+
+from commodity import path
+
+PROJECT_DIR = path.find_in_ancestors('project.mk', __file__)
+WISE_JS_DIR = path.resolve_path(
+    'wise', [
+        PROJECT_DIR or "",
+        '/usr/share/pyshared',
+        '/usr/lib/python2.7/dist-packages',
+    ])[0]
+
+STATICFILES_DIRS = (
+    os.path.join(PROJECT_DIR, "wise/js"),
+)
