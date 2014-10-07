@@ -872,10 +872,12 @@ Communicator: Class.extend({
 	body.appendChild(div);
 
 	wise._last_communicator = this;
-	for (var i in wise._waiting_for_init) {
-	    wise._waiting_for_init[i](this);
+	if (wise._waiting_for_init !== undefined) {
+	    for (var i in wise._waiting_for_init) {
+		wise._waiting_for_init[i](this);
+	    }
+	    wise._waiting_for_init.length = 0;
 	}
-	wise._waiting_for_init.length = 0;
     },
 }),
 
