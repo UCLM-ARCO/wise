@@ -184,14 +184,14 @@ class RequestMessage:
 
 
 class BaseMessageHandler(object):
-    def _handle_on_message(self, message):
+    def _handle_on_message(self, message, http_request=None):
         try:
             request = RequestMessage(message, self._adapter._communicator)
             method = self._get_object_method(request)
             if not method:
                 return
 
-            current = Current(self, self._adapter)
+            current = Current(self, self._adapter, request=http_request)
             try:
                 retval = method(*request.params + [current])
             except TypeError as e:
@@ -292,10 +292,7 @@ class DjangoMessageHandler(BaseMessageHandler):
     def __call__(self, request):
         self._ws = request.META["wsgi.websocket"]
 
-        if not self._check_auth(request):
-            self._ws.close(403, "Authentication Error")
-            return django.HttpResponseForbidden()
-
+        self._update_request(request)
         while True:
             try:
                 message = self._ws.receive()
@@ -304,32 +301,33 @@ class DjangoMessageHandler(BaseMessageHandler):
             except django.WebSocketError:
                 break
 
-            self._handle_on_message(message)
+            try:
+                self._handle_on_message(message, request)
+            except:
+                del self._ws
+                raise
 
         del self._ws
         return django.HttpResponse()
 
-    def _check_auth(self, request):
-        if not self._require_auth:
-            return True
+    def _update_request(self, request):
+        session = None
+        user = None
 
         sessionid = request.COOKIES.get('sessionid')
-        if not sessionid:
-            return False  # cookies disabled
+        if sessionid:
 
-        try:
-            # lazy import of this, to let django init settings
+            # late import of this, to let django init settings
             from mongoengine.django.sessions import MongoSession
             from mongoengine.django.auth import User
 
             session = MongoSession.objects.get(session_key=sessionid)
             uid = session.get_decoded().get('_auth_user_id')
-            if not uid:
-                return False  # anonymous user
+            if uid:
+                user = User.objects.get(pk=uid)
 
-            return User.objects.get(pk=uid).is_authenticated()
-        except Exception:
-            return False
+        request.user = user
+        request.session = session
 
     def write_message(self, message):
         self._ws.send(message)
