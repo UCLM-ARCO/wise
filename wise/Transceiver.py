@@ -317,6 +317,7 @@ class DjangoMessageHandler(BaseMessageHandler):
         sessionid = request.COOKIES.get('sessionid')
         if sessionid:
 
+            # FIXME: coupled with mongoDB!
             # late import of this, to let django init settings
             from mongoengine.django.sessions import MongoSession
             from mongoengine.django.auth import User
