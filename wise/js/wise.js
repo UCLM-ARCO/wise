@@ -761,6 +761,20 @@ Logger: Class.extend({
     },
 }),
 
+// Add a callback to be called when a communicator is created
+on_communicator_ready: function(callback) {
+    if (this._last_communicator) {
+	callback(this._last_communicator);
+	return;
+    }
+
+    if (this._waiting_for_init === undefined) {
+	this._waiting_for_init = [];
+    }
+
+    this._waiting_for_init.push(callback);
+},
+
 Communicator: Class.extend({
     init: function(args) {
 	this._host = args.host;
@@ -852,11 +866,16 @@ Communicator: Class.extend({
 
     ready: function() {
 	// notify to others that this part is ready
-	_("wise.ready called");
 	var div = document.createElement('div');
 	div.id = 'wiseReady';
 	var body = document.querySelector('body');
 	body.appendChild(div);
+
+	wise._last_communicator = this;
+	for (var i in wise._waiting_for_init) {
+	    wise._waiting_for_init[i](this);
+	}
+	wise._waiting_for_init.length = 0;
     },
 }),
 
@@ -889,6 +908,7 @@ initialize: function(host, port) {
 
 	// finish intialization
 	promise.resolve(ic);
+	ic.ready()
     }
 
     return promise;

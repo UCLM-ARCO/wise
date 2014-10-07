@@ -37,8 +37,7 @@ def _initialize_for_tornado(host, port, properties):
     __ic.is_ready.wait()
 
     admin_adapter = __ic.createObjectAdapter("WiseAdmin", "-w wise")
-    servant = WiseAdmin(__ic)
-    admin_adapter.add(servant, "WiseAdmin")
+    admin_adapter.add(WiseAdmin(__ic), "WiseAdmin")
 
     return __ic
 
@@ -49,8 +48,7 @@ def _initialize_for_gunicorn(properties):
     __ic = GunicornCommunicator(properties=properties)
 
     admin_adapter = __ic.createObjectAdapter("WiseAdmin", "-w wise")
-    servant = WiseAdmin(__ic)
-    admin_adapter.add(servant, "WiseAdmin")
+    admin_adapter.add(WiseAdmin(__ic), "WiseAdmin")
 
     from django.conf import settings
     for app in settings.INSTALLED_APPS:
