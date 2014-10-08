@@ -55,8 +55,9 @@ def _initialize_for_gunicorn(properties):
         try:
             module = __import__(app + ".servants")
             module.servants.initialize(__ic)
-        except ImportError:
-            pass
+        except ImportError as e:
+            if not str(e).endswith("servants"):
+                logging.error("loader: unable to load '{}', {}".format(app, str(e)))
 
     return __ic
 
