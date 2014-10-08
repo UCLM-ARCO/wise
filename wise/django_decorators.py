@@ -8,7 +8,9 @@ def login_required(fn):
         current = args[-1]
         user = current.context['request'].user
 
-        if user is None or not user.is_authenticated():
+        if user is None \
+           or not user.is_authenticated() \
+           or not user.is_active:
             raise PermissionDenied
         return fn(*args)
     return deco
@@ -19,7 +21,11 @@ def superuser_required(fn):
         current = args[-1]
         user = current.context['request'].user
 
-        if (user is None or not user.is_authenticated() or not user.is_superuser):
+        if user is None \
+           or not user.is_authenticated() \
+           or not user.is_superuser \
+           or not user.is_active:
+
             raise PermissionDenied
         return fn(*args)
     return deco
