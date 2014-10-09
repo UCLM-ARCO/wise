@@ -1,0 +1,5 @@
+
+This demo launches multiple browsers instances (not windows) and opens
+the same url. The django application will connect to server (using
+wise), and call an 'echo' method, and one which will produce an
+exception. Everithing should work as expected.

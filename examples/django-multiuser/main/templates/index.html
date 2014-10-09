@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+
+{% load staticfiles %}
+
+<html>
+  <head>
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css"
+	  rel="stylesheet" >
+
+    <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script src="{% static 'js/wise.js' %}"></script>
+
+    <script type="text/javascript">
+    function log_line(source, msg) {
+	var item = $("<tr><td>{0}</td><td>{1}</td></tr>".format(source, msg));
+	$('#logger').append(item);
+    };
+
+    function wise_application(broker) {
+	var oid = Math.random().toString(36).substring(7);
+	broker.stringToProxy("server -w ws1")
+	    .then(on_proxy_response, on_error);
+
+	function on_proxy_response(proxy) {
+	    log_line("client", "call to <i>echo</i>, msg:<b>{0}</b>".format(oid));
+	    proxy.echo(oid).then(on_echo_response, on_error);
+
+	    log_line("client", "call to <i>raise_exception</i>");
+	    proxy.raise_exception(oid).catch(on_raise_exception);
+	};
+
+	function on_echo_response(response) {
+	    log_line("server", "response: " + response);
+	};
+
+	function on_raise_exception(exception) {
+	    var msg = "{0}: {1}".format(exception.name, exception.message);
+	    log_line("server", '<b class="text-danger">exception:</b>' + msg);
+	};
+
+	function on_error(error) {
+	    log_line("server", '<b class="text-danger">INVALID RESPONSE</b>');
+	};
+
+    };
+    </script>
+  </head>
+
+  <body>
+    <table class="table">
+      <thead>
+	<tr>
+	  <th>Source</th>
+	  <th>Message</th>
+	</tr>
+      </thead>
+      <tbody id="logger">
+      </tbody>
+    </table>
+  </body>
+</html>
+
+<!--
+    Local Variables:
+      truncate-lines: true
+    End:
+-->
