@@ -322,10 +322,13 @@ class DjangoMessageHandler(BaseMessageHandler):
             from mongoengine.django.sessions import MongoSession
             from mongoengine.django.auth import User
 
-            session = MongoSession.objects.get(session_key=sessionid)
-            uid = session.get_decoded().get('_auth_user_id')
-            if uid:
-                user = User.objects.get(pk=uid)
+            try:
+                session = MongoSession.objects.get(session_key=sessionid)
+                uid = session.get_decoded().get('_auth_user_id')
+                if uid:
+                    user = User.objects.get(pk=uid)
+            except MongoSession.DoesNotExist:
+                pass
 
         request.user = user
         request.session = session
