@@ -1,7 +1,7 @@
 #!/bin/bash
 # -*- mode: sh; coding: utf-8 -*-
 
-INSTANCES=4
+INSTANCES=2
 URL="http://127.0.0.1:8000/"
 CMD=$(which google-chrome || which chromium-browser || which chromium)
 
@@ -15,8 +15,10 @@ fi
 
 launch_browsers() {
     for i in $(seq 0 $(($INSTANCES-1))); do
-	COL=$(($i%2))
-	ROW=$((($i/2)%2))
+	NUM_COLS=1
+	NUM_ROWS=2
+	COL=$(($i%$NUM_COLS))
+	ROW=$((($i/$NUM_COLS)%$NUM_ROWS))
 	X=$((($COL*$WW)+($COL*10)))
 	Y=$((($ROW*$WH)+($ROW*50)))
 

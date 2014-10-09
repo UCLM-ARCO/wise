@@ -29,7 +29,7 @@ class TransceiverApp(WebApplication):
             return TornadoMessageHandler
 
         if self._framework == "gunicorn":
-            return DjangoMessageHandler(**self.get_handler_params())
+            return DjangoMessageHandlerFactory(**self.get_handler_params())
 
         raise ValueError("Unknown Communicator framework: " + self._framework)
 
@@ -281,13 +281,17 @@ class TornadoMessageHandler(tornado.WebSocketHandler, BaseMessageHandler):
         return True
 
 
-class DjangoMessageHandler(BaseMessageHandler):
+class DjangoMessageHandlerFactory(object):
     def __init__(self, adapter):
         self._adapter = adapter
 
-    @property
-    def _require_auth(self):
-        return self._adapter.getProperty("auth")
+    def __call__(self, request):
+        return DjangoMessageHandler(self._adapter)(request)
+
+
+class DjangoMessageHandler(BaseMessageHandler):
+    def __init__(self, adapter):
+        self._adapter = adapter
 
     def __call__(self, request):
         self._ws = request.META["wsgi.websocket"]
