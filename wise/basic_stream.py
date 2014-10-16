@@ -1,5 +1,7 @@
 # -*- mode: python; coding: utf-8 -*-
 
+from bson import objectid
+
 
 def any_to_marshable(value):
     if isinstance(value, str):
@@ -42,6 +44,9 @@ def dict_to_marshable(value):
 
 
 def class_to_marshable(value):
+    if isinstance(value, objectid.ObjectId):
+        return str(value)
+
     retval = {}
     for name in dir(value):
         if name.startswith("_"):
