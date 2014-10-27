@@ -29,6 +29,9 @@ def any_to_marshable(value):
     if isinstance(value, dict):
         return dict_to_marshable(value)
 
+    if isinstance(value, objectid.ObjectId):
+        return str(value)
+
     # last resort
     return class_to_marshable(value)
 
@@ -44,9 +47,6 @@ def dict_to_marshable(value):
 
 
 def class_to_marshable(value):
-    if isinstance(value, objectid.ObjectId):
-        return str(value)
-
     retval = {}
     for name in dir(value):
         if name.startswith("_"):
