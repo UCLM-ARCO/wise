@@ -98,21 +98,27 @@ Remote duck typing
 API
 ---
 
-Communicator.createObjectAdapter(name, endpoint)
-Communicator.stringToProxy(stringfied_proxy)
+.. sourcecode:: python
 
-Adapter.add(instance, identity)
-Adapter.addWithUUID(instance)
+    Communicator.createObjectAdapter(name, endpoint)
+    Communicator.stringToProxy(stringfied_proxy)
+
+    Adapter.add(instance, identity)
+    Adapter.addWithUUID(instance)
 
 (python only)
-wise.initialize()
-Communicator.register_StaticFS(url, path)
-Communicator.waitForShutdown()
+
+.. sourcecode:: python
+
+    wise.initialize()
+    Communicator.register_StaticFS(url, path)
+    Communicator.waitForShutdown()
 
 (js only)
-wise_application(communicator)
 
+.. sourcecode:: js
 
+    wise_application(communicator)
 
 tests
 -----
