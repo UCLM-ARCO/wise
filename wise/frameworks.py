@@ -16,10 +16,11 @@ try:
     from tornado.websocket import WebSocketHandler
     tornado.WebSocketHandler = WebSocketHandler
 
-    from tornado.web import StaticFileHandler, Application, URLSpec
+    from tornado.web import StaticFileHandler, Application, URLSpec, RequestHandler
     tornado.StaticFileHandler = StaticFileHandler
     tornado.WebApplication = Application
     tornado.URLSpec = URLSpec
+    tornado.RequestHandler = RequestHandler
 
     from tornado.httpserver import HTTPServer
     tornado.HTTPServer = HTTPServer
@@ -34,8 +35,9 @@ except ImportError:
     tornado.WebSocketHandler = EmptyClass
     tornado.StaticFileHandler = EmptyClass
     tornado.WebApplication = EmptyClass
-    tornado.HTTPServer = EmptyClass
     tornado.URLSpec = EmptyClass
+    tornado.RequestHandler = EmptyClass
+    tornado.HTTPServer = EmptyClass
     tornado.IOLoop = EmptyClass
 
 

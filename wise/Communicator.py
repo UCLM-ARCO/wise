@@ -209,6 +209,13 @@ class TornadoCommunicator(Thread, CommunicatorBase):
         self.registerApplication(frontend)
         return frontend
 
+    def registerRedirect(self, from_, to_):
+        class RedirectHandler(tornado.RequestHandler):
+            def get(self):
+                self.redirect(to_)
+
+        self.registerHandlers([(from_, RedirectHandler, [])])
+
 
 class GunicornCommunicator(CommunicatorBase):
     framework = "gunicorn"
