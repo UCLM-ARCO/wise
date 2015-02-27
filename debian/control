@@ -8,7 +8,8 @@ Homepage: https://bitbucket.org/arco_group/wise
 
 Package: python-wise
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}, python-jsonpickle
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}, python-jsonpickle,
+ python-bson
 Description: Middleware between web and server
  Gives support for remote method invocation from objects in Server
  from Browser and viceversa. It uses a ZeroC Ice like API, to make it
