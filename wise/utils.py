@@ -45,6 +45,9 @@ def _initialize_for_tornado(host, port, properties):
 def _initialize_for_gunicorn(properties):
     global __ic
 
+    import django
+    django.setup()
+
     __ic = GunicornCommunicator(properties=properties)
 
     admin_adapter = __ic.createObjectAdapter("WiseAdmin", "-w wise")
