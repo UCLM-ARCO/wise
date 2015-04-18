@@ -1,6 +1,7 @@
 deb: python-tornado
 deb: python-jsonpickle
 deb: python-brimstone
+deb: python-commodity
 deb: phantomjs
 deb: nodejs-legacy
 deb: npm
