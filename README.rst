@@ -1,3 +1,7 @@
+.. image:: https://pypip.in/w/wise/badge.png
+    :target: https://crate.io/packages/wise/
+    :alt: Latest PyPI version
+
 ====
 wise
 ====
