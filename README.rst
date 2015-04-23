@@ -1,7 +1,6 @@
-.. image:: https://pypip.in/w/wise/badge.png
-    :target: https://crate.io/packages/wise/
+.. image:: https://pypip.in/v/doublex/badge.png
+    :target: https://crate.io/packages/python-wise
     :alt: Latest PyPI version
-
 ====
 wise
 ====
