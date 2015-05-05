@@ -1,0 +1,10 @@
+[
+  {
+    "model": "hello.Person",
+    "pk": 1,
+    "fields": {
+      "name": "Bart",
+      "age": "10"
+    }
+  }
+]
