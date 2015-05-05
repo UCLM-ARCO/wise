@@ -5,9 +5,11 @@ from models import Person
 
 class HelloServant(object):
     def say_hello(self, name, current):
-        p = Person.objects(name=name).first()
-        if p is None:
+        try:
+            p = Person.objects.get(name=name)
+        except Person.DoesNotExist:
             return "{}, I'm sorry, I don't know you.".format(name)
+
         return "Hello {}, you are {} years old.".format(p.name, p.age)
 
 

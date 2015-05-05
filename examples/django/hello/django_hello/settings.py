@@ -58,15 +58,10 @@ WSGI_APPLICATION = 'django_hello.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': '',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'hello.db'),
     }
 }
-
-SESSION_ENGINE = 'mongoengine.django.sessions'
-_MONGODB_NAME = "hello-test"
-
-import mongoengine
-mongoengine.connect(_MONGODB_NAME)
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/

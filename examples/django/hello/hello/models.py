@@ -1,13 +1,12 @@
 # -*- mode: python; coding: utf-8 -*-
 
-from mongoengine import Document, StringField, IntField
+from django.db import models, connections
+
+for conn in connections.all():
+    if conn.vendor == 'sqlite':
+        conn.allow_thread_sharing = True
 
 
-class Person(Document):
-    name = StringField()
-    age = IntField()
-
-
-# NOTE: there is no easy way to add fixtures
-Person.objects.delete()
-Person(name="Bart", age=10).save()
+class Person(models.Model):
+    name = models.CharField(max_length=200)
+    age = models.IntegerField()
