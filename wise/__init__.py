@@ -6,11 +6,11 @@ from .WiseAdmin import WiseAdmin
 from .WebApplication import WebApplication
 from .StaticFSApplication import StaticFSApplication
 from .Object import Observable
+import Logging
 
 try:
     from .appserver import AppServer
 except ImportError as e:
-    print "[wise] Error: AppServer not available:", e
+    Logging.warning("AppServer not available: {}".format(e))
 
 from .utils import initialize, dirname, Application, proxy_as_servant
-

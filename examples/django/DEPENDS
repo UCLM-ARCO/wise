@@ -1,8 +1,9 @@
-deb: python-django
-deb: gunicorn
-deb: python-commodity
-deb: python-jsonpickle
-deb: python-hamcrest
-deb: python-gevent-websocket
+deb:python-django
+deb:gunicorn
+deb:python-commodity
+deb:python-jsonpickle
+deb:python-bson
+deb:python-hamcrest
+deb:python-gevent-websocket
 
-pip: mongoengine
+pip:mongoengine
