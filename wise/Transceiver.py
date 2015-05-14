@@ -106,8 +106,11 @@ class TransceiverFactory:
 
     @classmethod
     def register_handler(cls, wslocator, handler):
-        logging.info("TransceiverFactory: register handler for '{}'".format(wslocator))
-        cls._handlers[wslocator] = handler
+        try:
+            logging.info("TransceiverFactory: register handler for '{}'".format(wslocator))
+            cls._handlers[str(wslocator)] = handler
+        except:
+            traceback.print_exc()
 
     @classmethod
     def unregister_handler(cls, wslocator):
@@ -117,25 +120,28 @@ class TransceiverFactory:
 
     @classmethod
     def get(cls, wslocator):
-        logging.info("TransceiverFactory: get for websocket '{}'".format(wslocator))
+        try:
+            logging.info("TransceiverFactory: get for websocket '{}'".format(wslocator))
 
-        # FIXME is the default value for get() (many times)
-        transceiver = cls._transceivers.get(wslocator, None)
-        if transceiver:
+            # FIXME is the default value for get() (many times)
+            transceiver = cls._transceivers.get(wslocator, None)
+            if transceiver:
+                return transceiver
+
+            handler = cls._handlers.get(wslocator, None)
+            if not handler:
+                logging.error("TransceiverFactory: ERROR: no handler for websocket '{}'"
+                              .format(wslocator))
+
+                return None
+
+            logging.info("TransceiverFactory: creating new for websocket '{}'"
+                         .format(wslocator))
+            transceiver = Transceiver(handler)
+            cls._transceivers[wslocator] = transceiver
             return transceiver
-
-        handler = cls._handlers.get(wslocator, None)
-        if not handler:
-            logging.error("TransceiverFactory: ERROR: no handler for websocket '{}'"
-                          .format(wslocator))
-
-            return None
-
-        logging.info("TransceiverFactory: creating new for websocket '{}'"
-                     .format(wslocator))
-        transceiver = Transceiver(handler)
-        cls._transceivers[wslocator] = transceiver
-        return transceiver
+        except:
+            traceback.print_exc()
 
 
 class RequestMessage:
@@ -160,7 +166,7 @@ class RequestMessage:
 
     # FIXME: mixed JSON unmarshalling process and typecoding
     def _convert_params(self, data):
-        if not 'params' in data:
+        if 'params' not in data:
             return {}
 
         params = data['params']

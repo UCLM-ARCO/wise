@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+
+{% load staticfiles %}
+
+<html>
+  <head>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js"></script>
+    <script type="text/javascript" src="{% static 'jquery-2.0.3.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'wise.js' %}"></script>
+  </head>
+  <body style="font-family: helvetica; width:600px">
+    <script src="/wise/js/wise.js"></script>
+
+    <h3>(django) 03: Server to Browser, invocation without response</h3>
+
+    <p>
+    In this example, the server will send invocations to browser,
+    without response from browser part. The content of invocations
+    will be shown below.
+    </p>
+
+    <h4>Server Messages:</h4>
+    <div id="messages" style="border: 1px solid #CCC; padding: 5px"></div>
+
+    <p>
+       (Control-F5 forces page refresh)
+    </p>
+
+    <script type="text/javascript">
+    function prepend(id, text) {
+        div = document.getElementById(id);
+        div.innerHTML = text + div.innerHTML;
+    }
+
+    Servant = Class.extend({
+	set_message: function(message) {
+            prepend('messages', message + '<br/>');
+	},
+    });
+
+    function wise_application(broker) {
+	broker.createObjectAdapter("WebAdapter", "-w browser")
+	    .then(on_adapter_ready);
+
+	function on_adapter_ready(adapter) {
+	    adapter.add(new Servant(), "printer1");
+	    broker.ready();
+	}
+    }
+    </script>
+
+  </body>
+</html>

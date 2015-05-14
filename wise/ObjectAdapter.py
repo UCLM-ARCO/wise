@@ -13,6 +13,7 @@ from .endpoint import Endpoint
 class WiseServant(object):
     def __init__(self, servant):
         assert servant is not None
+        assert servant is not self
         self._servant = servant
 
     def __getattr__(self, name):

@@ -1,0 +1,32 @@
+<html>
+  <body style="font-family: helvetica; width:600px">
+    <script src="/wise/js/wise.js"></script>
+
+    <h3>(tornado) 01: Browser to Server, invocation without response</h3>
+
+    <p>
+    This example will send an invocation from browser to server.
+    It will send the content of the text input below.
+    </p>
+
+    <input id="content" type="text" value="Hello, World!"/>
+    <button onClick="send_message()">Send</button>
+
+    <script type="text/javascript">
+    function wise_application(ws) {
+	ws.stringToProxy("printer1 -h 127.0.0.1 -p 8080 -w ws1")
+	    .then(on_stringToProxy_response);
+
+	function on_stringToProxy_response(proxy) {
+	    remote = proxy;
+	}
+    }
+
+    // UI callbacks
+    function send_message() {
+	remote.write(document.getElementById('content').value);
+    }
+    </script>
+
+  </body>
+</html>
