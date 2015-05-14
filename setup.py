@@ -4,7 +4,7 @@
 from distutils.core import setup
 
 setup(name = 'python-wise',
-      version = '0.20150416',
+      version = '0.20150514',
       description = 'Web distributed objects',
       packages = ['wise'],
       package_data = {'wise': ['js/*']},
