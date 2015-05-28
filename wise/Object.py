@@ -14,9 +14,6 @@ class Observable:
         self.group = WorkerGroup(10)
 
     def attach(self, observer, current):
-        ws = current.adapter.getCommunicator()
-        observer = ws.stringToProxy(observer)
-
         if observer is None or observer in self.observers:
             return
 
@@ -24,9 +21,6 @@ class Observable:
         self.observers.append(observer)
 
     def detach(self, observer, current):
-        ws = current.adapter.getCommunicator()
-        observer = ws.stringToProxy(observer)
-
         self._do_detach(observer)
 
     def _do_detach(self, observer):

@@ -10,7 +10,7 @@ class Server:
         broker = wise.initialize()
         self._observable = wise.Observable()
 
-        adapter = broker.createObjectAdapter("Adapter", "ws1")
+        adapter = broker.createObjectAdapter("Adapter", "-w ws1")
         adapter.add(self._observable, "Observable")
 
         broker.register_StaticFS('/static', wise.dirname(__file__))
