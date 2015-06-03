@@ -1,7 +1,7 @@
 # -*- mode: python; coding: utf-8 -*-
 
 from threading import Lock
-from commodity.thread_ import WorkerGroup
+from gevent.threadpool import ThreadPool
 
 from . import Logging as logging
 
@@ -11,7 +11,7 @@ class Observable:
         self.observers = []
         self.observers_lock = Lock()
 
-        self.group = WorkerGroup(10)
+        self.pool = ThreadPool(10)
 
     def attach(self, observer, current):
         if observer is None or observer in self.observers:
@@ -37,8 +37,7 @@ class Observable:
             method_name = "notify"
 
         for observer in self.observers[:]:
-            worker = self.group.get_worker(observer.endpoint.ws_name)
-            worker.add(self._notify_observer, (observer, method_name,) + args)
+            self.pool.spawn(self._notify_observer, *((observer, method_name,) + args))
 
     def _notify_observer(self, observer, method_name, *args):
         try:
