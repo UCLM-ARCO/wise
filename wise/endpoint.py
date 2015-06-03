@@ -13,7 +13,7 @@ class Endpoint:
         # FIXME: use re to parse proxies (or pyparsing)
 
         fields = [x.strip() for x in string.split()]
-        if not '-w' in fields:
+        if '-w' not in fields:
             raise ValueError("Invalid proxy format: '{}'".format(string))
         ws = fields[fields.index('-w') + 1]
 
@@ -28,6 +28,9 @@ class Endpoint:
         return Endpoint(ws, host, port)
 
     def __eq__(self, other):
+        if isinstance(other, str):
+            other = self.from_string(other)
+
         return (self.ws_name, self.host, self.port) == \
             (other.ws_name, other.ws_name, other.port)
 
