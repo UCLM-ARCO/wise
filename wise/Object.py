@@ -25,7 +25,7 @@ class Observable:
 
     def _do_detach(self, observer):
         with self.observers_lock:
-            if not observer in self.observers:
+            if observer not in self.observers:
                 return False
 
             self.observers.remove(observer)
