@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+
+{% load staticfiles %}
+
+<html>
+  <head>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js"></script>
+    <script type="text/javascript" src="{% static 'jquery-2.0.3.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'wise.js' %}"></script>
+
+  </head>
+  <body style="font-family: helvetica; width:600px">
+    <h3>(django) 05: browser <-> server, browser object as a server model observer</h3>
+
+    <p>
+      In this example, the browser holds a servant which is registered
+      in the server.  Once this is done, the server will make an
+      invocation on the registered servant.  None of the invocations
+      will have a response.
+    </p>
+
+    <h4>Server Messages</h4>
+    <div id="messages" style="border: 1px solid #CCC; padding: 5px"></div>
+
+    <p>
+       (Control-F5 forces page refresh)
+    </p>
+
+    <script type="text/javascript">
+    Servant = Class.extend({
+	set_message: function(message) {
+	    $('#messages').prepend("'{0}'<br/>".format(message));
+	},
+    });
+
+    function wise_application(ws) {
+	ws.createObjectAdapter("WebAdapter")
+	    .then(on_adapter_ready);
+
+	function on_adapter_ready(adapter) {
+	    var observer = adapter.addWithUUID(new Servant());
+
+	    ws.stringToProxy("Observable -w ws1")
+		.then(on_stringToProxy_response);
+
+	    function on_stringToProxy_response(proxy) {
+		proxy.attach(observer).then(ws.ready);
+	    }
+	}
+    }
+    </script>
+
+  </body>
+</html>
