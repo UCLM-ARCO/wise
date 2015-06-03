@@ -3,6 +3,7 @@
 import sys
 from threading import Thread, Event
 from commodity import path
+from importlib import import_module
 
 from . import Logging as logging
 from .ObjectAdapter import ObjectAdapter
@@ -222,10 +223,9 @@ class GunicornCommunicator(CommunicatorBase):
 
     def registerHandlers(self, handlers, host=""):
 
-        # Note: import here, only when needed
+        # Note: import here, only when needed (let django setup itself)
         from django.conf import settings
         from django.conf.urls import patterns, url
-        from django.utils.importlib import import_module
 
         urls = sys.modules.get(settings.ROOT_URLCONF)
         if urls is None:

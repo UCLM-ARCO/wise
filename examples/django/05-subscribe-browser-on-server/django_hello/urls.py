@@ -7,7 +7,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 urlpatterns = patterns(
     '',
 
-    url(r'^$', RedirectView.as_view(url="/hello")),
+    url(r'^$', RedirectView.as_view(url="/hello", permanent=True)),
     url(r'^hello/', include('hello.urls')),
 )
 

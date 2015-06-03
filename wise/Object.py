@@ -37,7 +37,7 @@ class Observable:
             method_name = "notify"
 
         for observer in self.observers[:]:
-            self.pool.spawn(self._notify_observer, *((observer, method_name,) + args))
+            self.pool.spawn(self._notify_observer, observer, method_name, args)
 
     def _notify_observer(self, observer, method_name, *args):
         try:

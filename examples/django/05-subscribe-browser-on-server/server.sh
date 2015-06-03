@@ -12,7 +12,6 @@ export PYTHONPATH=$PROJECT_DIR:$(pwd)
 export DJANGO_SETTINGS_MODULE=$PROJECT.settings
 
 gunicorn \
-    --debug \
     --reload \
     --access-logfile - \
     --error-logfile - \

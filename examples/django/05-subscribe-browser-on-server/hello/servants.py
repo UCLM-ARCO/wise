@@ -6,6 +6,10 @@ import wise
 
 
 def send_messages(observable):
+    timeout = 5
+    print "I'll wait {} seconds until you open your browser...".format(timeout)
+    time.sleep(timeout)
+
     for i in range(10):
         time.sleep(1)
 
@@ -19,6 +23,4 @@ def initialize(broker):
 
     adapter = broker.createObjectAdapter("Adapter", "-w ws1")
     adapter.add(observable, "Observable")
-
-    time.sleep(5)
     thread.start_new_thread(send_messages, (observable,))
