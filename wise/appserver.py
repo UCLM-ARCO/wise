@@ -16,6 +16,9 @@ logger.setLevel(logging.DEBUG)
 
 pwd = os.path.abspath(os.path.dirname(settings.__file__))
 
+if not hasattr(settings, "WebRequestHandler"):
+    settings.WebRequestHandler = web.RequestHandler
+
 
 class MultiPathLoader(template.BaseLoader):
     def __init__(self, directories, **kwargs):
@@ -41,7 +44,7 @@ class MultiPathLoader(template.BaseLoader):
 
 
 # dirty hack to get control over errors in tornado
-class ErrorHandler(web.RequestHandler):
+class ErrorHandler(settings.WebRequestHandler):
     def initialize(self, status_code):
         self.set_status(status_code)
 
@@ -132,7 +135,7 @@ class AppServer(object):
         for locator, handler_ in urls.urlpatterns.items():
             url = "^/{}/{}".format(name, locator)
 
-            class RequestHandler(web.RequestHandler):
+            class RequestHandler(settings.WebRequestHandler):
                 handler = handler_
 
                 def get(self):
@@ -184,7 +187,7 @@ class AppServer(object):
         for locator, handler_ in urls.urlpatterns.items():
             url = "^/{}".format(locator)
 
-            class RequestHandler(web.RequestHandler):
+            class RequestHandler(settings.WebRequestHandler):
                 handler = handler_
 
                 def get(self):
