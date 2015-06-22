@@ -138,11 +138,18 @@ class AppServer(object):
             class RequestHandler(settings.WebRequestHandler):
                 handler = handler_
 
-                def get(self):
-                    context = {
-                        'APP_STATIC_PATH': "/{}/static".format(name)
-                    }
-                    return self.handler(context)
+                if getattr(handler_, "use_post", None):
+                    def post(self):
+                        context = {
+                            'APP_STATIC_PATH': "/{}/static".format(name)
+                        }
+                        return self.handler(context)
+                else:
+                    def get(self):
+                        context = {
+                            'APP_STATIC_PATH': "/{}/static".format(name)
+                        }
+                        return self.handler(context)
 
                 def create_template_loader(self, path):
                     app_template_path = os.path.join(path, "templates")
@@ -189,9 +196,13 @@ class AppServer(object):
 
             class RequestHandler(settings.WebRequestHandler):
                 handler = handler_
-
-                def get(self):
-                    return self.handler({})
+                
+                if getattr(handler_, "use_post", None):
+                    def post(self):
+                        return self.handler({})
+                else:
+                    def get(self):
+                        return self.handler({})
 
                 def create_template_loader(self, path):
                     all_paths = [common_templates_path]
