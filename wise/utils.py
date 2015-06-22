@@ -11,7 +11,7 @@ from . import Logging as logging
 __ic = None
 
 
-def initialize(host=None, port=None, properties=None, server="tornado"):
+def initialize(host=None, port=None, properties=None, server="tornado", server_args=None):
     assert __ic is None, "Only one communicator instance is supported"
 
     properties = properties or {}
@@ -19,7 +19,7 @@ def initialize(host=None, port=None, properties=None, server="tornado"):
     if server == "tornado":
         host = host or "127.0.0.1"
         port = port if port is not None else "8080"
-        return _initialize_for_tornado(host, port, properties)
+        return _initialize_for_tornado(host, port, properties, server_args)
 
     if server == "gunicorn":
         if host is not None or port is not None:
@@ -29,11 +29,12 @@ def initialize(host=None, port=None, properties=None, server="tornado"):
     raise ValueError("Unknown backend server:", + server)
 
 
-def _initialize_for_tornado(host, port, properties):
+def _initialize_for_tornado(host, port, properties, server_args):
     global __ic
 
     host = host or socket.gethostbyname_ex(socket.gethostname())[0]
-    __ic = TornadoCommunicator(host=host, port=port, properties=properties)
+    __ic = TornadoCommunicator(host=host, port=port, properties=properties,
+                               server_args=server_args)
     __ic.is_ready.wait()
 
     admin_adapter = __ic.createObjectAdapter("WiseAdmin", "-w wise")

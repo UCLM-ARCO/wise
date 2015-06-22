@@ -141,9 +141,13 @@ class CommunicatorBase(object):
 class TornadoCommunicator(Thread, CommunicatorBase):
     framework = "tornado"
 
-    def __init__(self, host, port, properties=None):
+    def __init__(self, host, port, properties=None, server_args=None):
         Thread.__init__(self)
         CommunicatorBase.__init__(self, properties)
+
+        if server_args is None:
+            server_args = {}
+        self._server_args = server_args
 
         if self._properties.get("TornadoApp.debug", False):
             logging.warning("Wise: Debug Mode enabled, remove on production!!")
@@ -167,7 +171,7 @@ class TornadoCommunicator(Thread, CommunicatorBase):
         # handler (binded on HTTPConnection)
 
         self._http_server = tornado.HTTPServer(
-            self._tornado, no_keep_alive=True)
+            self._tornado, no_keep_alive=True, **self._server_args)
         logging.info("Communicator: http server on {}:{}".format(self.host, self.port))
         self._http_server.listen(self.port, self.host)
 

@@ -1,3 +1,10 @@
+python-wise (0.20150622-1) unstable; urgency=low
+
+  * New release
+  * Support on Tornado for SSL
+
+ -- Oscar Aceña Herrera <oscaracena@gmail.com>  Mon, 22 Jun 2015 18:50:25 +0200
+
 python-wise (0.20150514-1) unstable; urgency=low
 
   * New release
