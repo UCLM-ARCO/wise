@@ -165,9 +165,13 @@ Transceiver: Class.extend({
 	// FIXME: this attribute may be replaced with a promise that support several
 	// fulfill callbacks
 	this._waiting_callbacks = [promise];
-
 	this._is_ready = false;
-	this._socket_url = "ws://" + endpoint.host +
+
+	var proto = "ws";
+	if (this.use_secure_ws || location.protocol == "https:")
+	    proto = "wss";
+
+	this._socket_url = proto + "://" + endpoint.host +
 	    ":" +  endpoint.port + "/" + endpoint.ws_name;
 
 	log.debug("new WebSocket: " + this._socket_url);
@@ -1132,6 +1136,10 @@ identity: function(x) {
 WiseException: function(name, message) {
     this.name = name;
     this.message = message;
+},
+
+secure: function(state) {
+    this.use_secure_ws = state;
 },
 
 }; // wise namespace
