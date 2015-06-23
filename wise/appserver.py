@@ -135,31 +135,30 @@ class AppServer(object):
         for locator, handler_ in urls.urlpatterns.items():
             url = "^/{}/{}".format(name, locator)
 
-            class RequestHandler(settings.WebRequestHandler):
-                handler = handler_
+            if isinstance(handler_, type):
+                RequestHandler = handler_
 
-                if getattr(handler_, "use_post", None):
-                    def post(self):
-                        context = {
-                            'APP_STATIC_PATH': "/{}/static".format(name)
-                        }
-                        return self.handler(context)
-                else:
-                    def get(self):
-                        context = {
-                            'APP_STATIC_PATH': "/{}/static".format(name)
-                        }
-                        return self.handler(context)
+            else:
+                class RequestHandler(settings.WebRequestHandler):
+                    context = {'APP_STATIC_PATH': "/{}/static".format(name)}
+                    if getattr(handler_, "use_post", None):
+                        def post(self):
+                            return handler_(self.context)
+                    else:
+                        def get(self):
+                            return handler_(self.context)
 
-                def create_template_loader(self, path):
-                    app_template_path = os.path.join(path, "templates")
+            def create_template_loader(self, path):
+                app_template_path = os.path.join(path, "templates")
 
-                    all_paths = []
-                    if os.path.exists(app_template_path):
-                        all_paths.append(app_template_path)
+                all_paths = []
+                if os.path.exists(app_template_path):
+                    all_paths.append(app_template_path)
 
-                    all_paths.append(common_templates_path)
-                    return MultiPathLoader(all_paths)
+                all_paths.append(common_templates_path)
+                return MultiPathLoader(all_paths)
+
+            RequestHandler.create_template_loader = create_template_loader
 
             class RequestHandlerApp(WebApplication):
                 def get_handler_class(self):
@@ -194,19 +193,25 @@ class AppServer(object):
         for locator, handler_ in urls.urlpatterns.items():
             url = "^/{}".format(locator)
 
-            class RequestHandler(settings.WebRequestHandler):
-                handler = handler_
-                
-                if getattr(handler_, "use_post", None):
-                    def post(self):
-                        return self.handler({})
-                else:
-                    def get(self):
-                        return self.handler({})
+            if isinstance(handler_, type):
+                RequestHandler = handler_
 
-                def create_template_loader(self, path):
-                    all_paths = [common_templates_path]
-                    return MultiPathLoader(all_paths)
+            else:
+                class RequestHandler(settings.WebRequestHandler):
+                    context = {}
+
+                    if getattr(handler_, "use_post", None):
+                        def post(self):
+                            return handler_(self.context)
+                    else:
+                        def get(self):
+                            return handler_(self.context)
+
+            def create_template_loader(self, path):
+                all_paths = [common_templates_path]
+                return MultiPathLoader(all_paths)
+
+            RequestHandler.create_template_loader = create_template_loader
 
             class RequestHandlerApp(WebApplication):
                 def get_handler_class(self):
@@ -232,4 +237,3 @@ class AppServer(object):
 
     def stop(self):
         self.ws.shutdown()
-
