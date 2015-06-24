@@ -146,7 +146,7 @@ wise = {
 no_reconnect: false,
 
 _get_typecode: function(value) {
-    if (value === undefined || value === null)
+    if (value === undefined || value === null || value.wise_typecode === undefined)
 	return undefined;
 
     return value && value["wise_typecode"];
