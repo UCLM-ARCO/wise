@@ -22,6 +22,9 @@ karma-single:
 karma:
 	karma start test/karma.conf.js
 
+release:
+	python setup.py sdist upload
+
 .PHONY: clean
 clean:
 	$(call rm-r,*.pyc *~ *.log wise.db)
