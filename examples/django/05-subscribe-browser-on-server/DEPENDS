@@ -1,4 +1,6 @@
-deb: python-jsonpickle
-deb: python-django
-deb: python-gevent-websocket
-deb: gunicorn
+python-jsonpickle
+python-django
+python-gevent
+python-gevent-websocket
+python-greenlet
+gunicorn
